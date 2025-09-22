@@ -1,22 +1,19 @@
 import React from 'react';
-import { useProfile } from '../../hooks/useProfile';
 import useModalStore from '../../stores/modalStore';
-import { useTheme } from '../../contexts/ThemeContext';
 
 interface CurrentFilterLinkProps {
   onModalOpen?: () => void;
+  filter?: string;
 }
 
-const CurrentFilterLink: React.FC<CurrentFilterLinkProps> = ({ onModalOpen }) => {
-  const { profile } = useProfile();
+const CurrentFilterLink: React.FC<CurrentFilterLinkProps> = ({ onModalOpen, filter }) => {
   const { openFilterRoomsModal } = useModalStore();
-  const { isDarkMode } = useTheme();
+ 
 
-  const currentFilter = profile?.current_filter;
-  const autoHide = profile?.auto_hide;
+  const currentFilter = filter;
 
   // Determine what text to display
-  const displayText = currentFilter || (autoHide ? "Empty Rooms Hidden" : "All Rooms");
+  const displayText = currentFilter 
 
   return (
     <div className="group relative inline-block">
@@ -25,11 +22,7 @@ const CurrentFilterLink: React.FC<CurrentFilterLinkProps> = ({ onModalOpen }) =>
           onModalOpen?.();
           openFilterRoomsModal();
         }}
-        className={`text-xs px-3 py-1.5 rounded-full backdrop-blur-md border shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden ${
-          isDarkMode
-            ? 'bg-white/10 border-white/20 text-gray-200 hover:bg-white/15'
-            : 'bg-white/30 border-white/40 text-gray-800 hover:bg-white/40'
-        }`}
+        className="text-xs px-3 py-1.5 rounded-full backdrop-blur-md border shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden bg-white/30 border-white/40 text-gray-800 hover:bg-white/40 dark:bg-white/10 dark:border-white/20 dark:text-gray-200 dark:hover:bg-white/15"
         title="Current Filter"
       >
         {/* Glassmorphic shine effect */}
