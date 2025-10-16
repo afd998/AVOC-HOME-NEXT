@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, time, jsonb, index, check, real, doublePrecision, date, bigserial } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, time, jsonb, index, check, real, doublePrecision, date, bigserial, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -187,23 +187,6 @@ export const roomFilters = pgTable("room_filters", {
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
 
-export const facultyByods = pgTable("faculty_byods", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "faculty_byods_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	name: text(),
-	os: text(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	faculty: bigint({ mode: "number" }),
-}, (table) => [
-	foreignKey({
-			columns: [table.faculty],
-			foreignColumns: [faculty.id],
-			name: "faculty_byods_faculty_fkey"
-		}),
-	pgPolicy("allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
-]);
-
 export const events = pgTable("events", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	eventType: text("event_type"),
@@ -292,4 +275,23 @@ export const shifts = pgTable("shifts", {
 			name: "shifts_profile_id_fkey"
 		}),
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
+]);
+
+export const facultyEvents = pgTable("faculty_events", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	faculty: bigint({ mode: "number" }).notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	event: bigint({ mode: "number" }).notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.event],
+			foreignColumns: [events.id],
+			name: "faculty_events_event_fkey"
+		}),
+	foreignKey({
+			columns: [table.faculty],
+			foreignColumns: [faculty.id],
+			name: "faculty_events_faculty_fkey"
+		}),
+	primaryKey({ columns: [table.faculty, table.event], name: "faculty_events_pkey"}),
 ]);

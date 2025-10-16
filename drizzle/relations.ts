@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, events, eventTasks, tasks, notifications, profiles, facultyByods, panoptoChecks, shifts } from "./schema";
+import { faculty, facultySetup, events, eventTasks, tasks, notifications, profiles, panoptoChecks, shifts, facultyEvents } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -10,7 +10,7 @@ export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 
 export const facultyRelations = relations(faculty, ({many}) => ({
 	facultySetups: many(facultySetup),
-	facultyByods: many(facultyByods),
+	facultyEvents: many(facultyEvents),
 }));
 
 export const eventTasksRelations = relations(eventTasks, ({one}) => ({
@@ -32,6 +32,7 @@ export const eventsRelations = relations(events, ({one, many}) => ({
 		references: [profiles.id]
 	}),
 	panoptoChecks: many(panoptoChecks),
+	facultyEvents: many(facultyEvents),
 }));
 
 export const tasksRelations = relations(tasks, ({many}) => ({
@@ -56,13 +57,6 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	shifts: many(shifts),
 }));
 
-export const facultyByodsRelations = relations(facultyByods, ({one}) => ({
-	faculty: one(faculty, {
-		fields: [facultyByods.faculty],
-		references: [faculty.id]
-	}),
-}));
-
 export const panoptoChecksRelations = relations(panoptoChecks, ({one}) => ({
 	profile: one(profiles, {
 		fields: [panoptoChecks.completedByUserId],
@@ -78,5 +72,16 @@ export const shiftsRelations = relations(shifts, ({one}) => ({
 	profile: one(profiles, {
 		fields: [shifts.profileId],
 		references: [profiles.id]
+	}),
+}));
+
+export const facultyEventsRelations = relations(facultyEvents, ({one}) => ({
+	event: one(events, {
+		fields: [facultyEvents.event],
+		references: [events.id]
+	}),
+	faculty: one(faculty, {
+		fields: [facultyEvents.faculty],
+		references: [faculty.id]
 	}),
 }));
