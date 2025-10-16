@@ -4,7 +4,6 @@ import { useEventOverduePanoptoChecks } from "../hooks/useOverduePanoptoChecks";
 import { Card, CardContent } from "../../../../../../components/ui/card";
 import { EnhancedEvent } from "@/lib/data/calendar";
 
-
 import Link from "next/link";
 interface EventProps {
   event: EnhancedEvent;
@@ -88,9 +87,7 @@ export default function Event({ event, rowHeightPx = 96 }: EventProps) {
             isHovering={isHoveringEvent}
           /> */}
           <div className="flex-1">
-            <EventContent
-              event={event}
-            />
+            {/* <EventContent event={event} /> */}
           </div>
           {/* Red blinking vignette border for events with overdue Panopto checks */}
           {/* {shouldBlink && (

@@ -27,14 +27,12 @@ import { EnhancedEvent } from "@/lib/data/calendar";
 
 // Helper function to parse instructor names from JSON
 
-
 interface EventContentProps {
   event: EnhancedEvent;
-  isMergedRoomEvent?: boolean;
 }
 
 // Lecture Event Component
-function LectureEvent({ event, isMergedRoomEvent }: EventContentProps) {
+function LectureEvent({ event }: EventContentProps) {
   // Parse instructor names from JSON field
   // Get faculty members data
   const { data: facultyMembers, isLoading: isFacultyLoading } =
@@ -208,16 +206,16 @@ function LectureEvent({ event, isMergedRoomEvent }: EventContentProps) {
               Sec: {thirdPart}
             </span>
           )}
-          {event.lecture_title && (
+          {event.lectureTitle && (
             <span
               className="text-xs text-white opacity-80 transition-all duration-200 ease-in-out whitespace-nowrap leading-none"
               style={{
                 fontFamily:
                   "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
               }}
-              title={event.lecture_title}
+              title={event.lectureTitle}
             >
-              {event.lecture_title}
+              {event.lectureTitle}
             </span>
           )}
         </div>
@@ -225,7 +223,7 @@ function LectureEvent({ event, isMergedRoomEvent }: EventContentProps) {
       {rowHeightPx <= 90 && (
         <div className="flex flex-col min-w-0 pl-1 -gap-2 transition-all duration-200 ease-in-out overflow-hidden  ${isMergedRoomEvent ? 'justify-center' : ''}">
           <span className="font-medium text-black transition-all duration-200 ease-in-out whitespace-nowrap text-md leading-none">
-            {event.event_name}
+            {event.eventName}
           </span>
         </div>
       )}
@@ -234,10 +232,7 @@ function LectureEvent({ event, isMergedRoomEvent }: EventContentProps) {
 }
 
 // KEC Executive Luxury Event Component
-function KECEvent({ event, isMergedRoomEvent }: EventContentProps) {
-  const { truncatedEventName: eventName } = getEventTypeInfo(event);
-  const themeColors = getEventThemeColors(event);
-  const { profile, rowHeightPx } = useProfile();
+function KECEvent({ event }: EventContentProps) {
   const getEventHeight = () => {
     if (isMergedRoomEvent) return "h-full";
     return "h-16";
@@ -267,14 +262,14 @@ function KECEvent({ event, isMergedRoomEvent }: EventContentProps) {
           style={{
             fontSize: isMergedRoomEvent
               ? "1.2rem"
-              : eventName && eventName.length > 15
+              : event.eventName && event.eventName.length > 15
               ? "0.7rem"
               : "0.8rem",
             color: "#B8860B",
           }}
-          title={eventName}
+          title={event.eventName}
         >
-          {eventName}
+          {event.eventName}
         </div>
 
         {/* Subtitle */}
@@ -291,14 +286,7 @@ function KECEvent({ event, isMergedRoomEvent }: EventContentProps) {
 }
 
 // Default Event Component
-function DefaultEvent({
-  event,
-  isHovering,
-  isMergedRoomEvent,
-  hasOverduePanoptoChecks,
-  isOverdueChecksLoading,
-  organization,
-}: EventContentProps) {
+function DefaultEvent({ event }: EventContentProps) {
   // Parse instructor names from JSON field
   const instructorNames = parseInstructorNames(event.instructor_names);
 
@@ -311,19 +299,13 @@ function DefaultEvent({
   const themeColors = getEventThemeColors(event);
   // Special case: Ad Hoc Class Meeting uses same background as main event (themeColors[5])
   // All other event types use themeColors[7] for content background
-  const contentBgColor =
-    event.event_type === "Ad Hoc Class Meeting"
-      ? themeColors[5]
-      : event.event_type === "Lecture"
-      ? themeColors[4]
-      : themeColors[7];
 
   // Determine height based on event type
   const getEventHeight = () => {
     if (isMergedRoomEvent) return "h-full"; // Use full height for merged room events
     if (isReducedHeightEvent) {
       // Ad Hoc Class Meeting gets even more reduced height
-      if (event.event_type === "Ad Hoc Class Meeting") return "h-8"; // 32px for Ad Hoc Class Meeting
+      if (event.eventType === "Ad Hoc Class Meeting") return "h-8"; // 32px for Ad Hoc Class Meeting
       return "h-10"; // 40px for other reduced height events
     }
     return "h-12"; // 48px for regular events
@@ -356,7 +338,7 @@ function DefaultEvent({
           <div
             className={cn(
               "text-xs font-medium transition-all duration-200 ease-in-out w-full leading-tight",
-              event.event_type === "Lecture" ? "text-white" : "text-foreground",
+              event.eventType === "Lecture" ? "text-white" : "text-foreground",
               isHovering ? "scale-102" : "scale-100"
             )}
             style={{
@@ -381,58 +363,30 @@ function DefaultEvent({
   );
 }
 
-export default function EventContent({
-  event,
-  isHovering,
-  isMergedRoomEvent,
-  hasOverduePanoptoChecks,
-  isOverdueChecksLoading,
-}: EventContentProps) {
-  // Fetch organization data if the event organization is "JAPAN CLUB", "KELLOGG MARKETING CLUB", "KELLOGG KIDS", "ASIAN MANAGEMENT ASSOCIATION", "KELLOGG VETERANS ASSOCIATION", or "Entrepreneurship Acquisition Club"
-  const shouldFetchOrg =
-    event.organization === "JAPAN CLUB" ||
-    event.organization === "KELLOGG MARKETING CLUB" ||
-    event.organization === "KELLOGG KIDS" ||
-    event.organization === "ASIAN MANAGEMENT ASSOCIATION" ||
-    event.organization === "KELLOGG VETERANS ASSOCIATION" ||
-    event.organization === "Entrepreneurship Acquisition Club";
-  const { data: organization } = useOrganization(
-    shouldFetchOrg ? event.organization || "" : ""
-  );
-
+export default async function EventContent({ event }: EventContentProps) {
+  // const shouldFetchOrg =
+  //   event.organization === "JAPAN CLUB" ||
+  //   event.organization === "KELLOGG MARKETING CLUB" ||
+  //   event.organization === "KELLOGG KIDS" ||
+  //   event.organization === "ASIAN MANAGEMENT ASSOCIATION" ||
+  //   event.organization === "KELLOGG VETERANS ASSOCIATION" ||
+  //   event.organization === "Entrepreneurship Acquisition Club";
+  // const { data: organization } = useOrganization(
+  //   shouldFetchOrg ? event.organization || "" : ""
+  // );
+  const facultyRows = await getfacultyForEvent(event.id);
   return (
     <div
       className={`flex gap-2 relative transition-all duration-200 ease-in-out flex-1 ${
-        event.event_type === "KEC" ? "w-full justify-center" : "min-w-0"
+        event.eventType === "KEC" ? "w-full justify-center" : "min-w-0"
       } ${isMergedRoomEvent ? "h-full pt-6" : ""}`}
     >
-      {event.event_type === "Lecture" ? (
-        <LectureEvent
-          event={event}
-          isHovering={isHovering}
-          isMergedRoomEvent={isMergedRoomEvent}
-          hasOverduePanoptoChecks={hasOverduePanoptoChecks}
-          isOverdueChecksLoading={isOverdueChecksLoading}
-          organization={organization}
-        />
-      ) : event.event_type === "KEC" ? (
-        <KECEvent
-          event={event}
-          isHovering={isHovering}
-          isMergedRoomEvent={isMergedRoomEvent}
-          hasOverduePanoptoChecks={hasOverduePanoptoChecks}
-          isOverdueChecksLoading={isOverdueChecksLoading}
-          organization={organization}
-        />
+      {event.eventType === "Lecture" ? (
+        <LectureEvent event={event} facultyRows={facultyRows} />
+      ) : event.eventType === "KEC" ? (
+        <KECEvent event={event} facultyRows={facultyRows} />
       ) : (
-        <DefaultEvent
-          event={event}
-          isHovering={isHovering}
-          isMergedRoomEvent={isMergedRoomEvent}
-          hasOverduePanoptoChecks={hasOverduePanoptoChecks}
-          isOverdueChecksLoading={isOverdueChecksLoading}
-          organization={organization}
-        />
+        <DefaultEvent event={event} facultyRows={facultyRows} />
       )}
     </div>
   );
