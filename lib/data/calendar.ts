@@ -1,15 +1,16 @@
 import { getEvents } from "./events";
-import getMyProfile from "./profile";
-import { unstable_cache } from "next/cache";
-import { useEventOwnership } from "@/core/event/hooks/useCalculateOwners";
 import { getFilters } from "./filters";
-import { events } from "@/drizzle/schema";
-import { InferSelectModel } from "drizzle-orm";
-import { roomFilters } from "@/drizzle/schema";
+import { faculty, facultyEvents, roomFilters } from "@/drizzle/schema";
+import { db } from "@/lib/db";
 import { RoomFilter } from "@/lib/db/types";
 import { Event as EventType } from "@/lib/db/types";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-export type EnhancedEvent = EventType & {
+import { InferSelectModel, eq, inArray } from "drizzle-orm";
+
+type FacultyMember = InferSelectModel<typeof faculty>;
+type HydratedEvent = EventType & { faculty: FacultyMember[] };
+
+export type EnhancedEvent = HydratedEvent & {
   derived: ReturnType<typeof derivded>;
 };
 export type RoomRowData = { roomName: string; events: EnhancedEvent[] };
@@ -58,18 +59,42 @@ function expandMergedRoomNames(roomName: string): string[] {
 export async function getCalendar(date: string, filter: string) {
   "use cache";
   cacheTag(`calendar:${date}:${filter}`);
-  let events = await getEvents(date);
-  let filteredEvents = await filterEvents(events, filter);
-  let enhancedEvents: EnhancedEvent[] = filteredEvents.map(
-    (event: EventType) => {
-      return {
-        ...event,
-        derived: derivded(event, 7, 23, 2.5, 96),
-      };
-    }
-  );
+  const rawEvents = await getEvents(date);
+  const filteredEvents = await filterEvents(rawEvents, filter);
+  const facultyByEventId = new Map<number, FacultyMember[]>();
+  const eventIds = filteredEvents.map((event) => event.id);
 
-  
+  if (eventIds.length > 0) {
+    const facultyRows = await db
+      .select({
+        eventId: facultyEvents.event,
+        facultyMember: faculty,
+      })
+      .from(facultyEvents)
+      .innerJoin(faculty, eq(facultyEvents.faculty, faculty.id))
+      .where(inArray(facultyEvents.event, eventIds));
+
+    facultyRows.forEach(({ eventId, facultyMember }) => {
+      const existing = facultyByEventId.get(eventId);
+      if (existing) {
+        existing.push(facultyMember);
+        return;
+      }
+      facultyByEventId.set(eventId, [facultyMember]);
+    });
+  }
+
+  const hydratedEvents: HydratedEvent[] = filteredEvents.map((event) => ({
+    ...event,
+    faculty: facultyByEventId.get(event.id) ?? [],
+  }));
+
+  const enhancedEvents: EnhancedEvent[] = hydratedEvents.map((event) => ({
+    ...event,
+    derived: derivded(event, 7, 23, 2.5, 96),
+  }));
+
+
   // Group events by roomName
   const groupedEvents = enhancedEvents.reduce((acc, event) => {
     const roomName = event.roomName;

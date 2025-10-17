@@ -76,6 +76,12 @@ export default function Event({ event, rowHeightPx = 96 }: EventProps) {
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
           transition:
             "left 200ms ease-in-out, width 200ms ease-in-out, transform 200ms ease-in-out, box-shadow 200ms ease-in-out, z-index 200ms ease-in-out",
+          ...(event.eventType === "Lecture" && {
+            background: `
+              radial-gradient(ellipse 150% 100% at center, #9a8bb8 0%, #9a8bb8 5%, #8a7ba9 20%, #7a6b9a 40%, #6a5a8a 60%, #5a4a7a 100%),
+              radial-gradient(ellipse 200% 200% at center, transparent 0%, transparent 50%, rgba(0, 0, 0, 0.4) 100%)
+            `
+          })
         }}
         title={event.eventName || ""}
         data-event="true"
@@ -87,7 +93,7 @@ export default function Event({ event, rowHeightPx = 96 }: EventProps) {
             isHovering={isHoveringEvent}
           /> */}
           <div className="flex-1">
-            {/* <EventContent event={event} /> */}
+            <EventContent event={event} />
           </div>
           {/* Red blinking vignette border for events with overdue Panopto checks */}
           {/* {shouldBlink && (

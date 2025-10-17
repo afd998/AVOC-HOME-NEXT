@@ -49,6 +49,7 @@ function removeKECNoAcademicEvents(eventsList: ProcessedEvent[]): ProcessedEvent
 
     return (
       itemName === "<p>Academic Session</p>" ||
+      itemName === "<p>Academic session</p>" ||
       itemName === "<p>Class Session</p>"
     );
   });
