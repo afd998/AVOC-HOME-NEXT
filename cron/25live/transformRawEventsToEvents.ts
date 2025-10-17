@@ -28,21 +28,26 @@ export type RawEvent = {
 
 export type ProcessedEvent = InferInsertModel<typeof events>;
 
-function removeKECNoAcademicEvents(eventsList: ProcessedEvent[]): ProcessedEvent[] {
+function removeKECNoAcademicEvents(
+  eventsList: ProcessedEvent[]
+): ProcessedEvent[] {
   return eventsList.filter((event) => {
     if (event.eventType !== "KEC") {
       return true;
     }
 
-    const raw = event.raw as {
-      itemDetails?: {
-        defn?: {
-          panel?: Array<{
-            item?: Array<{ itemName?: string }>;
-          }>;
-        };
-      };
-    } | null | undefined;
+    const raw = event.raw as
+      | {
+          itemDetails?: {
+            defn?: {
+              panel?: Array<{
+                item?: Array<{ itemName?: string }>;
+              }>;
+            };
+          };
+        }
+      | null
+      | undefined;
 
     const itemName =
       raw?.itemDetails?.defn?.panel?.[1]?.item?.[0]?.itemName ?? null;
@@ -50,7 +55,8 @@ function removeKECNoAcademicEvents(eventsList: ProcessedEvent[]): ProcessedEvent
     return (
       itemName === "<p>Academic Session</p>" ||
       itemName === "<p>Academic session</p>" ||
-      itemName === "<p>Class Session</p>"
+      itemName === "<p>Class Session</p>" ||
+      itemName === "<p>Class session</p>"
     );
   });
 }
@@ -59,14 +65,17 @@ function combineKECEvents(eventsList: ProcessedEvent[]): ProcessedEvent[] {
   const kecEvents = eventsList.filter((event) => event.eventType === "KEC");
   const nonKecEvents = eventsList.filter((event) => event.eventType !== "KEC");
 
-  const kecGroups = kecEvents.reduce<Record<string, ProcessedEvent[]>>((groups, event) => {
-    const key = `${event.date ?? ""}_${event.roomName ?? ""}`;
-    if (!groups[key]) {
-      groups[key] = [];
-    }
-    groups[key].push(event);
-    return groups;
-  }, {});
+  const kecGroups = kecEvents.reduce<Record<string, ProcessedEvent[]>>(
+    (groups, event) => {
+      const key = `${event.date ?? ""}_${event.roomName ?? ""}`;
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(event);
+      return groups;
+    },
+    {}
+  );
 
   const combinedKecEvents: ProcessedEvent[] = [];
 
@@ -102,15 +111,22 @@ function combineKECEvents(eventsList: ProcessedEvent[]): ProcessedEvent[] {
   return [...combinedKecEvents, ...nonKecEvents];
 }
 
-function mergeAdjacentRoomEvents(eventsList: ProcessedEvent[]): ProcessedEvent[] {
-  const eventGroups = eventsList.reduce<Record<string, ProcessedEvent[]>>((groups, event) => {
-    const key = `${event.date ?? ""}_${event.eventName ?? ""}_${event.startTime ?? ""}`;
-    if (!groups[key]) {
-      groups[key] = [];
-    }
-    groups[key].push(event);
-    return groups;
-  }, {});
+function mergeAdjacentRoomEvents(
+  eventsList: ProcessedEvent[]
+): ProcessedEvent[] {
+  const eventGroups = eventsList.reduce<Record<string, ProcessedEvent[]>>(
+    (groups, event) => {
+      const key = `${event.date ?? ""}_${event.eventName ?? ""}_${
+        event.startTime ?? ""
+      }`;
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(event);
+      return groups;
+    },
+    {}
+  );
 
   const mergedEvents: ProcessedEvent[] = [];
 
@@ -186,7 +202,9 @@ function mergeAdjacentRoomEvents(eventsList: ProcessedEvent[]): ProcessedEvent[]
   return mergedEvents;
 }
 
-export function transformRawEventsToEvents(rawData: RawEvent[]): ProcessedEvent[] {
+export function transformRawEventsToEvents(
+  rawData: RawEvent[]
+): ProcessedEvent[] {
   if (!rawData || !Array.isArray(rawData)) {
     return [];
   }
