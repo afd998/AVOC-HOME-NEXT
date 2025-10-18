@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DatePicker from "react-datepicker";
 import { useTheme } from '../../contexts/ThemeContext';
-import { useAcademicCalendarRange, getAcademicEventsForDate } from '../../hooks/useAcademicCalendarRange';
+import { useAcademicCalendarRange, getAcademicEventsForDate } from '../../../../../ref/hooks/useAcademicCalendarRange';
 import { Info } from 'lucide-react';
 import "react-datepicker/dist/react-datepicker.css";
 

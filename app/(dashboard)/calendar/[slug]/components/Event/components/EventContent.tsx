@@ -2,12 +2,12 @@ import { FacultyAvatar } from "../../../../../../core/faculty/FacultyAvatar";
 import { Item, ItemContent } from "../../../../../../components/ui/item";
 import { Badge } from "../../../../../../components/ui/badge";
 import { cn } from "../../../../../../lib/utils";
-import { EnhancedEvent } from "@/lib/data/calendar";
+import { finalEvent } from "@/lib/data/calendar/calendar";
 import localFont from "next/font/local";
 const myFont = localFont({
   src: "../../../../../../public/fonts/Kenyan Coffee Rg.otf",
 });
-function LectureEvent({ event }: { event: EnhancedEvent }) {
+function LectureEvent({ event }: { event: finalEvent }) {
   // Special case: Ad Hoc Class Meeting uses same background as main event (themeColors[5])
   // All other event types use themeColors[7] for content background
 
@@ -181,7 +181,7 @@ function LectureEvent({ event }: { event: EnhancedEvent }) {
 }
 
 // KEC Executive Luxury Event Component
-function KECEvent({ event }: { event: EnhancedEvent }) {
+function KECEvent({ event }: { event: finalEvent }) {
   const getEventHeight = () => {
     if (event.derived.isMergedRoomEvent) return "h-full";
     return "h-16";
@@ -236,7 +236,7 @@ function KECEvent({ event }: { event: EnhancedEvent }) {
 }
 
 // Default Event Component
-function DefaultEvent({ event }: { event: EnhancedEvent }) {
+function DefaultEvent({ event }: { event: finalEvent }) {
   const getEventHeight = () => {
     if (event.derived.isMergedRoomEvent) return "h-full"; // Use full height for merged room events
 
@@ -298,7 +298,7 @@ function DefaultEvent({ event }: { event: EnhancedEvent }) {
 export default async function EventContent({
   event,
 }: {
-  event: EnhancedEvent;
+  event: finalEvent;
 }) {
   // const shouldFetchOrg =
   //   event.organization === "JAPAN CLUB" ||

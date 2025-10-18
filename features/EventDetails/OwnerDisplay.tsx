@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useEventOwnership, useAssignManualOwner, useClearManualOwner } from '../../core/event/hooks/useCalculateOwners';
+import { useEventOwnership, useAssignManualOwner, useClearManualOwner } from '../../ref/useCalculateOwners';
 import { useUserProfile } from '../../core/User/useUserProfile';
 import UserAvatar from '../../core/User/UserAvatar';
 import UserSelectionModal from './UserSelectionModal';

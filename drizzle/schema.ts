@@ -187,6 +187,15 @@ export const roomFilters = pgTable("room_filters", {
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
 
+export const resourcesDict = pgTable("resources_dict", {
+	id: text().primaryKey().notNull(),
+	name: text(),
+	isAv: boolean("is_av"),
+	icon: jsonb(),
+}, (table) => [
+	unique("resources_id_key").on(table.id),
+]);
+
 export const events = pgTable("events", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	eventType: text("event_type"),
@@ -197,15 +206,15 @@ export const events = pgTable("events", {
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "events_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	itemId2: bigint("item_id2", { mode: "number" }),
-	startTime: time("start_time"),
-	endTime: time("end_time"),
+	startTime: time("start_time").notNull(),
+	endTime: time("end_time").notNull(),
 	raw: jsonb(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	itemId: bigint("item_id", { mode: "number" }),
 	eventName: text("event_name"),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }),
 	manOwner: uuid("man_owner"),
-	date: date(),
+	date: date().notNull(),
 	instructorNames: jsonb("instructor_names"),
 	organization: text(),
 }, (table) => [

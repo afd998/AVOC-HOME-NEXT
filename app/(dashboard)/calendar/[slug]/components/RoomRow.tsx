@@ -1,11 +1,10 @@
 import { Badge } from "../../../../../components/ui/badge";
 import { Event as EventType } from "@/lib/db/types";
 import Event from "../Event/components/Event";
-import { EnhancedEvent } from "@/lib/data/calendar";
-
+import { finalEvent } from "@/lib/data/calendar/calendar";
 interface RoomRowProps {
   room: string;
-  roomEvents: EnhancedEvent[];
+  roomEvents: finalEvent[];
 
   isEvenRow?: boolean; // Make optional with default
   isLastRow?: boolean; // Add prop for last row styling
@@ -81,7 +80,7 @@ export default async function RoomRow({
         }`}
         style={{ ...rowHeightStyle }}
       >
-        {roomEvents?.map((event: EnhancedEvent) => (
+        {roomEvents?.map((event: finalEvent) => (
           <Event key={event.id} event={event} rowHeightPx={96} />
         ))}
       </div>

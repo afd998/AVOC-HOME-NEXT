@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useEvent } from '../../../../../../core/event/hooks/useEvent';
-import { usePanoptoChecksData } from '../../../../hooks/usePanoptoChecks';
+import { usePanoptoChecksData } from '../../../../../../../ref/hooks/usePanoptoChecks';
 import { isUserEventOwner } from '../../../../utils/eventUtils';
 import { Database } from '../../../../types/supabase';
 

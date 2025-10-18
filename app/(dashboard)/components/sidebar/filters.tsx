@@ -1,6 +1,6 @@
 import { getFilters } from "@/lib/data/filters";
 import FilterDialogClient from "./filter-dialog-client";
-import FilterRoomsModal from "@/app/(dashboard)/calendar/Schedule/components/FilterRoomsModal";
+import FilterRoomsModal from "@/app/(dashboard)/calendar/[slug]/components/FilterRoomsModal";
 import getMyProfile from "@/lib/data/profile";
 import { profiles } from "@/drizzle/schema";
 

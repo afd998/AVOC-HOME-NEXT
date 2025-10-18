@@ -1,8 +1,6 @@
-
 import getMyProfile from "@/lib/data/profile";
-import HomePage from "../HomePage";
-import { getCalendar } from "@/lib/data/calendar";
-import HomePage2 from "../Schedule/HomePage2";
+import { getCalendar } from "@/lib/data/calendar/calendar";
+import HomePage2 from "./components/HomePage2";
 
 export default async function CalendarPage(props: {
   params: Promise<{ slug: string }>;
@@ -16,7 +14,6 @@ export default async function CalendarPage(props: {
 
   return (
     <div>
-    
       <HomePage2 calendar={calendar} date={params.slug} filter={filter} />
     </div>
   );

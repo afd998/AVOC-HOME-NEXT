@@ -1,12 +1,11 @@
 import EventHeader from "./EventHeader";
 import EventContent from "./EventContent";
-import { useEventOverduePanoptoChecks } from "../hooks/useOverduePanoptoChecks";
-import { Card, CardContent } from "../../../../../../components/ui/card";
-import { EnhancedEvent } from "@/lib/data/calendar";
+import { Card, CardContent } from "@/components/ui/card";
+import { finalEvent } from "@/lib/data/calendar/calendar";
 
 import Link from "next/link";
 interface EventProps {
-  event: EnhancedEvent;
+  event: finalEvent;
   rowHeightPx?: number;
 }
 
