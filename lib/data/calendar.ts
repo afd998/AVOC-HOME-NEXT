@@ -6,9 +6,12 @@ import { RoomFilter } from "@/lib/db/types";
 import { Event as EventType } from "@/lib/db/types";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { InferSelectModel, eq, inArray } from "drizzle-orm";
-
+import { events } from "@/drizzle/schema";
 type FacultyMember = InferSelectModel<typeof faculty>;
-type HydratedEvent = EventType & { faculty: FacultyMember[] };
+type HydratedEvent = EventType & {
+  faculty: FacultyMember[];
+  isFirstSession: boolean;
+};
 
 export type EnhancedEvent = HydratedEvent & {
   derived: ReturnType<typeof derivded>;
@@ -59,11 +62,25 @@ function expandMergedRoomNames(roomName: string): string[] {
 export async function getCalendar(date: string, filter: string) {
   "use cache";
   cacheTag(`calendar:${date}:${filter}`);
-  const rawEvents = await getEvents(date);
-  const filteredEvents = await filterEvents(rawEvents, filter);
-  const facultyByEventId = new Map<number, FacultyMember[]>();
-  const eventIds = filteredEvents.map((event) => event.id);
+  const rawEvents = await db.query.events.findMany({
+    where: eq(events.date, date),
+  });
 
+
+  const filteredEvents = await filterEvents(rawEvents, filter);
+  const lectureEvents = filteredEvents.filter(
+    (event) => event.eventType === "Lecture"
+  );
+  const firstLectureIds = determineFirstLectureIds(lectureEvents);
+  const eventsWithFirstSessionFlag = filteredEvents.map((event) => ({
+    ...event,
+    isFirstSession:
+      event.eventType === "Lecture" && firstLectureIds.has(event.id),
+  }));
+  const facultyByEventId = new Map<number, FacultyMember[]>();
+  const eventIds = eventsWithFirstSessionFlag.map((event) => event.id);
+
+  // Get faculty for events
   if (eventIds.length > 0) {
     const facultyRows = await db
       .select({
@@ -83,17 +100,20 @@ export async function getCalendar(date: string, filter: string) {
       facultyByEventId.set(eventId, [facultyMember]);
     });
   }
-
-  const hydratedEvents: HydratedEvent[] = filteredEvents.map((event) => ({
+//get first session flag
+ 
+ 
+  // Hydrate events with faculty
+  const hydratedEvents: HydratedEvent[] = eventsWithFirstSessionFlag.map((event) => ({
     ...event,
     faculty: facultyByEventId.get(event.id) ?? [],
   }));
 
+  // Derive event data
   const enhancedEvents: EnhancedEvent[] = hydratedEvents.map((event) => ({
     ...event,
     derived: derivded(event, 7, 23, 2.5, 96),
   }));
-
 
   // Group events by roomName
   const groupedEvents = enhancedEvents.reduce((acc, event) => {
@@ -179,6 +199,50 @@ export async function getCalendar(date: string, filter: string) {
   //resolve first session
   //maybe compute pixel location
   //
+}
+
+function determineFirstLectureIds(events: EventType[]) {
+  const firstLectureIds = new Set<number>();
+  const earliestLectureByName = new Map<string, EventType>();
+
+  events.forEach((event) => {
+    const partitionKey = event.eventName ?? "__UNNAMED__";
+    const currentEarliest = earliestLectureByName.get(partitionKey);
+    if (!currentEarliest) {
+      earliestLectureByName.set(partitionKey, event);
+      return;
+    }
+
+    if (compareLectureOrder(event, currentEarliest) < 0) {
+      earliestLectureByName.set(partitionKey, event);
+    }
+  });
+
+  earliestLectureByName.forEach((lecture) => {
+    firstLectureIds.add(lecture.id);
+  });
+
+  return firstLectureIds;
+}
+
+function compareLectureOrder(a: EventType, b: EventType) {
+  const toComparableDate = (value: EventType["date"]) => {
+    if (!value) {
+      return "";
+    }
+    if (value instanceof Date) {    
+      return value.toISOString();
+    }
+    return value;
+  };
+
+  const dateComparison = toComparableDate(a.date).localeCompare(
+    toComparableDate(b.date)
+  );
+  if (dateComparison !== 0) {
+    return dateComparison;
+  }
+  return Number(a.id) - Number(b.id);
 }
 
 async function filterEvents(eventsToFilter: EventType[], filter: string) {

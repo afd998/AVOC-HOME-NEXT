@@ -80,18 +80,14 @@ export default function Event({ event, rowHeightPx = 96 }: EventProps) {
             background: `
               radial-gradient(ellipse 150% 100% at center, #9a8bb8 0%, #9a8bb8 5%, #8a7ba9 20%, #7a6b9a 40%, #6a5a8a 60%, #5a4a7a 100%),
               radial-gradient(ellipse 200% 200% at center, transparent 0%, transparent 50%, rgba(0, 0, 0, 0.4) 100%)
-            `
-          })
+            `,
+          }),
         }}
         title={event.eventName || ""}
         data-event="true"
       >
         <CardContent className="flex flex-col h-full p-0">
-          {/* <EventHeader
-            eventId={event.id}
-            date={event.date || undefined}
-            isHovering={isHoveringEvent}
-          /> */}
+          <EventHeader event={event} />
           <div className="flex-1">
             <EventContent event={event} />
           </div>

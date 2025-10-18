@@ -1,4 +1,5 @@
 import utils from "./utils";
+import { parseEventResources } from "./utils/parse-resourses";
 import type { InferInsertModel } from "drizzle-orm";
 import { events } from "../../lib/db/schema";
 
@@ -9,7 +10,6 @@ const {
   getInstructorNames,
   getLectureTitle,
   parseRoomName,
-  parseEventResources,
   toTimeStrings,
 } = utils;
 
@@ -61,55 +61,6 @@ function removeKECNoAcademicEvents(
   });
 }
 
-function combineKECEvents(eventsList: ProcessedEvent[]): ProcessedEvent[] {
-  const kecEvents = eventsList.filter((event) => event.eventType === "KEC");
-  const nonKecEvents = eventsList.filter((event) => event.eventType !== "KEC");
-
-  const kecGroups = kecEvents.reduce<Record<string, ProcessedEvent[]>>(
-    (groups, event) => {
-      const key = `${event.date ?? ""}_${event.roomName ?? ""}`;
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-      groups[key].push(event);
-      return groups;
-    },
-    {}
-  );
-
-  const combinedKecEvents: ProcessedEvent[] = [];
-
-  Object.values(kecGroups).forEach((eventGroup) => {
-    if (eventGroup.length === 1) {
-      combinedKecEvents.push(eventGroup[0]);
-      return;
-    }
-
-    let earliestStart = eventGroup[0].startTime ?? "00:00:00";
-    let latestEnd = eventGroup[0].endTime ?? "00:00:00";
-
-    eventGroup.forEach((event) => {
-      if (event.startTime && event.startTime < earliestStart) {
-        earliestStart = event.startTime;
-      }
-      if (event.endTime && event.endTime > latestEnd) {
-        latestEnd = event.endTime;
-      }
-    });
-
-    const combinedEvent: ProcessedEvent = {
-      ...eventGroup[0],
-      startTime: earliestStart,
-      endTime: latestEnd,
-      instructorNames: null,
-      resources: [],
-    };
-
-    combinedKecEvents.push(combinedEvent);
-  });
-
-  return [...combinedKecEvents, ...nonKecEvents];
-}
 
 function mergeAdjacentRoomEvents(
   eventsList: ProcessedEvent[]
@@ -263,9 +214,8 @@ export {
   getInstructorNames,
   getLectureTitle,
   parseRoomName,
-  parseEventResources,
   toTimeStrings,
-  combineKECEvents,
+  
   mergeAdjacentRoomEvents,
   removeKECNoAcademicEvents,
 };

@@ -1,5 +1,3 @@
-"use client";
-import React, { useState } from "react";
 
 interface FacultyAvatarProps {
   imageUrl: string;
@@ -33,7 +31,6 @@ export function FacultyAvatar({
   maskRadius = 63, // Default radius of 50, can be adjusted (smaller = tighter mask, larger = looser mask)
   priority = false, // For above-the-fold images
 }: FacultyAvatarProps) {
-  const [imageError, setImageError] = useState(false);
 
   // Check if we have a valid cutout image
   const hasCutout =
@@ -41,24 +38,6 @@ export function FacultyAvatar({
     typeof cutoutImageUrl === "string" &&
     cutoutImageUrl.length > 0;
 
-  // Halloween theme detection
-
-  const handleImageError = () => {
-    setImageError(true);
-  };
-
-  if (imageError) {
-    return (
-      <div
-        className={`${sizeClasses[size]} rounded-full bg-purple-200 flex items-center justify-center ${className}`}
-        title={instructorName}
-      >
-        <span className="text-sm transition-all duration-200 ease-in-out">
-          👤
-        </span>
-      </div>
-    );
-  }
 
   // If we have a cutout image, use the SVG with cutout effects
   if (hasCutout) {
@@ -79,7 +58,7 @@ export function FacultyAvatar({
           }}
         ></div>
 
-        {/* Halloween green glow effect */}
+     
 
         {/* Foreground layer with cutout image and effects */}
         <div className="absolute inset-0 z-20" style={{ overflow: "visible" }}>
@@ -112,9 +91,8 @@ export function FacultyAvatar({
                 x="-15"
                 y="0"
                 fill="none"
-                className="transition-all duration-300 ease-in-out [transform-origin:50%_50%] [transform:translateY(-30px)_scale(1.5)] group-hover:[transform:translateY(-30px)_scale(1.7)] [filter:sepia(1)_hue-rotate(240deg)_saturate(0.8)_brightness(0.9)_contrast(1.2)] group-hover:[filter:sepia(1)_hue-rotate(120deg)_saturate(1.5)_brightness(1.2)_contrast(1.3)_drop-shadow(0_0_10px_rgba(0,255,0,0.8))]"
+                className="transition-all duration-300 ease-in-out [transform-origin:50%_50%] [transform:translateY(-30px)_scale(1.5)] group-hover:[transform:translateY(-30px)_scale(1.7)] [filter:sepia(1)_hue-rotate(240deg)_saturate(0.8)_brightness(0.9)_contrast(1.2)] group-hover:[filter:sepia(1)_hue-rotate(240deg)_saturate(1.5)_brightness(1.2)_contrast(1.3)]"
                 href={cutoutImageUrl}
-                onError={handleImageError}
               />
             </g>
           </svg>
@@ -146,8 +124,7 @@ export function FacultyAvatar({
           <img
             src={imageUrl}
             alt={instructorName}
-            className="w-full h-full object-cover rounded-full transition-all duration-300 ease-in-out scale-100 group-hover:scale-110 [filter:brightness(0.9)_saturate(1.1)_hue-rotate(5deg)_contrast(1.05)] group-hover:[filter:brightness(1.1)_saturate(1.2)_hue-rotate(10deg)_contrast(1.1)] [mix-blend-mode:multiply]"
-            onError={handleImageError}
+            className="w-full h-full object-cover rounded-full transition-all duration-300 ease-in-out scale-100 group-hover:scale-110 [filter:brightness(0.9)_saturate(1.1)_contrast(1.05)] group-hover:[filter:brightness(1.1)_saturate(1.2)_contrast(1.1)] [mix-blend-mode:multiply]"
           />
         </div>
 
@@ -167,8 +144,6 @@ export function FacultyAvatar({
             }}
           ></div>
         </div>
-
-        {/* Halloween green glow effect */}
       </div>
     );
   }

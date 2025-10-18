@@ -1,5 +1,4 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { Database } from '../../../../types/supabase';
 import { formatTime } from '../../../../utils/timeUtils';
 import { getEventThemeColors } from '../../../../utils/eventUtils';
 import { useOccurrences } from '../../../../hooks/useOccurrences';
@@ -10,76 +9,29 @@ import { useEvent } from '../../../../../../core/event/hooks/useEvent';
 import { useEventResources } from '../../../../../../core/event/hooks/useEvent';
 import { useEventDurationHours } from '../../hooks/useEvents';
 import UserAvatar from '../../../../../../core/User/UserAvatar';
-import { Monitor } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../../../components/ui/tooltip';
-
-type Event = Database['public']['Tables']['events']['Row'];
+import { EnhancedEvent } from '@/lib/data/calendar';
 
 interface EventHeaderProps {
-  eventId: number;
-  date?: string;
-  isHovering: boolean;
+ event: EnhancedEvent;
 }
 
 export default function EventHeader({ 
-  eventId, 
-  date,
-  isHovering = false
+  event, 
 }: EventHeaderProps) {
-  // Get event data from useEvent hook (will use cache if available)
-  const { data: currentEvent } = useEvent(eventId, date);
   
-  // Early return if no event data
-  if (!currentEvent) {
-    return null;
-  }
-
-  // Get all occurrences of this event and isFirstSession flag
-  const { data: occurrencesData } = useOccurrences(currentEvent);
-  const occurrences = occurrencesData?.occurrences || [];
-  const isFirstSession = occurrencesData?.isFirstSession || false;
-  
-  // Get ownership data including timeline
   const { data: ownershipData } = useEventOwnership(currentEvent.id);
-  
-  // Get timeline entries
   const timeline = ownershipData?.timeline || [];
   
   // Get Panopto checks functionality
   const { isComplete: allChecksComplete, isLoading: checksLoading } = useEventChecksComplete(
-    currentEvent.id,
-    currentEvent.start_time || undefined,
-    currentEvent.end_time || undefined,
-    currentEvent.date || undefined
+    event.id,
+    event.startTime || undefined,
+    event.endTime || undefined,
+    event.date || undefined
   );
-  
-  // Get parsed event resources and computed flags from cache
-  const { data: resourcesData } = useEventResources(currentEvent.id);
-  const resources = resourcesData?.resources || [];
-  
-  // Get pre-computed boolean flags from cache
-  const hasVideoRecording = resourcesData?.hasVideoRecording || false;
-  const hasStaffAssistance = resourcesData?.hasStaffAssistance || false;
-  const hasHandheldMic = resourcesData?.hasHandheldMic || false;
-  const hasWebConference = resourcesData?.hasWebConference || false;
-  const hasClickers = resourcesData?.hasClickers || false;
-  const hasAVNotes = resourcesData?.hasAVNotes || false;
-  const hasNeatBoard = resourcesData?.hasNeatBoard || false;
-  
-  // Get theme colors for this event type
-  const themeColors = getEventThemeColors(currentEvent);
-  
-  // Check if all Panopto checks are complete for this event (using React Query properly)
-  const { isComplete, isLoading, error } = useEventChecksComplete(
-    currentEvent.id,
-    currentEvent.start_time || undefined,
-    currentEvent.end_time || undefined,
-    currentEvent.date || undefined
-  );
+    
 
-  
-  
-  
   // Format start and end times from HH:MM:SS format (memoized)
   const formatTimeFromISO = useCallback((timeString: string | null) => {
     if (!timeString) return '';
@@ -110,17 +62,10 @@ export default function EventHeader({
 
   // Memoize the time display calculation
   const timeDisplay = useMemo(() => {
-    return `${formatTimeFromISO(currentEvent.start_time)} - ${formatTimeFromISO(currentEvent.end_time)}`;
-  }, [formatTimeFromISO, currentEvent.start_time, currentEvent.end_time]);
-
-  // Get cached event duration in hours
-  const { data: eventDurationHours = 0 } = useEventDurationHours(currentEvent.id);
-  const isShortLecture = currentEvent.event_type === 'Lecture' && eventDurationHours < 2;
+    return `${formatTimeFromISO(event.startTime)} - ${formatTimeFromISO(event.endTime)}`;
+  }, [formatTimeFromISO, event.startTime, event.endTime]);
 
 
-
-
-  
 
   return (
     <div className={`flex  text-foreground justify-between items-center h-5 py-0.5 transition-all duration-200 ease-in-out absolute top-0 left-1 right-0 z-100`}>
@@ -142,9 +87,9 @@ export default function EventHeader({
         </span>
       </div>
       {/* Only show the container if there are resources or assignees */}
-      {((isFirstSession || resources.length > 0) || timeline.length > 0) && (
+      {((event.isFirstSession || event.resources.length > 0) || timeline.length > 0) && (
         <div className={`flex items-center gap-1 shrink-0 transition-all duration-200 ease-in-out overflow-visible bg-black/25  rounded-md px-2 py-1 mt-2`}>
-        {isFirstSession && (
+        {event.isFirstSession && (  
           <span
             className="text-yellow-500 dark:text-yellow-400 text-xs font-bold transition-all duration-250 ease-in-out cursor-pointer relative"
             title="First Session"
@@ -187,7 +132,7 @@ export default function EventHeader({
         ))}
         
         {/* Separator bar between resource icons and owner icons */}
-        {(isFirstSession || resources.length > 0) && timeline.length > 0 && (
+        {(event.isFirstSession || event.resources.length > 0) && timeline.length > 0 && (
           <div className="w-0.5 h-4 bg-white dark:bg-gray-800 mx-0.5 opacity-20"></div>
         )}
         

@@ -36,7 +36,7 @@ function LectureEvent({ event }: { event: EnhancedEvent }) {
         event.derived.isMergedRoomEvent ? "items-center" : ""
       } relative`}
     >
-      {event.faculty.length > 0 && event.derived.durationMinutes > 96 && (
+      {event.faculty.length > 0 && (
         <div
           className={`flex flex-col items-center justify-center gap-0.5 rounded ${avatarContainerHeight} ${getAvatarContainerWidth()} z-10 transition-all duration-200 ease-in-out relative shrink-0 -mt-1`}
         >
