@@ -1,9 +1,9 @@
-import { AppSidebar } from "@/app/(dashboard)/sidebar/app-sidebar";
-import { SidebarInset } from "@/app/(dashboard)/sidebar/sidebar";
-import { SidebarTrigger } from "@/app/(dashboard)/sidebar/sidebar";
+import { AppSidebar } from "@/app/(dashboard)/components/sidebar/app-sidebar";
+import { SidebarInset } from "@/app/(dashboard)/components/sidebar/sidebar";
+import { SidebarTrigger } from "@/app/(dashboard)/components/sidebar/sidebar";
 import React, { Suspense } from "react";
-import { SidebarShell } from "@/app/(dashboard)/sidebar/sidebar-shell";
-import HeaderBreadcrumb from "@/app/(dashboard)/sidebar/header-breadcrumb";
+import { SidebarShell } from "@/app/(dashboard)/components/sidebar/sidebar-shell";   
+import HeaderBreadcrumb from "@/app/(dashboard)/components/sidebar/header-breadcrumb";
 
 export const experimental_ppr = true;
 

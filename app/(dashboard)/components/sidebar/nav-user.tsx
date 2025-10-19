@@ -14,7 +14,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../../../components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu"; 
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "./sidebar";
 import { redirect } from "next/navigation";
 import { createServerSupabase } from "@/lib/supabase/server";

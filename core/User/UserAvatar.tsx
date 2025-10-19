@@ -1,4 +1,3 @@
-import React from 'react';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { getProfile } from '@/lib/data/profile';
@@ -48,9 +47,8 @@ const sizeClasses = {
   lg: 'h-12 w-12'
 };
 
-export default function UserAvatar({ userId, size = 'md', className = '', variant = 'default' }: UserAvatarProps) {
-const profile = getProfile(userId)
-
+export  default async function UserAvatar({ userId, size = 'md', className = '', variant = 'default' }: UserAvatarProps) {
+const profile = await getProfile(userId)
  
   const displayName = profile?.name || userId;
   const initials = displayName
@@ -62,9 +60,7 @@ const profile = getProfile(userId)
 
   const userColor = generateUserColor(userId);
   
-  // Debug: log the color being used
-  console.log(`User ${userId} getting color: ${userColor}`);
-
+  
   // Style based on variant
   const avatarStyle = variant === 'solid' 
     ? {

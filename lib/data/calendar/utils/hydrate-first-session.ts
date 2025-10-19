@@ -1,56 +1,58 @@
 import { Event as EventType } from "@/lib/db/types";
+import { events as eventsTable } from "@/drizzle/schema";
+import { db } from "@/lib/db";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 export type EventWithFirstSession = EventType & { isFirstSession: boolean };
 
-export function addFirstSessionFlags(
+export async function addFirstSessionFlags(
   events: EventType[]
-): EventWithFirstSession[] {
-  // Filter for lecture events only
+): Promise<EventWithFirstSession[]> {
   const lectureEvents = events.filter((event) => event.eventType === "Lecture");
 
-  const firstLectureIds = new Set<number>();
+  if (lectureEvents.length === 0) {
+    return events.map((event) => ({
+      ...event,
+      isFirstSession: false,
+    }));
+  }
+
+  const uniqueLectureNames = new Set<string>();
+  lectureEvents.forEach((event) => {
+    uniqueLectureNames.add(event.eventName!);
+  });
+
   const earliestLectureByName = new Map<string, EventType>();
 
-  lectureEvents.forEach((event) => {
-    const partitionKey = event.eventName ?? "__UNNAMED__";
-    const currentEarliest = earliestLectureByName.get(partitionKey);
-    if (!currentEarliest) {
-      earliestLectureByName.set(partitionKey, event);
-      return;
-    }
+  if (uniqueLectureNames.size > 0) {
+    const namesToQuery = Array.from(uniqueLectureNames);
+    const namedLectures = await db
+      .select()
+      .from(eventsTable)
+      .where(
+        and(
+          eq(eventsTable.eventType, "Lecture"),
+          inArray(eventsTable.eventName, namesToQuery)
+        )
+      )
+      .orderBy(
+        asc(eventsTable.eventName),
+        asc(eventsTable.date),
+        asc(eventsTable.id)
+      );
 
-    if (compareLectureOrder(event, currentEarliest) < 0) {
-      earliestLectureByName.set(partitionKey, event);
-    }
-  });
+    namedLectures.forEach((lecture) => {
+      const key = lecture.eventName!;
+      if (!earliestLectureByName.has(key)) {
+        earliestLectureByName.set(key, lecture);
+      }
+    });
+  }
 
-  earliestLectureByName.forEach((lecture) => {
-    firstLectureIds.add(lecture.id);
-  });
-
-  // Map events with first session flag
-  const eventsWithFirstSessionFlag: EventWithFirstSession[] = events.map((event) => ({
+  return events.map((event) => ({
     ...event,
     isFirstSession:
-      event.eventType === "Lecture" && firstLectureIds.has(event.id),
+      event.eventType === "Lecture" &&
+      earliestLectureByName.get(event.eventName!)?.id === event.id,
   }));
-
-  return eventsWithFirstSessionFlag;
-}
-
-function compareLectureOrder(a: EventType, b: EventType) {
-  const toComparableDate = (value: EventType["date"]) => {
-    if (!value) {
-      return "";
-    }
-    return String(value);
-  };
-
-  const dateComparison = toComparableDate(a.date).localeCompare(
-    toComparableDate(b.date)
-  );
-  if (dateComparison !== 0) {
-    return dateComparison;
-  }
-  return Number(a.id) - Number(b.id);
 }

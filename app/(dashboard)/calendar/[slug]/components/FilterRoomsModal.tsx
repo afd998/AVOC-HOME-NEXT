@@ -6,7 +6,7 @@ import {
   DialogFooter,
 } from "../../../../../components/ui/dialog";
 import { Button } from "../../../../../components/ui/button";
-import { ModalCloseButton } from "@/app/(dashboard)/sidebar/filter-dialog-client";
+import { ModalCloseButton } from "@/app/(dashboard)/components/sidebar/filter-dialog-client";  
 import {
   Item,
   ItemGroup,
@@ -116,7 +116,7 @@ async function FilterRoomsModal({ profile }: { profile: Profile }) {
                         <ItemContent>
                           <ItemTitle>{filter.name}</ItemTitle>
                           <ItemDescription>
-                            {filter.display.length} rooms
+                            {filter.display?.length} rooms
                           </ItemDescription>
                         </ItemContent>
                       </Button>
@@ -138,7 +138,7 @@ async function FilterRoomsModal({ profile }: { profile: Profile }) {
                             id={`auto-hide-${filter.id}`}
                             type="submit"
                             checked={autoHide}
-                            readOnly
+                            disabled={true}
                           />
                         </ItemActions>
                       </form>

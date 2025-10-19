@@ -9,43 +9,22 @@ import { useCallback } from "react";
 import React from "react";
 import { getEventData } from "@/lib/data/calendar/event/events";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-
+import { ResourceIcon } from "@/core/event/resourceIcon";
 export default  async function EventHeader({ event }: { event: finalEvent }) {
-  "use cashe"
+  "use cache"
   cacheTag(`event-header:${event.id}`)
   const eventData = await getEventData(event)
   const { owners, handOffTimes, timeline } = eventData;
-  // Format start and end times from HH:MM:SS format (memoized)
-  const formatTimeFromISO = useCallback((timeString: string | null) => {
-    if (!timeString) return "";
-    try {
-      // Parse HH:MM:SS format
-      const [hours, minutes] = timeString.split(":").map(Number);
-      const date = new Date();
-      date.setHours(hours, minutes, 0, 0);
+  // Simple time formatting
+  const formatTime = (time: string | null) => {
+    if (!time) return "";
+    const [hours, minutes] = time.split(":").map(Number);
+    const period = hours >= 12 ? "PM" : "AM";
+    const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    return minutes === 0 ? `${displayHour} ${period}` : `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
 
-      // If minutes are 00, show just the hour
-      if (minutes === 0) {
-        return date.toLocaleTimeString("en-US", {
-          hour: "numeric",
-          hour12: true,
-        });
-      } else {
-        return date.toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        });
-      }
-    } catch (error) {
-      console.error("Error formatting time:", timeString, error);
-      return "";
-    }
-  }, []);
-  // Memoize the time display calculation
-  const timeDisplay = `${formatTimeFromISO(
-    event.startTime
-  )} - ${formatTimeFromISO(event.endTime)}`;
+  const timeDisplay = `${formatTime(event.startTime)} - ${formatTime(event.endTime)}`;
 
   return (
     <div
@@ -67,7 +46,7 @@ export default  async function EventHeader({ event }: { event: finalEvent }) {
       </div>
       {/* Only show the container if there are resources or assignees */}
       {(event.isFirstSession ||
-        event.resources.length > 0 ||
+        event.resources.map((resource) => resource.isAVResource).length > 0 ||
         timeline.length > 0) && (
         <div
           className={`flex items-center gap-1 shrink-0 transition-all duration-200 ease-in-out overflow-visible bg-black/25  rounded-md px-2 py-1 mt-2`}
@@ -84,16 +63,17 @@ export default  async function EventHeader({ event }: { event: finalEvent }) {
             .filter((resource) => resource.isAVResource)
             .filter(
               (resource) =>
-                resource.itemName !== "KSM-KGH-AV-Lapel Microphone" &&
-                resource.itemName !== "KSM-KGH-AV-Display Adapter" &&
-                resource.itemName !== "KSM-KGH-AV-Presentation Clicker"
+                resource.id !== "KSM-KGH-AV-Lapel Microphone" &&
+                resource.id !== "KSM-KGH-AV-Display Adapter" &&
+                resource.id !== "KSM-KGH-AV-Presentation Clicker"
             )
             .map((resource, index) => (
               <Tooltip key={`resource-${index}`}>
                 <TooltipTrigger asChild>
                   <div className="transition-all duration-250 ease-in-out cursor-pointer relative">
                     <div className="relative">
-                      {resource.icon as React.ReactNode}
+                      <ResourceIcon icon={resource.icon} /> 
+                     
                       {/* {resource.displayName === "Video Recording" &&
                         allChecksComplete && (
                           <div classNam   e="absolute top-0 right-0">
@@ -131,7 +111,7 @@ export default  async function EventHeader({ event }: { event: finalEvent }) {
           {/* Separator bar between resource icons and owner icons */}
           {(event.isFirstSession || event.resources.length > 0) &&
             timeline.length > 0 && (
-              <div className="w-0.5 h-4 bg-white dark:bg-gray-800 mx-0.5 opacity-20"></div>
+              <div className="w-0.5 h-4 bg-white dark:bg-gray-800 mx-0 opacity-20"></div>
             )}
 
           {/* Owner Avatars */}

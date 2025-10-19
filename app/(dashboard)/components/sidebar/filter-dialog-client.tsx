@@ -9,8 +9,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Dialog, DialogTrigger } from "../../../components/ui/dialog";
-import { Button } from "../../../components/ui/button";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button"; 
 import { profiles } from "@/drizzle/schema";
 
 type Profile = typeof profiles.$inferSelect;

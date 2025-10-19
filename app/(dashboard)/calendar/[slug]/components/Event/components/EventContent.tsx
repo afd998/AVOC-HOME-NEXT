@@ -1,11 +1,11 @@
-import { FacultyAvatar } from "../../../../../../core/faculty/FacultyAvatar";
-import { Item, ItemContent } from "../../../../../../components/ui/item";
-import { Badge } from "../../../../../../components/ui/badge";
-import { cn } from "../../../../../../lib/utils";
+import { FacultyAvatar } from "@/core/faculty/FacultyAvatar";
+import { Item, ItemContent } from "@/components/ui/item";   
+    import { Badge } from "@/components/ui/badge";
+    import { cn } from "@/lib/utils";  
 import { finalEvent } from "@/lib/data/calendar/calendar";
 import localFont from "next/font/local";
 const myFont = localFont({
-  src: "../../../../../../public/fonts/Kenyan Coffee Rg.otf",
+  src: "../../../../../../../public/fonts/Kenyan Coffee Rg.otf", 
 });
 function LectureEvent({ event }: { event: finalEvent }) {
   // Special case: Ad Hoc Class Meeting uses same background as main event (themeColors[5])

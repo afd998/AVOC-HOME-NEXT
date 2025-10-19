@@ -4,7 +4,7 @@ import { unstable_cache } from "next/cache";
 import { db } from "@/lib/db";
 import { faculty, events } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
-
+import { unstable_cacheTag as cacheTag } from "next/cache"; 
 const LABEL_OVERRIDES: Record<string, string> = {
   dashboard: "Dashboard",
   calendar: "Calendar",
@@ -52,7 +52,9 @@ function formatDateLabel(date: Date): string {
 function toDateSegment(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
-async function generateBreadcrumbs(pathname: string): Promise<BreadcrumbItemData[]> {
+async function generateBreadcrumbs(
+  pathname: string
+): Promise<BreadcrumbItemData[]> {
   const segments = pathname.split("/").filter(Boolean);
 
   if (segments.length === 0) {
@@ -133,14 +135,8 @@ async function generateBreadcrumbs(pathname: string): Promise<BreadcrumbItemData
         const nextDate = new Date(date);
         nextDate.setDate(nextDate.getDate() + 1);
 
-        prevHref = buildHref([
-          ...previousSegments,
-          toDateSegment(prevDate),
-        ]);
-        nextHref = buildHref([
-          ...previousSegments,
-          toDateSegment(nextDate),
-        ]);
+        prevHref = buildHref([...previousSegments, toDateSegment(prevDate)]);
+        nextHref = buildHref([...previousSegments, toDateSegment(nextDate)]);
       }
     } else if (/^\d+$/.test(segment)) {
       const parentSegment = previousSegments.at(-1);
@@ -186,13 +182,11 @@ async function lookupCrumb(path: string) {
 }
 
 // Wrap with unstable_cache to create a memoized, taggable cache on the server
-const getCrumb = (path: string) =>
-  unstable_cache(
-    () => lookupCrumb(path),
-    // unique key per path:
-    [`crumb:${path}`],
-    { revalidate: 300, tags: [`crumb:${path}`] }
-  )();
+const getCrumb = async (path: string) => {  
+  "use cache";
+  cacheTag(`crumb:${path}`)
+  return lookupCrumb(path)
+};
 
 export async function GET(req: Request) {
   const url = new URL(req.url);

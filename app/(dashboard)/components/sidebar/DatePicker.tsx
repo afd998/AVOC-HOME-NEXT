@@ -7,7 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/app/(dashboard)/sidebar/sidebar"
+} from "@/app/(dashboard)/components/sidebar/sidebar"
 
 export function DatePicker() {
   return (

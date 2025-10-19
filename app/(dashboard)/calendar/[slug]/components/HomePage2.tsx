@@ -1,4 +1,4 @@
-import RoomRow from "../../Schedule/components/RoomRow";
+import RoomRow from "@/app/(dashboard)/calendar/[slug]/components/RoomRow";  
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { RoomRowData } from "@/lib/data/calendar/calendar";
 import { finalEvent } from "@/lib/data/calendar/calendar";
@@ -15,7 +15,7 @@ export default async function HomePage2({
   // "use cache";
   // cacheTag(`calendar:${date}:${filter}`);
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full gpu-optimized">
+    <div className="">
       {calendar.map(
         (
           { roomName, events }: { roomName: string; events: finalEvent[] },

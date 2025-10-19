@@ -9,9 +9,9 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "../../../components/ui/breadcrumb";
-import { Button } from "../../../components/ui/button";
-import { Skeleton } from "../../../components/ui/skeleton";
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton"; 
 import { usePathname } from "next/navigation";
 
 type BreadcrumbItemData = {

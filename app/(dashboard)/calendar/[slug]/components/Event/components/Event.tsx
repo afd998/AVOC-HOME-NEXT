@@ -2,8 +2,9 @@ import EventHeader from "./EventHeader";
 import EventContent from "./EventContent";
 import { Card, CardContent } from "@/components/ui/card";
 import { finalEvent } from "@/lib/data/calendar/calendar";
-
+import { Suspense } from "react";
 import Link from "next/link";
+import React from "react";
 interface EventProps {
   event: finalEvent;
   rowHeightPx?: number;
@@ -86,7 +87,9 @@ export default function Event({ event, rowHeightPx = 96 }: EventProps) {
         data-event="true"
       >
         <CardContent className="flex flex-col h-full p-0">
-          <EventHeader event={event} />
+          <Suspense >
+            <EventHeader event={event} />
+          </Suspense>
           <div className="flex-1">
             <EventContent event={event} />
           </div>

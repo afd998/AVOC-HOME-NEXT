@@ -211,7 +211,7 @@ export const events = pgTable("events", {
 	raw: jsonb(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	itemId: bigint("item_id", { mode: "number" }),
-	eventName: text("event_name"),
+	eventName: text("event_name").notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }),
 	manOwner: uuid("man_owner"),
 	date: date().notNull(),

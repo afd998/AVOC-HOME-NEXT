@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { Sheet } from "../../../components/ui/sheet";
+import { Sheet } from "@/components/ui/sheet";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 

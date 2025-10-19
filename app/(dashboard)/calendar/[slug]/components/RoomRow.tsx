@@ -1,6 +1,5 @@
 import { Badge } from "../../../../../components/ui/badge";
-import { Event as EventType } from "@/lib/db/types";
-import Event from "../Event/components/Event";
+import Event from "@/app/(dashboard)/calendar/[slug]/components/Event/components/Event";    
 import { finalEvent } from "@/lib/data/calendar/calendar";
 interface RoomRowProps {
   room: string;

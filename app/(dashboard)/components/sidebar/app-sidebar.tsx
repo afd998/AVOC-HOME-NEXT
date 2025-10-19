@@ -16,23 +16,23 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "./sidebar";
-import { Badge } from "../../../components/ui/badge";
+
 import {
   Item,
   ItemContent,
   ItemTitle,
   ItemActions,
-} from "../../../components/ui/item";
-import NotificationsModal from "../../../features/notifications/NotificationsModal";
-import FilterRoomsModal from "../calendar/Schedule/components/FilterRoomsModal";
-import QuarterCount from "../../../features/QuarterCount/QuarterCount";
-import AcademicCalendarInfo from "../calendar/Schedule/components/AcademicCalendarInfo";
-import { Calendar } from "../../../components/ui/calendar";
+} from "@/components/ui/item"; 
+import NotificationsModal from "@/features/notifications/NotificationsModal";
+import FilterRoomsModal from "@/app/(dashboard)/calendar/[slug]/components/FilterRoomsModal";
+import QuarterCount from "@/features/QuarterCount/QuarterCount";
+import AcademicCalendarInfo from "@/app/(dashboard)/calendar/[slug]/components/AcademicCalendarInfo";  
+import { Calendar } from "@/components/ui/calendar"; 
 import Link from "next/link";
 // Navigation data for the sidebar
 import CalendarButton from "./calendar-button";
 import SliderServer from "./sliders-server";
-import ThemeToggle from "../../../components/theme/theme-toggle";
+import ThemeToggle from "@/components/theme/theme-toggle";
 import { LogoButton } from "./logo-button";
 import { Filters } from "./filters";
 import { CalendarOnly } from "./calendar-only"; 
@@ -106,9 +106,9 @@ export async function AppSidebar({
                       </React.Suspense>
                     </SidebarMenuButton>
                   </div>
-                  <React.Suspense fallback={null}>
+                  {/* <React.Suspense fallback={null}>
                     <SliderServer />
-                  </React.Suspense>
+                  </React.Suspense> */}
                 </div>
               </SidebarGroupContent>
             </SidebarGroup>

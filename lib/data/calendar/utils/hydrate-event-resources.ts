@@ -4,7 +4,6 @@ import { inArray } from "drizzle-orm";
 import { EventWithDisplay } from "./hydrate-display-columns";
 
 export type CalendarEventResource = {
-  itemName: string;
   id: string;
   quantity: number;
   instruction: string;
@@ -109,10 +108,10 @@ export async function hydrateEventsWithResources(
       .filter((resource): resource is RawEventResource => resource !== null)
       .map<CalendarEventResource>((resource) => {
         const metadata = metadataById.get(resource.itemName);
-        const isAv = typeof metadata?.isAv === "boolean" ? metadata.isAv : false;
+        const isAv =
+          typeof metadata?.isAv === "boolean" ? metadata.isAv : false;
 
         return {
-          itemName: resource.itemName,
           id: resource.itemName,
           quantity: resource.quantity ?? 0,
           instruction: resource.instruction ?? "",

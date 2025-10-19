@@ -23,7 +23,7 @@ export async function getCalendar(date: string, filter: string) {
     where: eq(events.date, date),
   });
   const filteredEvents = await filterEvents(rawEvents, filter);
-  const eventsWithFirstSessionFlag = addFirstSessionFlags(filteredEvents);
+  const eventsWithFirstSessionFlag = await addFirstSessionFlags(filteredEvents);
   const hydratedEvents = await hydrateEventsWithFaculty(
     eventsWithFirstSessionFlag
   );
