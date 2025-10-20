@@ -46,18 +46,27 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "pnpm"
+          cache: "pnpm" # cache keyed by pnpm-lock.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install Playwright
+
+      - name: Install Playwright (Chromium only)
         run: pnpm exec playwright install --with-deps chromium
+
       - name: Run scraper
         run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
+
 
   scrape-window-2:
     runs-on: ubuntu-latest
@@ -96,16 +105,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "pnpm"
+          cache: "pnpm" # cache keyed by pnpm-lock.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install Playwright
+
+      - name: Install Playwright (Chromium only)
         run: pnpm exec playwright install --with-deps chromium
+
       - name: Run scraper
         run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
 
@@ -146,19 +163,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "npm"
-          registry-url: "https://registry.npmjs.org/"
+          cache: "pnpm" # cache keyed by pnpm-lock.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9 # or the version you use locally
+
       - name: Install dependencies
-        run: |
-          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
-      - name: Install Playwright
-        run: npx playwright install --with-deps chromium
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright (Chromium only)
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Run scraper
-        run: npx tsx cron/25live/scrape.ts ${{ matrix.offset }}
+        run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
 
   scrape-window-4:
     runs-on: ubuntu-latest
@@ -197,18 +221,27 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "pnpm"
+          cache: "pnpm" # cache keyed by pnpm-lock.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install Playwright
+
+      - name: Install Playwright (Chromium only)
         run: pnpm exec playwright install --with-deps chromium
+
       - name: Run scraper
         run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
+
 
   scrape-window-5:
     runs-on: ubuntu-latest
@@ -247,16 +280,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "pnpm"
+          cache: "pnpm" # cache keyed by pnpm-lock.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install Playwright
+
+      - name: Install Playwright (Chromium only)
         run: pnpm exec playwright install --with-deps chromium
+
       - name: Run scraper
         run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
 
@@ -297,19 +338,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "npm"
-          registry-url: "https://registry.npmjs.org/"
+          cache: "pnpm" # cache keyed by pnpm-lock.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9 # or the version you use locally
+
       - name: Install dependencies
-        run: |
-          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
-      - name: Install Playwright
-        run: npx playwright install --with-deps chromium
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright (Chromium only)
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Run scraper
-        run: npx tsx cron/25live/scrape.ts ${{ matrix.offset }}
+        run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
 
   scrape-window-7:
     runs-on: ubuntu-latest
@@ -348,16 +396,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "pnpm"
+          cache: "pnpm" # cache keyed by pnpm-lock.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install Playwright
+
+      - name: Install Playwright (Chromium only)
         run: pnpm exec playwright install --with-deps chromium
+
       - name: Run scraper
         run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
 
@@ -398,15 +454,23 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "pnpm"
+          cache: "pnpm" # cache keyed by pnpm-lock.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install Playwright
+
+      - name: Install Playwright (Chromium only)
         run: pnpm exec playwright install --with-deps chromium
+
       - name: Run scraper
         run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
