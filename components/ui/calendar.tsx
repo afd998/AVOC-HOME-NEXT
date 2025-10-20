@@ -7,7 +7,7 @@ import {
   ChevronRightIcon,
 } from "lucide-react";
 import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -40,6 +40,7 @@ function Calendar({
   const defaultClassNames = getDefaultClassNames();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Parse date from URL if useUrlDate is enabled
   const urlSelectedDate = React.useMemo(() => {
@@ -61,10 +62,15 @@ function Calendar({
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, "0");
         const dd = String(date.getDate()).padStart(2, "0");
-        router.push(`/calendar/${yyyy}-${mm}-${dd}`);
+        const params = new URLSearchParams(searchParams.toString());
+        const queryString = params.toString();
+        const nextPath = `/calendar/${yyyy}-${mm}-${dd}${
+          queryString ? `?${queryString}` : ""
+        }`;
+        router.push(nextPath);
       }
     },
-    [useUrlNavigation, router]
+    [useUrlNavigation, router, searchParams]
   );
 
   return (

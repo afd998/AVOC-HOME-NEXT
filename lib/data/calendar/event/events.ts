@@ -178,8 +178,13 @@ function createOwnershipTimeline(
 }
 
 async function getShiftBlocks(date: string): Promise<ShiftBlock[]> {
-  const shiftBlocksData = await db.query.shiftBlocks.findMany({
-    where: eq(shiftBlocks.date, date),
-  });
-  return shiftBlocksData;
+  try {
+    const shiftBlocksData = await db.query.shiftBlocks.findMany({
+      where: eq(shiftBlocks.date, date),
+    });
+    return shiftBlocksData;
+  } catch (error) {
+    console.error("[db] events.getShiftBlocks", { date, error });
+    throw error;
+  }
 }

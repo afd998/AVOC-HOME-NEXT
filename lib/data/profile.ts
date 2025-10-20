@@ -8,10 +8,15 @@ import { unstable_cacheTag as cacheTag } from "next/cache";
 export const getProfile = async (userId: string) => {
   "use cache";
   cacheTag(`profile:${userId}`);
-  const profile = await db.query.profiles.findFirst({
-    where: eq(profiles.id, userId),
-  });
-  return profile;
+  try {
+    const profile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, userId),
+    });
+    return profile;
+  } catch (error) {
+    console.error("[db] profile.getProfile", { userId, error });
+    throw error;
+  }
 };
 
 const getMyProfile = async () => {
@@ -25,7 +30,16 @@ export async function saveMyProfile(
   "use server";
   const user = await requireUserId();
 
-  await db.update(profiles).set(patch).where(eq(profiles.id, user.id));
+  try {
+    await db.update(profiles).set(patch).where(eq(profiles.id, user.id));
+  } catch (error) {
+    console.error("[db] profile.saveMyProfile", {
+      userId: user.id,
+      patch,
+      error,
+    });
+    throw error;
+  }
   revalidateTag(`profile:${user.id}`, "layout");
 }
 

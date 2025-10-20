@@ -1,22 +1,32 @@
-import React from 'react';
-import { useProfile } from '../../../../../core/User/useProfile';
-import useModalStore from '../../../stores/modalStore';
-import { useTheme } from '../../../contexts/ThemeContext';
+import React from "react";
+import useModalStore from "../../../stores/modalStore";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { useSearchParams } from "next/navigation";
 
 interface CurrentFilterLinkProps {
   onModalOpen?: () => void;
 }
 
-const CurrentFilterLink: React.FC<CurrentFilterLinkProps> = ({ onModalOpen }) => {
-  const { profile } = useProfile();
+const DEFAULT_FILTER = "All Rooms";
+
+const CurrentFilterLink: React.FC<CurrentFilterLinkProps> = ({
+  onModalOpen,
+}) => {
   const { openFilterRoomsModal } = useModalStore();
   const { isDarkMode } = useTheme();
+  const searchParams = useSearchParams();
 
-  const currentFilter = profile?.current_filter;
-  const autoHide = profile?.auto_hide;
+  const currentFilter = searchParams.get("filter");
+  const autoHideParam = searchParams.get("autoHide");
+  const autoHide = autoHideParam === "true" || autoHideParam === "1";
 
   // Determine what text to display
-  const displayText = currentFilter || (autoHide ? "Empty Rooms Hidden" : "All Rooms");
+  const displayText =
+    currentFilter && currentFilter.length > 0
+      ? currentFilter
+      : autoHide
+      ? "Empty Rooms Hidden"
+      : DEFAULT_FILTER;
 
   return (
     <div className="group relative inline-block">

@@ -11,13 +11,18 @@ import { revalidateTag, updateTag } from "next/cache";
 async function fetchFacultyPage(page: number) {
   const from = page * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
-  const data: InferSelectModel<typeof faculty>[] =
-    await db.query.faculty.findMany({
-      limit: PAGE_SIZE,
-      offset: page * PAGE_SIZE,
-    });
+  try {
+    const data: InferSelectModel<typeof faculty>[] =
+      await db.query.faculty.findMany({
+        limit: PAGE_SIZE,
+        offset: page * PAGE_SIZE,
+      });
 
-  return data;
+    return data;
+  } catch (error) {
+    console.error("[db] faculty.fetchFacultyPage", { page, from, to, error });
+    throw error;
+  }
 }
 
 export const getFacultyPage = async (page: number) =>
@@ -28,10 +33,15 @@ export const getFacultyPage = async (page: number) =>
 
 export const getFacultyById = unstable_cache(
   async (id: number) => {
-    const data = await db.query.faculty.findFirst({
-      where: eq(faculty.id, id),
-    });
-    return data;
+    try {
+      const data = await db.query.faculty.findFirst({
+        where: eq(faculty.id, id),
+      });
+      return data;
+    } catch (error) {
+      console.error("[db] faculty.getFacultyById", { id, error });
+      throw error;
+    }
   },
   ["faculty"],
   { tags: ["faculty"] }
@@ -39,11 +49,16 @@ export const getFacultyById = unstable_cache(
 
 export const getFacultySetups = unstable_cache(
   async (id: number) => {
-    const data = await db.query.facultySetup.findMany({
-      where: eq(facultySetup.faculty, id),
-    });
-    console.log("getting setup not from cache", data);
-    return data;
+    try {
+      const data = await db.query.facultySetup.findMany({
+        where: eq(facultySetup.faculty, id),
+      });
+      console.log("getting setup not from cache", data);
+      return data;
+    } catch (error) {
+      console.error("[db] faculty.getFacultySetups", { id, error });
+      throw error;
+    }
   },
   ["facultysetup"],
   { tags: ["facultysetup"] }
@@ -54,18 +69,23 @@ export async function createFacultySetup(
 ) {
   "use server";
 
-  const [result] = await db
-    .insert(facultySetup)
-    .values({
-      ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    } as any)
-    .returning();
+  try {
+    const [result] = await db
+      .insert(facultySetup)
+      .values({
+        ...data,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } as any)
+      .returning();
 
-  updateTag("facultysetup");
+    updateTag("facultysetup");
 
-  return result;
+    return result;
+  } catch (error) {
+    console.error("[db] faculty.createFacultySetup", { data, error });
+    throw error;
+  }
 }
 
 export async function updateFacultySetup(
@@ -75,25 +95,35 @@ export async function updateFacultySetup(
   "use server";
   console.log("updating setup");
 
-  const [result] = await db
-    .update(facultySetup)
-    .set({
-      ...data,
-      updatedAt: new Date().toISOString(),
-    })
-    .where(eq(facultySetup.id, setupId))
-    .returning();
- console.log("result", result);
+  try {
+    const [result] = await db
+      .update(facultySetup)
+      .set({
+        ...data,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(facultySetup.id, setupId))
+      .returning();
+    console.log("result", result);
 
-  updateTag("facultysetup");
+    updateTag("facultysetup");
 
-  return result;
+    return result;
+  } catch (error) {
+    console.error("[db] faculty.updateFacultySetup", { setupId, data, error });
+    throw error;
+  }
 }
 
 export async function deleteFacultySetup(setupId: string) {
   "use server";
 
-  await db.delete(facultySetup).where(eq(facultySetup.id, setupId));
+  try {
+    await db.delete(facultySetup).where(eq(facultySetup.id, setupId));
+  } catch (error) {
+    console.error("[db] faculty.deleteFacultySetup", { setupId, error });
+    throw error;
+  }
 
   updateTag("facultysetup");
 }

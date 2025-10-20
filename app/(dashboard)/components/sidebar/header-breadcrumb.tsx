@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton"; 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 type BreadcrumbItemData = {
   key: string;
@@ -33,6 +33,19 @@ type BreadcrumbPayload = {
 
 export default function HeaderBreadcrumb() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const queryString = searchParams.toString();
+
+  const withQueryParams = React.useCallback(
+    (href?: string) => {
+      if (!href) return undefined;
+      if (!queryString) return href;
+      const separator = href.includes("?") ? "&" : "?";
+      return `${href}${separator}${queryString}`;
+    },
+    [queryString]
+  );
+
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItemData[] | null>(
     null
   );
@@ -108,7 +121,10 @@ export default function HeaderBreadcrumb() {
                         size="sm"
                         className="h-6 w-6 p-0"
                       >
-                        <Link href={item.prevHref} aria-label="Previous day">
+                        <Link
+                          href={withQueryParams(item.prevHref)!}
+                          aria-label="Previous day"
+                        >
                           <ChevronLeft className="h-3 w-3" />
                         </Link>
                       </Button>
@@ -121,7 +137,10 @@ export default function HeaderBreadcrumb() {
                         size="sm"
                         className="h-6 w-6 p-0"
                       >
-                        <Link href={item.nextHref} aria-label="Next day">
+                        <Link
+                          href={withQueryParams(item.nextHref)!}
+                          aria-label="Next day"
+                        >
                           <ChevronRight className="h-3 w-3" />
                         </Link>
                       </Button>

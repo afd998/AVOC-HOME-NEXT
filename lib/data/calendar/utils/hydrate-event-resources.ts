@@ -81,15 +81,25 @@ export async function hydrateEventsWithResources(
     }));
   }
 
-  const resourceMetadata = await db
-    .select({
-      id: resourcesDict.id,
-      displayName: resourcesDict.name,
-      isAv: resourcesDict.isAv,
-      icon: resourcesDict.icon,
-    })
-    .from(resourcesDict)
-    .where(inArray(resourcesDict.id, Array.from(resourceIds)));
+  const resourceMetadata = await (async () => {
+    try {
+      return await db
+        .select({
+          id: resourcesDict.id,
+          displayName: resourcesDict.name,
+          isAv: resourcesDict.isAv,
+          icon: resourcesDict.icon,
+        })
+        .from(resourcesDict)
+        .where(inArray(resourcesDict.id, Array.from(resourceIds)));
+    } catch (error) {
+      console.error("[db] hydrateEventsWithResources", {
+        resourceIds: Array.from(resourceIds),
+        error,
+      });
+      throw error;
+    }
+  })();
 
   const metadataById = new Map<string, ResourceMetadata>(
     resourceMetadata.map((entry) => [entry.id, entry])

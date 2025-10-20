@@ -16,12 +16,28 @@ import { addDisplayColumns } from "./utils/hydrate-display-columns";
 export type finalEvent = EventWithResources;
 export type RoomRowData = { roomName: string; events: finalEvent[] };
 
-export async function getCalendar(date: string, filter: string) {
+export async function getCalendar(
+  date: string,
+  filter: string,
+  autoHide: boolean
+) {
   "use cache";
-  cacheTag(`calendar:${date}:${filter}`);
-  const rawEvents = await db.query.events.findMany({
-    where: eq(events.date, date),
-  });
+  cacheTag(`calendar:${date}:${filter}:${autoHide ? "hide" : "show"}`);
+  const rawEvents = await (async () => {
+    try {
+      return await db.query.events.findMany({
+        where: eq(events.date, date),
+      });
+    } catch (error) {
+      console.error("[db] calendar.getCalendar", {
+        date,
+        filter,
+        autoHide,
+        error,
+      });
+      throw error;
+    }
+  })();
   const filteredEvents = await filterEvents(rawEvents, filter);
   const eventsWithFirstSessionFlag = await addFirstSessionFlags(filteredEvents);
   const hydratedEvents = await hydrateEventsWithFaculty(
@@ -32,9 +48,12 @@ export async function getCalendar(date: string, filter: string) {
 
   const roomGroups = groupEventsByRoom(eventsWithResources);
   const finalRoomGroups = handleMergedRooms(roomGroups);
+  const visibleRoomGroups = autoHide
+    ? finalRoomGroups.filter((group) => group.events.length > 0)
+    : finalRoomGroups;
 
   // Sort by roomName with letters before numbers, omitting first 3 chars ("GH ")
-  finalRoomGroups.sort((a, b) => {
+  visibleRoomGroups.sort((a, b) => {
     // Skip first 3 characters ("GH ") and get the actual room identifier
     const aRoomId = a.roomName.substring(3);
     const bRoomId = b.roomName.substring(3);
@@ -53,7 +72,7 @@ export async function getCalendar(date: string, filter: string) {
     return aRoomId.localeCompare(bRoomId);
   });
 
-  return finalRoomGroups;
+  return visibleRoomGroups;
 }
 
 function groupEventsByRoom(events: finalEvent[]): RoomRowData[] {

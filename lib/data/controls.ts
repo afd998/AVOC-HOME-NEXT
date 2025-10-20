@@ -15,18 +15,23 @@ const fallbackControls = {
 
 const getControlsCached = unstable_cache(
   async (userId: string) => {
-    const row = await db.query.profiles.findFirst({
-      columns: {
-        zoom: true,
-        pixelsPerMin: true,
-        rowHeight: true,
-        startHour: true,
-        endHour: true,
-      },
-      where: eq(profiles.id, userId),
-    });
+    try {
+      const row = await db.query.profiles.findFirst({
+        columns: {
+          zoom: true,
+          pixelsPerMin: true,
+          rowHeight: true,
+          startHour: true,
+          endHour: true,
+        },
+        where: eq(profiles.id, userId),
+      });
 
-    return row ?? { ...fallbackControls };
+      return row ?? { ...fallbackControls };
+    } catch (error) {
+      console.error("[db] controls.getControlsCached", { userId, error });
+      throw error;
+    }
   },
   ["controls"],
   { tags: ["controls"] }
@@ -53,6 +58,15 @@ export async function saveMyControls(
   "use server";
   const user = await requireUserId();
 
-  await db.update(profiles).set(patch).where(eq(profiles.id, user.id));
+  try {
+    await db.update(profiles).set(patch).where(eq(profiles.id, user.id));
+  } catch (error) {
+    console.error("[db] controls.saveMyControls", {
+      userId: user.id,
+      patch,
+      error,
+    });
+    throw error;
+  }
   revalidateTag("controls");
 }

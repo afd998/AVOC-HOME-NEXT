@@ -7,8 +7,13 @@ import { RoomFilter } from "@/lib/db/types";
 
 export const getFilters = unstable_cache(
   async () => {
-    const filters = await db.query.roomFilters.findMany();
-    return filters as Array<RoomFilter>;
+    try {
+      const filters = await db.query.roomFilters.findMany();
+      return filters as Array<RoomFilter>;
+    } catch (error) {
+      console.error("[db] filters.getFilters", { error });
+      throw error;
+    }
   },
   ["filters"],
   { tags: ["filters"] }

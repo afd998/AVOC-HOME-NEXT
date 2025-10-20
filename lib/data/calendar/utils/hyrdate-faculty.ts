@@ -17,23 +17,28 @@ export async function hydrateEventsWithFaculty(
 
   // Get faculty for events
   if (eventIds.length > 0) {
-    const facultyRows = await db
-      .select({
-        eventId: facultyEvents.event,
-        facultyMember: faculty,
-      })
-      .from(facultyEvents)
-      .innerJoin(faculty, eq(facultyEvents.faculty, faculty.id))
-      .where(inArray(facultyEvents.event, eventIds));
+    try {
+      const facultyRows = await db
+        .select({
+          eventId: facultyEvents.event,
+          facultyMember: faculty,
+        })
+        .from(facultyEvents)
+        .innerJoin(faculty, eq(facultyEvents.faculty, faculty.id))
+        .where(inArray(facultyEvents.event, eventIds));
 
-    facultyRows.forEach(({ eventId, facultyMember }) => {
-      const existing = facultyByEventId.get(eventId);
-      if (existing) {
-        existing.push(facultyMember);
-        return;
-      }
-      facultyByEventId.set(eventId, [facultyMember]);
-    });
+      facultyRows.forEach(({ eventId, facultyMember }) => {
+        const existing = facultyByEventId.get(eventId);
+        if (existing) {
+          existing.push(facultyMember);
+          return;
+        }
+        facultyByEventId.set(eventId, [facultyMember]);
+      });
+    } catch (error) {
+      console.error("[db] hydrateEventsWithFaculty", { eventIds, error });
+      throw error;
+    }
   }
 
   // Hydrate events with faculty

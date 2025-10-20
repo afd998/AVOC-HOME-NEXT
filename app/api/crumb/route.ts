@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { faculty, events } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { unstable_cacheTag as cacheTag } from "next/cache"; 
+import { revalidateTag } from "next/cache";
+
 const LABEL_OVERRIDES: Record<string, string> = {
   dashboard: "Dashboard",
   calendar: "Calendar",
@@ -70,7 +72,7 @@ async function generateBreadcrumbs(
       return facultyNameCache.get(id) ?? null;
     }
     try {
-      const record = await db.query.faculty.findFirst({
+      const record = await db.query.faculty.findFirst({     
         where: eq(faculty.id, id),
         columns: {
           kelloggdirectoryName: true,

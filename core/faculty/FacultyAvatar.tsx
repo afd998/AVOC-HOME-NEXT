@@ -1,3 +1,4 @@
+"use client"
 
 interface FacultyAvatarProps {
   imageUrl: string;

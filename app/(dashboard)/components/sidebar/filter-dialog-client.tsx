@@ -11,10 +11,12 @@ import {
 } from "react";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button"; 
-import { profiles } from "@/drizzle/schema";
+import { useSearchParams } from "next/navigation";
 
-type Profile = typeof profiles.$inferSelect;
+const DEFAULT_FILTER = "All Rooms";
+
 const ModalCtx = createContext<{ close: () => void } | null>(null);
+
 export function useModal() {
   const v = useContext(ModalCtx);
   if (!v) throw new Error("useModal must be used inside ModalClient");
@@ -22,16 +24,18 @@ export function useModal() {
 }
 
 export default function FilterDialogClient({
-  profile,
   children,
 }: {
-  profile?: Profile | null;
   children: ReactNode;
 }) {
   const [openFilterRoomsModal, setOpenFilterRoomsModal] = useState(false);
   const close = useCallback(() => setOpenFilterRoomsModal(false), []);
 
-  const currentFilter = profile?.currentFilter;
+  const searchParams = useSearchParams();
+  const currentFilter = searchParams.get("filter");
+  const showBadge =
+    currentFilter && currentFilter !== DEFAULT_FILTER ? currentFilter : null;
+
   return (
     <Dialog
       open={openFilterRoomsModal}
@@ -51,9 +55,9 @@ export default function FilterDialogClient({
         >
           <Filter className="h-4 w-4 mr-1" />
           <span>Filter Rooms</span>
-          {currentFilter && (
+          {showBadge && (
             <Badge variant="outline" className="ml-auto text-xs">
-              {currentFilter}
+              {showBadge}
             </Badge>
           )}
         </div>

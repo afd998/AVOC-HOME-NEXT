@@ -102,8 +102,8 @@ export async function AppSidebar({
                   {/* Filter Rooms Button */}
                   <div className="space-y-2">
                     <SidebarMenuButton>
-                      <FilterDialogClient profile={profile}>
-                        <FilterRoomsModal profile={profile} />
+                      <FilterDialogClient>
+                        <FilterRoomsModal />
                       </FilterDialogClient>
                     </SidebarMenuButton>
                   </div>

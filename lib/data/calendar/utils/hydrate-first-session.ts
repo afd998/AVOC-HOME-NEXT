@@ -26,27 +26,35 @@ export async function addFirstSessionFlags(
 
   if (uniqueLectureNames.size > 0) {
     const namesToQuery = Array.from(uniqueLectureNames);
-    const namedLectures = await db
-      .select()
-      .from(eventsTable)
-      .where(
-        and(
-          eq(eventsTable.eventType, "Lecture"),
-          inArray(eventsTable.eventName, namesToQuery)
+    try {
+      const namedLectures = await db
+        .select()
+        .from(eventsTable)
+        .where(
+          and(
+            eq(eventsTable.eventType, "Lecture"),
+            inArray(eventsTable.eventName, namesToQuery)
+          )
         )
-      )
-      .orderBy(
-        asc(eventsTable.eventName),
-        asc(eventsTable.date),
-        asc(eventsTable.id)
-      );
+        .orderBy(
+          asc(eventsTable.eventName),
+          asc(eventsTable.date),
+          asc(eventsTable.id)
+        );
 
-    namedLectures.forEach((lecture) => {
-      const key = lecture.eventName!;
-      if (!earliestLectureByName.has(key)) {
-        earliestLectureByName.set(key, lecture);
-      }
-    });
+      namedLectures.forEach((lecture) => {
+        const key = lecture.eventName!;
+        if (!earliestLectureByName.has(key)) {
+          earliestLectureByName.set(key, lecture);
+        }
+      });
+    } catch (error) {
+      console.error("[db] addFirstSessionFlags", {
+        namesToQuery,
+        error,
+      });
+      throw error;
+    }
   }
 
   return events.map((event) => ({
