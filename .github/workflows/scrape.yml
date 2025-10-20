@@ -47,16 +47,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3 # or the version you use locally
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm" # cache keyed by pnpm-lock.yaml
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -105,16 +105,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3 # or the version you use locally
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm" # cache keyed by pnpm-lock.yaml
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -163,16 +163,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3 # or the version you use locally
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm" # cache keyed by pnpm-lock.yaml
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -221,16 +221,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3 # or the version you use locally
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm" # cache keyed by pnpm-lock.yaml
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -240,7 +240,6 @@ jobs:
 
       - name: Run scraper
         run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
-
   scrape-window-5:
     runs-on: ubuntu-latest
     strategy:
@@ -279,16 +278,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3 # or the version you use locally
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm" # cache keyed by pnpm-lock.yaml
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -337,16 +336,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3 # or the version you use locally
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm" # cache keyed by pnpm-lock.yaml
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -395,16 +394,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3 # or the version you use locally
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm" # cache keyed by pnpm-lock.yaml
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -414,7 +413,6 @@ jobs:
 
       - name: Run scraper
         run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
-
   scrape-window-8:
     runs-on: ubuntu-latest
     strategy:
@@ -453,16 +451,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3 # or the version you use locally
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm" # cache keyed by pnpm-lock.yaml
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
