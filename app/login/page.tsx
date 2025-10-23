@@ -1,21 +1,12 @@
 import React from "react";
-import { LoginForm } from "@/components/auth/login-form";
+import { LoginForm } from "@/app/login/login-form";
 import LandingPageNavBar from "@/app/components/LandingPageNavBar";
 import Image from "next/image";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 export default async function LoginPage() {
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    // ✅ Immediately redirect signed-in users
-    redirect("/calendar");
-  }
-
   return (
     <div className="w-full">
       <LandingPageNavBar />
@@ -32,8 +23,9 @@ export default async function LoginPage() {
                         one-time verification code.
                       </p>
                     </div>
-
-                    <LoginForm />
+                    <Suspense>
+                      <LoginForm />
+                    </Suspense>
                   </div>
                 </div>
               </div>

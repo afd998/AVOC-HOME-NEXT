@@ -1,14 +1,17 @@
-import React, { Suspense } from "react";
+import { CalendarShellProvider } from "@/app/(dashboard)/calendar/[slug]/components/CalendarShellProvider";
+import type { ReactNode } from "react";
 
 export default function CalendarPageLayout({
   children,
+  eventModal,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
+  eventModal: ReactNode;
 }>) {
   return (
-    <div>
-      {" "}
-      <Suspense>{children}</Suspense>
-    </div>
+    <CalendarShellProvider>
+      {children}
+      {eventModal}
+    </CalendarShellProvider>
   );
 }

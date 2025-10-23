@@ -52,7 +52,7 @@ export default function Event({ event, rowHeightPx = 96 }: EventProps) {
   }
 
   return (
-    <Link href={`/calendar/${event.id}`}>
+    <Link href={`/events/${event.id}`}>
       <Card
         className={`absolute transition-all duration-200 ease-in-out cursor-pointer group rounded-md hover:scale-105 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] ${
           event.eventType === "Lecture" ? "text-white" : "text-gray-900"

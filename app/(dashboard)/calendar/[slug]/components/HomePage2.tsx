@@ -1,39 +1,51 @@
-import RoomRow from "@/app/(dashboard)/calendar/[slug]/components/RoomRow";  
+import { getCalendar } from "@/lib/data/calendar/calendar";
+import VerticalLines from "@/app/(dashboard)/calendar/[slug]/components/VerticalLines";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-import { RoomRowData } from "@/lib/data/calendar/calendar";
-import { finalEvent } from "@/lib/data/calendar/calendar";
+import RoomRows from "@/app/(dashboard)/calendar/[slug]/components/RoomRows";
+import CalendarShellMetricsUpdater from "@/app/(dashboard)/calendar/[slug]/components/CalendarShellMetricsUpdater";
+import {
+  CALENDAR_END_HOUR,
+  CALENDAR_PIXELS_PER_MINUTE,
+  CALENDAR_ROW_HEIGHT_PX,
+  CALENDAR_START_HOUR,
+} from "@/app/(dashboard)/calendar/[slug]/calendarConfig";
 
-export default async function HomePage2({
-  calendar,
-  date,
-  filter,
-  autoHide,
-}: {
-  calendar: RoomRowData[];
-  date: string;
+export default async function HomePage2(props: {
   filter: string;
   autoHide: boolean;
+  slug: string;
 }) {
-  // "use cache";
-  // cacheTag(`calendar:${date}:${filter}`);
+  "use cache";
+  cacheTag(
+    `calendar:${props.slug}:${props.filter}:${props.autoHide ? "hide" : "show"}`
+  );
+  const calendar = await getCalendar(props.slug, props.filter, props.autoHide);
+  const actualRowCount = calendar.length;
+  const safeRowCount = Math.max(actualRowCount, 1);
+
   return (
-    <div className="" data-auto-hide={autoHide ? "true" : undefined}>
-      {calendar.map(
-        (
-          { roomName, events }: { roomName: string; events: finalEvent[] },
-          index: number
-        ) => {
-          return (
-            <RoomRow
-              key={`${roomName}`}
-              room={roomName}
-              roomEvents={events}
-              isEvenRow={index % 2 === 0}
-              isLastRow={index === calendar.length - 1}
-            />
-          );
-        }
-      )}
-    </div>
+    <>
+      <CalendarShellMetricsUpdater
+        actualRowCount={actualRowCount}
+        autoHide={props.autoHide}
+      />
+      <div className="pointer-events-none absolute inset-0">
+        <VerticalLines
+          startHour={CALENDAR_START_HOUR}
+          endHour={CALENDAR_END_HOUR}
+          pixelsPerMinute={CALENDAR_PIXELS_PER_MINUTE}
+          actualRowCount={safeRowCount}
+          rowHeightPx={CALENDAR_ROW_HEIGHT_PX}
+        />
+      </div>
+      <div className="relative pointer-events-auto">
+        <RoomRows
+          calendar={calendar}
+          date={props.slug}
+          filter={props.filter}
+          autoHide={props.autoHide}
+        />
+      </div>
+    </>
   );
 }

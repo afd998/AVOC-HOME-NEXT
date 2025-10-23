@@ -1,7 +1,7 @@
-import { FacultyAvatar } from "@/core/faculty/FacultyAvatar";
-import { Item, ItemContent } from "@/components/ui/item";   
-    import { Badge } from "@/components/ui/badge";
-    import { cn } from "@/lib/utils";  
+import { EventFacultySummary } from "@/core/event/components/EventFacultySummary";
+import { Item, ItemContent } from "@/components/ui/item";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { finalEvent } from "@/lib/data/calendar/calendar";
 import localFont from "next/font/local";
 const myFont = localFont({
@@ -19,12 +19,21 @@ function LectureEvent({ event }: { event: finalEvent }) {
   const containerHeight = event.derived.isMergedRoomEvent ? "h-full" : "h-16"; // Use full height for merged events
   const avatarContainerHeight = "h-16"; // Keep avatar section the same height always
 
+  const instructorNames = Array.isArray(event.instructorNames)
+    ? event.instructorNames.filter(
+        (name): name is string => typeof name === "string"
+      )
+    : [];
+
+  const facultyCount =
+    event.faculty.length > 0 ? event.faculty.length : instructorNames.length;
+
   // Dynamic width based on number of faculty
   const getAvatarContainerWidth = () => {
     // Use appropriate width based on faculty count
-    if (event.faculty.length <= 1) return "w-16"; // 64px for single faculty
-    if (event.faculty.length === 2) return "w-24"; // 96px for two faculty
-    if (event.faculty.length >= 3) return "w-28"; // 112px for three or more faculty
+    if (facultyCount <= 1) return "w-16"; // 64px for single faculty
+    if (facultyCount === 2) return "w-24"; // 96px for two faculty
+    if (facultyCount >= 3) return "w-28"; // 112px for three or more faculty
     return "w-16"; // default
   };
 
@@ -36,105 +45,24 @@ function LectureEvent({ event }: { event: finalEvent }) {
         event.derived.isMergedRoomEvent ? "items-center" : ""
       } relative`}
     >
-      {event.faculty.length > 0 && (
-        <div
-          className={`flex flex-col items-center justify-center gap-0.5 rounded ${avatarContainerHeight} ${getAvatarContainerWidth()} z-10 transition-all duration-200 ease-in-out relative shrink-0 -mt-1`}
-        >
-          {event.faculty.length === 1 &&
-          event.faculty[0]?.kelloggdirectoryImageUrl ? (
-            <FacultyAvatar
-              imageUrl={event.faculty[0].kelloggdirectoryImageUrl}
-              cutoutImageUrl={event.faculty[0].cutoutImage}
-              instructorName={event.faculty[0].twentyfiveliveName || ""}
-              size="md"
-            />
-          ) : event.faculty.length > 1 ? (
-            <div className="flex -space-x-2">
-              {event.faculty.slice(0, 3).map((faculty, index) => {
-                return (
-                  <FacultyAvatar
-                    key={`${faculty?.twentyfiveliveName}-${index}`}
-                    imageUrl={faculty?.kelloggdirectoryImageUrl || ""}
-                    cutoutImageUrl={faculty?.cutoutImage}
-                    instructorName={faculty?.twentyfiveliveName || ""}
-                    size="md"
-                    className="h-10 w-10"
-                  />
-                );
-              })}
-              {event.faculty.length > 3 && (
-                <div
-                  className="h-10 w-10 rounded-full bg-gray-400 border-2 border-white flex items-center justify-center text-white font-medium text-sm"
-                  title={event.faculty
-                    .slice(3)
-                    .map((faculty) => faculty?.twentyfiveliveName || "")
-                    .join(", ")}
-                >
-                  +{event.faculty.length - 3}
-                </div>
-              )}
-            </div>
-          ) : (
-            <span
-              className="text-sm transition-all duration-200 ease-in-out"
-              style={{ transform: "scale(1)" }}
-            >
-              👤
-            </span>
-          )}
-          <span
-            className={`leading-tight font-medium opacity-90 text-center whitespace-nowrap w-full -mt-0.5 transition-all duration-200 ease-in-out ${(() => {
-              const nameToDisplay =
-                event.faculty.length > 0
-                  ? (() => {
-                      if (event.faculty.length === 1) {
-                        const firstName =
-                          event.faculty[0]?.twentyfiveliveName || "";
-                        const parts = firstName.split(",");
-                        if (parts.length >= 2) {
-                          return parts[0].trim();
-                        }
-                        return firstName;
-                      } else {
-                        // Show first names for the instructors whose avatars are displayed (up to 3)
-                        const displayedInstructors = event.faculty
-                          .slice(0, 3)
-                          .map((faculty) => faculty?.twentyfiveliveName || "")
-                          .join(", ");
-                        return displayedInstructors;
-                      }
-                    })()
-                  : "";
-              return event.faculty.length > 12 ? "text-[8px]" : "text-[10px]";
-            })()}`}
-          >
-            {event.faculty.length > 0
-              ? (() => {
-                  if (event.faculty.length === 1) {
-                    const firstName =
-                      event.faculty[0]?.twentyfiveliveName || "";
-                    const parts = firstName.split(",");
-                    if (parts.length >= 2) {
-                      return parts[0].trim();
-                    }
-                    return firstName;
-                  } else {
-                    // Show first names for the instructors whose avatars are displayed (up to 3)
-                    const displayedInstructors = event.faculty
-                      .slice(0, 3)
-                      .map((faculty) => faculty?.twentyfiveliveName || "");
-                    return displayedInstructors
-                      .map((name) => {
-                        const parts = name.split(",");
-                        return parts.length >= 2 ? parts[0].trim() : name;
-                      })
-                      .join(", ");
-                  }
-                })()
-              : ""}
-          </span>
-        </div>
-      )}
+      <EventFacultySummary
+        faculty={event.faculty}
+        instructorNames={
+          instructorNames.length ? instructorNames : undefined
+        }
+        maxVisible={3}
+        size="md"
+        className={cn(
+          "rounded z-10 transition-all duration-200 ease-in-out relative shrink-0 -mt-1",
+          avatarContainerHeight,
+          getAvatarContainerWidth()
+        )}
+        avatarsClassName="justify-center"
+        avatarClassName="!h-10 !w-10"
+        overlapClassName="-space-x-2"
+        remainingBadgeClassName="border-2 border-white text-white font-medium text-sm !h-10 !w-10"
+        namesClassName="w-full -mt-0.5 transition-all duration-200 ease-in-out"
+      />
 
       <div
         className={`flex flex-col min-w-0 pl-1 -gap-2 transition-all duration-200 ease-in-out overflow-hidden mt-1 ${
@@ -327,3 +255,4 @@ export default async function EventContent({
     </div>
   );
 }
+

@@ -5,13 +5,13 @@ import { RoomFilter } from "@/lib/db/types";
 import { Event as EventType } from "@/lib/db/types";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { eq } from "drizzle-orm";
-import { hydrateEventsWithFaculty } from "./utils/hyrdate-faculty";
-import { addFirstSessionFlags } from "./utils/hydrate-first-session";
+import { hydrateEventsWithFaculty } from "./event/utils/hyrdate-faculty";
+import { addFirstSessionFlags } from "./event/utils/hydrate-first-session";
 import {
   hydrateEventsWithResources,
   EventWithResources,
-} from "./utils/hydrate-event-resources";
-import { addDisplayColumns } from "./utils/hydrate-display-columns";
+} from "./event/utils/hydrate-event-resources";
+import { addDisplayColumns } from "./event/utils/hydrate-display-columns";
 
 export type finalEvent = EventWithResources;
 export type RoomRowData = { roomName: string; events: finalEvent[] };

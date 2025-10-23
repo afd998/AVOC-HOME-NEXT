@@ -26,7 +26,6 @@ import {
 import NotificationsModal from "@/features/notifications/NotificationsModal";
 import FilterRoomsModal from "@/app/(dashboard)/calendar/[slug]/components/FilterRoomsModal";
 import QuarterCount from "@/features/QuarterCount/QuarterCount";
-import AcademicCalendarInfo from "@/app/(dashboard)/calendar/[slug]/components/AcademicCalendarInfo";  
 import { Calendar } from "@/components/ui/calendar"; 
 import Link from "next/link";
 // Navigation data for the sidebar

@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, time, jsonb, index, check, real, doublePrecision, date, bigserial, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, jsonb, time, index, check, real, doublePrecision, date, bigserial, primaryKey, integer } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -25,30 +25,6 @@ export const facultySetup = pgTable("faculty_setup", {
 		}),
 	unique("faculty_setup_id_key").on(table.id),
 	pgPolicy("allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
-]);
-
-export const eventTasks = pgTable("event_tasks", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "event_services_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	event: bigint({ mode: "number" }),
-	status: text(),
-	startTime: time("start_time"),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	taskId: bigint("task_id", { mode: "number" }),
-}, (table) => [
-	foreignKey({
-			columns: [table.event],
-			foreignColumns: [events.id],
-			name: "event_services_event_fkey"
-		}),
-	foreignKey({
-			columns: [table.taskId],
-			foreignColumns: [tasks.id],
-			name: "event_tasks_task_id_fkey"
-		}),
-	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
 ]);
 
 export const academicCalendar = pgTable("academic_calendar", {
@@ -137,7 +113,29 @@ export const tasks = pgTable("tasks", {
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "services_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	name: text(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	event: bigint({ mode: "number" }),
+	taskType: text("task_type"),
+	startTime: time("start_time"),
+	status: text(),
+	assignedTo: uuid("assigned_to"),
+	completedBy: uuid("completed_by"),
 }, (table) => [
+	foreignKey({
+			columns: [table.assignedTo],
+			foreignColumns: [profiles.id],
+			name: "tasks_assigned_to_fkey"
+		}),
+	foreignKey({
+			columns: [table.completedBy],
+			foreignColumns: [profiles.id],
+			name: "tasks_completed_by_fkey"
+		}),
+	foreignKey({
+			columns: [table.event],
+			foreignColumns: [events.id],
+			name: "tasks_event_fkey"
+		}),
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
 ]);
 
@@ -296,11 +294,32 @@ export const facultyEvents = pgTable("faculty_events", {
 			columns: [table.event],
 			foreignColumns: [events.id],
 			name: "faculty_events_event_fkey"
-		}),
+		}).onDelete("cascade"),
 	foreignKey({
 			columns: [table.faculty],
 			foreignColumns: [faculty.id],
 			name: "faculty_events_faculty_fkey"
 		}),
 	primaryKey({ columns: [table.faculty, table.event], name: "faculty_events_pkey"}),
+]);
+
+export const resourceEvents = pgTable("resource_events", {
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	resourceId: text("resource_id").notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	eventId: bigint("event_id", { mode: "number" }).notNull(),
+	quantity: integer().default(1).notNull(),
+	instructions: text(),
+}, (table) => [
+	foreignKey({
+			columns: [table.eventId],
+			foreignColumns: [events.id],
+			name: "fk_event"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.resourceId],
+			foreignColumns: [resourcesDict.id],
+			name: "fk_resource"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.resourceId, table.eventId], name: "resource_events_pkey"}),
 ]);

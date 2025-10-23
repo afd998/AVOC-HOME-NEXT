@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, events, eventTasks, tasks, notifications, profiles, panoptoChecks, shifts, facultyEvents } from "./schema";
+import { faculty, facultySetup, events, notifications, profiles, tasks, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -13,32 +13,6 @@ export const facultyRelations = relations(faculty, ({many}) => ({
 	facultyEvents: many(facultyEvents),
 }));
 
-export const eventTasksRelations = relations(eventTasks, ({one}) => ({
-	event: one(events, {
-		fields: [eventTasks.event],
-		references: [events.id]
-	}),
-	task: one(tasks, {
-		fields: [eventTasks.taskId],
-		references: [tasks.id]
-	}),
-}));
-
-export const eventsRelations = relations(events, ({one, many}) => ({
-	eventTasks: many(eventTasks),
-	notifications: many(notifications),
-	profile: one(profiles, {
-		fields: [events.manOwner],
-		references: [profiles.id]
-	}),
-	panoptoChecks: many(panoptoChecks),
-	facultyEvents: many(facultyEvents),
-}));
-
-export const tasksRelations = relations(tasks, ({many}) => ({
-	eventTasks: many(eventTasks),
-}));
-
 export const notificationsRelations = relations(notifications, ({one}) => ({
 	event: one(events, {
 		fields: [notifications.eventId],
@@ -50,11 +24,46 @@ export const notificationsRelations = relations(notifications, ({one}) => ({
 	}),
 }));
 
+export const eventsRelations = relations(events, ({one, many}) => ({
+	notifications: many(notifications),
+	tasks: many(tasks),
+	profile: one(profiles, {
+		fields: [events.manOwner],
+		references: [profiles.id]
+	}),
+	panoptoChecks: many(panoptoChecks),
+	facultyEvents: many(facultyEvents),
+	resourceEvents: many(resourceEvents),
+}));
+
 export const profilesRelations = relations(profiles, ({many}) => ({
 	notifications: many(notifications),
+	tasks_assignedTo: many(tasks, {
+		relationName: "tasks_assignedTo_profiles_id"
+	}),
+	tasks_completedBy: many(tasks, {
+		relationName: "tasks_completedBy_profiles_id"
+	}),
 	events: many(events),
 	panoptoChecks: many(panoptoChecks),
 	shifts: many(shifts),
+}));
+
+export const tasksRelations = relations(tasks, ({one}) => ({
+	profile_assignedTo: one(profiles, {
+		fields: [tasks.assignedTo],
+		references: [profiles.id],
+		relationName: "tasks_assignedTo_profiles_id"
+	}),
+	profile_completedBy: one(profiles, {
+		fields: [tasks.completedBy],
+		references: [profiles.id],
+		relationName: "tasks_completedBy_profiles_id"
+	}),
+	event: one(events, {
+		fields: [tasks.event],
+		references: [events.id]
+	}),
 }));
 
 export const panoptoChecksRelations = relations(panoptoChecks, ({one}) => ({
@@ -84,4 +93,19 @@ export const facultyEventsRelations = relations(facultyEvents, ({one}) => ({
 		fields: [facultyEvents.faculty],
 		references: [faculty.id]
 	}),
+}));
+
+export const resourceEventsRelations = relations(resourceEvents, ({one}) => ({
+	event: one(events, {
+		fields: [resourceEvents.eventId],
+		references: [events.id]
+	}),
+	resourcesDict: one(resourcesDict, {
+		fields: [resourceEvents.resourceId],
+		references: [resourcesDict.id]
+	}),
+}));
+
+export const resourcesDictRelations = relations(resourcesDict, ({many}) => ({
+	resourceEvents: many(resourceEvents),
 }));

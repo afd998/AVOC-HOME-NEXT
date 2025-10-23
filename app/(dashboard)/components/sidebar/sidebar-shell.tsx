@@ -58,7 +58,6 @@ type SidebarContextProps = {
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
-
 export function useSidebar(): SidebarContextProps {
   const context = React.useContext(SidebarContext);
 
@@ -69,11 +68,7 @@ export function useSidebar(): SidebarContextProps {
   return context;
 }
 
-function SidebarProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function SidebarProvider({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
   const [open, setOpen] = React.useState(true);
@@ -166,7 +161,6 @@ function SidebarShellContent({
   className,
   children,
   style,
-  ...props
 }: SidebarShellContentProps) {
   const { isMobile, openMobile, setOpenMobile, state } = useSidebar();
 
@@ -174,10 +168,8 @@ function SidebarShellContent({
     (child) => !(typeof child === "string" && child.trim().length === 0)
   );
   const [sidebarChild, ...restChildren] = childArray;
+  const sidebar = sidebarChild;
 
-  const sidebar = React.isValidElement(sidebarChild) ? sidebarChild : null;
-
-  const sidebarContent = sidebar?.props?.children ?? null;
 
   return (
     <div
@@ -198,7 +190,7 @@ function SidebarShellContent({
           ...style,
         } as React.CSSProperties
       }
-      {...props}
+    
     >
       {sidebar &&
         (isMobile ? (
@@ -222,7 +214,7 @@ function SidebarShellContent({
                 </SheetDescription>
               </SheetHeader>
               <div className="flex h-full w-full flex-col">
-                {sidebarContent ?? sidebar}
+                {sidebar}
               </div>
             </SheetContent>
           </Sheet>
@@ -261,7 +253,6 @@ export function SidebarShell({
           collapsible={collapsible}
           className={className}
           style={style}
-          {...props}
         >
           {children}
         </SidebarShellContent>

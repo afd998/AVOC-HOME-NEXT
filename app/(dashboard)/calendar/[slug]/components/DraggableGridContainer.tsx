@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useRef, useCallback, useEffect, ReactNode, forwardRef, useImperativeHandle } from 'react';
 
 interface DraggableGridContainerProps {
