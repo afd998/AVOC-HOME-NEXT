@@ -26,6 +26,7 @@ import {
   type RawEvent,
 } from "./schemas";
 import { saveFacultyEvents } from "./saveFacultyEvents";
+import { saveResourceEvents } from "./saveResourceEvents";
 // Validate configuration to ensure all required environment variables are present
 config.validate();
 
@@ -257,8 +258,9 @@ async function main(): Promise<void> {
   const data = await fetchEventsData(date);
   const processedEvents = transformRawEventsToEvents(data);
   await saveEvents(processedEvents, date);
+  await saveResourceEvents(processedEvents);
   await saveFacultyEvents(processedEvents);
-  await transformEventsToTasks(processedEvents);
+  //await transformEventsToTasks(processedEvents);
 }
 
 /**

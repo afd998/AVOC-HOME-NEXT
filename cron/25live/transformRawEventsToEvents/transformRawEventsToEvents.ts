@@ -18,7 +18,7 @@ const {
 export type RawEvent = RawEventFromSchema;
 
 export type EventResource = {
-  itemName: string | null;
+  itemName: string;
   quantity: number | null;
   instruction: string | null;
 };
@@ -79,7 +79,7 @@ export function transformRawEventsToEvents(
     );
   });
 
-  const processedEvents = filteredData.map<ProcessedEvent>((event) => {
+  const processedEvents = filteredData.map<ProcessedEvent>((event ) => {
     const { startTimeStr, endTimeStr } = toTimeStrings(event.start, event.end);
 
     const eventDate = event.subject_item_date

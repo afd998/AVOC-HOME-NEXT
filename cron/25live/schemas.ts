@@ -24,7 +24,7 @@ export const availabilityResponseSchema = z
 
 const eventDetailResourceSchema = z
   .object({
-    itemName: z.string().nullable().optional(),
+    itemName: z.string(),
     quantity: z.coerce.number().optional(),
     instruction: z.string().nullable().optional(),
   })
@@ -44,12 +44,12 @@ const eventDetailProfSchema = z
   .catchall(z.unknown());
 
 const eventDetailNestedItemSchema: z.ZodType<{
-  itemName?: string | null;
+  itemName?: string | number | null;
   item?: Array<Record<string, unknown>>;
 }> = z.lazy(() =>
   z
     .object({
-      itemName: z.string().nullable().optional(),
+      itemName: z.union([z.string(), z.number()]).nullable().optional(),
       item: z.array(eventDetailNestedItemSchema).optional(),
     })
     .catchall(z.unknown())
