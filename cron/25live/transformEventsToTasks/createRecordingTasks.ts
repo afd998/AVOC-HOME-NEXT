@@ -45,7 +45,7 @@ const formatSecondsToTime = (totalSeconds) => {
  * @param {Object} resource
  * @returns {Array<Object>}
  */
-function createRecordingTasks(event, resource) {
+export function createRecordingTasks(event, resource) {
   if (!event || !resource) {
     return [];
   }
@@ -93,7 +93,3 @@ function createRecordingTasks(event, resource) {
 
   return tasks;
 }
-
-module.exports = {
-  createRecordingTasks,
-};

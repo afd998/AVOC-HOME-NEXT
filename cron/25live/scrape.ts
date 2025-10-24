@@ -260,7 +260,7 @@ async function main(): Promise<void> {
   await saveEvents(processedEvents, date);
   await saveResourceEvents(processedEvents);
   await saveFacultyEvents(processedEvents);
-  //await transformEventsToTasks(processedEvents);
+  await transformEventsToTasks(processedEvents);
 }
 
 /**
