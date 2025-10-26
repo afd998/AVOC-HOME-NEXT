@@ -1,15 +1,13 @@
 import { getFilters } from "../filters";
 import { RoomFilter } from "@/lib/db/types";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-import { getTasksByDate } from "../tasks/tasks";
-import { tasks as tasksTable } from "@/drizzle/schema";
-import { InferSelectModel } from "drizzle-orm";
+import { getTasksByDate, type TaskWithDict } from "../tasks/tasks";
 const TIMELINE_START_HOUR = 7;
 const TIMELINE_END_HOUR = 23;
 const PIXELS_PER_MINUTE = 2.5;
 const ROOM_LABEL_WIDTH = 96;
 const EVENT_MARGIN = 1;
-type TaskRow = InferSelectModel<typeof tasksTable>;
+type TaskRow = TaskWithDict;
 
 export type DerivedTaskMetrics = {
   startMinutes: number;

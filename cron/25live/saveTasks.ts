@@ -41,7 +41,7 @@ export async function saveTasks(incoming: TaskRow[] , date: string) {
       set: {
         // do not update createdAt
         date: sql`excluded.date`,
-        name: sql`excluded.name`,
+        taskDict: sql`excluded.task_dict`,
         event: sql`excluded.event`,
         taskType: sql`excluded.task_type`,
         startTime: sql`excluded.start_time`,

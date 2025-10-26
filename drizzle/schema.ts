@@ -120,7 +120,6 @@ export const tasks = pgTable("tasks", {
 	assignedTo: uuid("assigned_to"),
 	completedBy: uuid("completed_by"),
 	date: date().notNull(),
-	tasks: text(),
 	resource: text(),
 	room: text().notNull(),
 	taskDict: text("task_dict"),
