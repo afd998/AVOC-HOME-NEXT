@@ -2,8 +2,6 @@ import React from "react";
 import { LoginForm } from "@/app/login/login-form";
 import LandingPageNavBar from "@/app/components/LandingPageNavBar";
 import Image from "next/image";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 export default async function LoginPage() {

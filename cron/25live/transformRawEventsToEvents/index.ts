@@ -8,7 +8,7 @@
  * @param {number} subjectItemId - The subject item ID
  * @returns {number} A unique integer ID
  */
-const generateDeterministicId = (itemId, itemId2, subjectItemId) => {
+const generateDeterministicId = (itemId: number, itemId2: number, subjectItemId: number) => {
   // Create a deterministic ID that combines the three numbers in a way that's guaranteed unique
   // and fits within PostgreSQL int8 limits (19 digits max)
   
@@ -170,7 +170,7 @@ const toTimeStrings = (start, end) => {
   return { startTimeStr, endTimeStr };
 };
 
-module.exports = {
+export {
   generateDeterministicId,
   getEventType,
   getOrganization,
@@ -179,5 +179,3 @@ module.exports = {
   parseRoomName,
   toTimeStrings
 };
-
-

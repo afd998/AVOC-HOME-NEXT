@@ -1,41 +1,44 @@
 const THIRTY_MINUTES_IN_SECONDS = 30 * 60;
-
+import { tasks } from "../../../drizzle/schema";
+import { InferInsertModel } from "drizzle-orm";
+import { type ProcessedEvent, type EventResource } from "../transformRawEventsToEvents/transformRawEventsToEvents";
+import { generateTaskId } from "./taskId";
 /**
  * Convert a HH:MM[:SS] string into seconds from midnight.
  * @param {string} timeStr
  * @returns {number|null}
  */
-const parseTimeToSeconds = (timeStr) => {
-  if (typeof timeStr !== 'string') {
+
+type TaskRow = InferInsertModel<typeof tasks>;
+const parseTimeToSeconds = (timeStr: string) => {
+  if (typeof timeStr !== "string") {
     return null;
   }
 
-  const parts = timeStr.split(':').map(part => Number(part));
+  const parts = timeStr.split(":").map((part) => Number(part));
 
   if (parts.some(Number.isNaN)) {
     return null;
   }
 
   const [hours = 0, minutes = 0, seconds = 0] = parts;
-
-  return (hours * 3600) + (minutes * 60) + Math.floor(seconds);
+  return hours * 3600 + minutes * 60 + Math.floor(seconds);
 };
-
 /**
  * Convert seconds from midnight into a HH:MM:SS string.
  * @param {number} totalSeconds
  * @returns {string}
  */
-const formatSecondsToTime = (totalSeconds) => {
+const formatSecondsToTime = (totalSeconds: number) => {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = Math.floor(totalSeconds % 60);
 
   return [
-    hours.toString().padStart(2, '0'),
-    minutes.toString().padStart(2, '0'),
-    seconds.toString().padStart(2, '0'),
-  ].join(':');
+    hours.toString().padStart(2, "0"),
+    minutes.toString().padStart(2, "0"),
+    seconds.toString().padStart(2, "0"),
+  ].join(":");
 };
 
 /**
@@ -45,22 +48,22 @@ const formatSecondsToTime = (totalSeconds) => {
  * @param {Object} resource
  * @returns {Array<Object>}
  */
-export function createRecordingTasks(event, resource) {
+export function createRecordingTasks(event: ProcessedEvent, resource: EventResource) {
   if (!event || !resource) {
     return [];
   }
 
-  const resourceName = resource.itemName || '';
+  const resourceName = resource.itemName || "";
   const hasVideoRecordingResource = resourceName
     .toUpperCase()
-    .startsWith('KSM-KGH-VIDEO-RECORDING');
+    .startsWith("KSM-KGH-VIDEO-RECORDING");
 
   if (!hasVideoRecordingResource) {
     return [];
   }
 
-  const startSeconds = parseTimeToSeconds(event.start_time);
-  const endSeconds = parseTimeToSeconds(event.end_time);
+  const startSeconds = parseTimeToSeconds(event.startTime);
+  const endSeconds = parseTimeToSeconds(event.endTime);
 
   if (startSeconds === null || endSeconds === null) {
     return [];
@@ -76,18 +79,25 @@ export function createRecordingTasks(event, resource) {
     return [];
   }
 
-  const tasks = [];
+  const tasks: TaskRow[] = [];
   for (let index = 0; index < totalChecks; index += 1) {
-    const checkSeconds = startSeconds + (index * THIRTY_MINUTES_IN_SECONDS);
+    const checkSeconds = startSeconds + index * THIRTY_MINUTES_IN_SECONDS;
+
+    const taskType = "RECORDING CHECK" as const;
+    const startTime = formatSecondsToTime(checkSeconds);
 
     tasks.push({
-      event_id: event.id,
-      taskType: 'RECORDING CHECK',
-      resource_item_name: resourceName,
+      id: generateTaskId(event.id, taskType, startTime),
+      taskType: "RECORDING CHECK",
       date: event.date,
-      time: formatSecondsToTime(checkSeconds),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      startTime,
+      createdAt: new Date().toISOString(),
+      status: "pending",
+      assignedTo: null,
+      completedBy: null,
+      event: event.id,
+      resource: resourceName,
+      room: event.roomName,
     });
   }
 

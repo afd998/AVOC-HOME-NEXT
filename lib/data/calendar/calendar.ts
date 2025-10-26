@@ -1,21 +1,26 @@
 import { getFilters } from "../filters";
-import { events } from "@/drizzle/schema";
-import { db } from "@/lib/db";
 import { RoomFilter } from "@/lib/db/types";
 import { Event as EventType } from "@/lib/db/types";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-import { eq } from "drizzle-orm";
-import { hydrateEventsWithFaculty } from "./event/utils/hyrdate-faculty";
-import { addFirstSessionFlags } from "./event/utils/hydrate-first-session";
+import { FacultyMember } from "./event/utils/hyrdate-faculty";
 import {
-  hydrateEventsWithResources,
-  EventWithResources,
-} from "./event/utils/hydrate-event-resources";
-import { addDisplayColumns } from "./event/utils/hydrate-display-columns";
+  addFirstSessionFlags,
+  type EventWithFirstSession,
+} from "./event/utils/hydrate-first-session";
+import type { CalendarEventResource } from "./event/utils/hydrate-event-resources";
+import {
+  addDisplayColumns,
+  type EventWithDisplay,
+} from "./event/utils/hydrate-display-columns";
+import { getEventsByDate } from "./event/events";
 
-export type finalEvent = EventWithResources;
+type HydratedEvent = EventType & {
+  faculty: FacultyMember[];
+  resources: CalendarEventResource[];
+};
+type CalendarBaseEvent = EventWithFirstSession<HydratedEvent>;
+export type finalEvent = EventWithDisplay<CalendarBaseEvent>;
 export type RoomRowData = { roomName: string; events: finalEvent[] };
-
 export async function getCalendar(
   date: string,
   filter: string,
@@ -25,9 +30,7 @@ export async function getCalendar(
   cacheTag(`calendar:${date}:${filter}:${autoHide ? "hide" : "show"}`);
   const rawEvents = await (async () => {
     try {
-      return await db.query.events.findMany({
-        where: eq(events.date, date),
-      });
+      return await getEventsByDate(date);
     } catch (error) {
       console.error("[db] calendar.getCalendar", {
         date,
@@ -38,15 +41,29 @@ export async function getCalendar(
       throw error;
     }
   })();
-  const filteredEvents = await filterEvents(rawEvents, filter);
-  const eventsWithFirstSessionFlag = await addFirstSessionFlags(filteredEvents);
-  const hydratedEvents = await hydrateEventsWithFaculty(
-    eventsWithFirstSessionFlag
-  );
-  const enhancedEvents = addDisplayColumns(hydratedEvents);
-  const eventsWithResources = await hydrateEventsWithResources(enhancedEvents);
 
-  const roomGroups = groupEventsByRoom(eventsWithResources);
+  const eventsWithRelations: HydratedEvent[] = rawEvents.map(
+    ({ facultyEvents, resourceEvents, ...event }) => ({
+      ...event,
+      faculty: (facultyEvents ?? []).map((relation) => relation.faculty),
+      resources: (resourceEvents ?? []).map((relation) => ({
+        id: relation.resourcesDict.id,
+        quantity: relation.quantity ?? 0,
+        instruction: relation.instructions ?? "",
+        displayName: relation.resourcesDict.name ?? relation.resourcesDict.id,
+        isAVResource: Boolean(relation.resourcesDict.isAv),
+        is_av: Boolean(relation.resourcesDict.isAv),
+        icon: relation.resourcesDict.icon ?? null,
+      })),
+    })
+  );
+
+  const eventsWithJoins = await addFirstSessionFlags<HydratedEvent>(
+    eventsWithRelations
+  );
+  const filteredEvents = await filterEvents(eventsWithJoins, filter);
+  const enhancedEvents = addDisplayColumns(filteredEvents);
+  const roomGroups = groupEventsByRoom(enhancedEvents);
   const finalRoomGroups = handleMergedRooms(roomGroups);
   const visibleRoomGroups = autoHide
     ? finalRoomGroups.filter((group) => group.events.length > 0)
@@ -177,10 +194,10 @@ function expandMergedRoomNames(roomName: string): string[] {
   return expandedSegments;
 }
 
-async function filterEvents(
-  eventsToFilter: EventType[],
+async function filterEvents<T extends EventType>(
+  eventsToFilter: T[],
   filter: string
-): Promise<EventType[]> {
+): Promise<T[]> {
   if (filter === "All Rooms") {
     return eventsToFilter;
   }

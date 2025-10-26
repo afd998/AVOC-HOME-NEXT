@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, jsonb, time, index, check, real, doublePrecision, date, bigserial, primaryKey, integer } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, jsonb, index, check, real, doublePrecision, time, date, bigserial, primaryKey, integer } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -108,37 +108,6 @@ export const facultyUpdates = pgTable("faculty_updates", {
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
 
-export const tasks = pgTable("tasks", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "services_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	name: text(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	event: bigint({ mode: "number" }),
-	taskType: text("task_type"),
-	startTime: time("start_time"),
-	status: text(),
-	assignedTo: uuid("assigned_to"),
-	completedBy: uuid("completed_by"),
-}, (table) => [
-	foreignKey({
-			columns: [table.assignedTo],
-			foreignColumns: [profiles.id],
-			name: "tasks_assigned_to_fkey"
-		}),
-	foreignKey({
-			columns: [table.completedBy],
-			foreignColumns: [profiles.id],
-			name: "tasks_completed_by_fkey"
-		}),
-	foreignKey({
-			columns: [table.event],
-			foreignColumns: [events.id],
-			name: "tasks_event_fkey"
-		}),
-	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
-]);
-
 export const rooms = pgTable("rooms", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "rooms_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
@@ -183,6 +152,41 @@ export const roomFilters = pgTable("room_filters", {
 	display: jsonb(),
 }, (table) => [
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
+]);
+
+export const tasks = pgTable("tasks", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "services_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	name: text(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	event: bigint({ mode: "number" }),
+	taskType: text("task_type"),
+	startTime: time("start_time"),
+	status: text(),
+	assignedTo: uuid("assigned_to"),
+	completedBy: uuid("completed_by"),
+	date: date().notNull(),
+	tasks: text(),
+	resource: text(),
+	room: text(),
+}, (table) => [
+	foreignKey({
+			columns: [table.assignedTo],
+			foreignColumns: [profiles.id],
+			name: "tasks_assigned_to_fkey"
+		}),
+	foreignKey({
+			columns: [table.completedBy],
+			foreignColumns: [profiles.id],
+			name: "tasks_completed_by_fkey"
+		}),
+	foreignKey({
+			columns: [table.event],
+			foreignColumns: [events.id],
+			name: "tasks_event_fkey"
+		}),
+	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
 ]);
 
 export const resourcesDict = pgTable("resources_dict", {

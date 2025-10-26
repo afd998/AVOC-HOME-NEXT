@@ -1,4 +1,5 @@
-import * as React from "react";
+ import { Suspense } from "react";
+
 import { Users, Calendar as CalendarIcon } from "lucide-react";
 
 import { NavUser } from "./nav-user";
@@ -43,10 +44,10 @@ export async function AppSidebar({
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <div className="flex flex-col items-center justify-center py-2 gap-2">
-          <React.Suspense fallback={null}>
+          <Suspense  fallback={null}> 
           
             <LogoButton />
-          </React.Suspense>
+          </Suspense>  
 
           {/* Calendar icon - only visible when collapsed */}
           <CalendarButton />
@@ -67,7 +68,7 @@ export async function AppSidebar({
         <SidebarGroup className="px-0 group-data-[collapsible=icon]:hidden py-0">
           <SidebarGroupContent className="">
             <div className="w-full flex justify-center">
-              <React.Suspense fallback={null}>
+              <Suspense fallback={null}>
                 <Calendar
                   mode="single"
                   useUrlDate={true}
@@ -75,7 +76,7 @@ export async function AppSidebar({
                   className="rounded-lg  ![--cell-size:--spacing(8)] md:![--cell-size:--spacing(8)]"
                   buttonVariant="ghost"
                 />
-              </React.Suspense>
+              </Suspense>
             </div>
 
             {/* Quarter Count and Academic Calendar Info */}
@@ -100,14 +101,14 @@ export async function AppSidebar({
                   {/* Filter Rooms Button */}
                   <div className="space-y-2">
                     <SidebarMenuButton>
-                      <React.Suspense fallback={null}>
+                      <Suspense fallback={null}>
                         <Filters />
-                      </React.Suspense>
+                      </Suspense>
                     </SidebarMenuButton>
                   </div>
-                  {/* <React.Suspense fallback={null}>
+                  {/* <Suspense fallback={null}>
                     <SliderServer />
-                  </React.Suspense> */}
+                  </Suspense> */}
                 </div>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -167,9 +168,9 @@ export async function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <React.Suspense fallback={null}>
+        {/* <Suspense fallback={null}>
           <NavUser />
-        </React.Suspense>
+        </Suspense> */}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

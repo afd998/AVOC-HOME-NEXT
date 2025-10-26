@@ -27,6 +27,7 @@ import {
 } from "./schemas";
 import { saveFacultyEvents } from "./saveFacultyEvents";
 import { saveResourceEvents } from "./saveResourceEvents";
+import { saveTasks } from "./saveTasks";
 // Validate configuration to ensure all required environment variables are present
 config.validate();
 
@@ -260,7 +261,8 @@ async function main(): Promise<void> {
   await saveEvents(processedEvents, date);
   await saveResourceEvents(processedEvents);
   await saveFacultyEvents(processedEvents);
-  await transformEventsToTasks(processedEvents);
+  const tasks = await transformEventsToTasks(processedEvents);
+  await saveTasks(tasks, date);
 }
 
 /**

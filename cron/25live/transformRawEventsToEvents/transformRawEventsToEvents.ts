@@ -1,4 +1,4 @@
-import utils from ".";
+import * as utils from "./index.js";    
 import { parseEventResources } from "./parse-resourses";
 import type { InferInsertModel } from "drizzle-orm";
 import { events } from "../../../lib/db/schema";

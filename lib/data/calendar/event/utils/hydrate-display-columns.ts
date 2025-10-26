@@ -1,18 +1,20 @@
 import { Event as EventType } from "@/lib/db/types";
-import { EventWithFaculty } from "./hyrdate-faculty";
 
 export type DerivedEventMetrics = ReturnType<typeof derivded>;
-export type EventWithDisplay = EventWithFaculty & {
+export type EventWithDisplay<T extends EventType = EventType> = T & {
   derived: DerivedEventMetrics;
 };
 
-export function addDisplayColumns(
-  events: EventWithFaculty[]
-): EventWithDisplay[] {
-  return events.map((event) => ({
-    ...event,
-    derived: derivded(event, 7, 23, 2.5, 96),
-  }));
+export function addDisplayColumns<T extends EventType>(
+  events: T[]
+): EventWithDisplay<T>[] {
+  return events.map(
+    (event) =>
+      ({
+        ...event,
+        derived: derivded(event, 7, 23, 2.5, 96),
+      }) satisfies EventWithDisplay<T>
+  );
 }
 
 export const derivded = (

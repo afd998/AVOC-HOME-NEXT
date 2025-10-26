@@ -1,17 +1,13 @@
-import { Event as EventType } from "@/lib/db/types";
-import { events as eventsTable } from "@/drizzle/schema";
-import { db } from "@/lib/db";
+import { ProcessedEvent } from "../transformRawEventsToEvents/transformRawEventsToEvents";
+import { db } from "../../../lib/db";
+import { events as eventsTable } from "../../../drizzle/schema";
 import { and, asc, eq, inArray } from "drizzle-orm";
-
-export type EventWithFirstSession<T extends EventType = EventType> = T & {
-  isFirstSession: boolean;
-};
-
-export async function addFirstSessionFlags<T extends EventType>(
-  events: T[]
-): Promise<EventWithFirstSession<T>[]> {
+import { InferInsertModel } from "drizzle-orm";
+import { tasks } from "../../../drizzle/schema";
+import { generateTaskId } from "./taskId";
+type TaskRow = InferInsertModel<typeof tasks>;
+export async function createFirstSessionTasks(events: ProcessedEvent[]) {
   const lectureEvents = events.filter((event) => event.eventType === "Lecture");
-
   if (lectureEvents.length === 0) {
     return events.map((event) => ({
       ...event,
@@ -24,7 +20,7 @@ export async function addFirstSessionFlags<T extends EventType>(
     uniqueLectureNames.add(event.eventName!);
   });
 
-  const earliestLectureByName = new Map<string, EventType>();
+  const earliestLectureByName = new Map<string, ProcessedEvent>();
 
   if (uniqueLectureNames.size > 0) {
     const namesToQuery = Array.from(uniqueLectureNames);
@@ -58,14 +54,23 @@ export async function addFirstSessionFlags<T extends EventType>(
       throw error;
     }
   }
-
-  return events.map(
-    (event) =>
-      ({
-        ...event,
-        isFirstSession:
-          event.eventType === "Lecture" &&
-          earliestLectureByName.get(event.eventName!)?.id === event.id,
-      }) satisfies EventWithFirstSession<T>
-  );
+  let tasks: TaskRow[] = [];
+  events.forEach((event) => {
+    if (earliestLectureByName.get(event.eventName!)?.id === event.id) {
+      tasks.push({
+        startTime: event.startTime,
+        taskType: "FIRST SESSION",
+        event: event.id,
+        room: event.roomName,
+        date: event.date,
+        createdAt: new Date().toISOString(),
+        status: "pending",
+        assignedTo: null,
+        completedBy: null,
+        resource: null,
+        id: generateTaskId(event.id, "FIRST SESSION", event.startTime),
+      });
+    }
+  });
+  return tasks;
 }

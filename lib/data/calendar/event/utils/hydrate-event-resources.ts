@@ -13,7 +13,9 @@ export type CalendarEventResource = {
   icon: unknown | null;
 };
 
-export type EventWithResources = EventWithDisplay & {
+export type EventWithResources<
+  T extends EventWithDisplay = EventWithDisplay
+> = T & {
   resources: CalendarEventResource[];
 };
 
