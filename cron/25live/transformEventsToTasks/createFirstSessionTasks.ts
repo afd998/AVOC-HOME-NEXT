@@ -9,10 +9,7 @@ type TaskRow = InferInsertModel<typeof tasks>;
 export async function createFirstSessionTasks(events: ProcessedEvent[]) {
   const lectureEvents = events.filter((event) => event.eventType === "Lecture");
   if (lectureEvents.length === 0) {
-    return events.map((event) => ({
-      ...event,
-      isFirstSession: false,
-    }));
+    return [];
   }
 
   const uniqueLectureNames = new Set<string>();
@@ -43,7 +40,7 @@ export async function createFirstSessionTasks(events: ProcessedEvent[]) {
       namedLectures.forEach((lecture) => {
         const key = lecture.eventName!;
         if (!earliestLectureByName.has(key)) {
-          earliestLectureByName.set(key, lecture);
+          earliestLectureByName.set(key, lecture as ProcessedEvent);
         }
       });
     } catch (error) {

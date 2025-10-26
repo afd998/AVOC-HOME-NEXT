@@ -169,7 +169,7 @@ export const tasks = pgTable("tasks", {
 	date: date().notNull(),
 	tasks: text(),
 	resource: text(),
-	room: text(),
+	room: text().notNull(),
 }, (table) => [
 	foreignKey({
 			columns: [table.assignedTo],
@@ -187,6 +187,14 @@ export const tasks = pgTable("tasks", {
 			name: "tasks_event_fkey"
 		}),
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
+]);
+
+export const taskDict = pgTable("task_dict", {
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	id: text().primaryKey().notNull(),
+	icon: jsonb(),
+}, (table) => [
+	unique("task_dict_id_key").on(table.id),
 ]);
 
 export const resourcesDict = pgTable("resources_dict", {

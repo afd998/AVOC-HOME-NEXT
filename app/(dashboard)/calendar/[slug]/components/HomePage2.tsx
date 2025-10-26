@@ -9,6 +9,7 @@ import {
   CALENDAR_ROW_HEIGHT_PX,
   CALENDAR_START_HOUR,
 } from "@/app/(dashboard)/calendar/[slug]/calendarConfig";
+import { getTasksCalendar } from "@/lib/data/tasks/taskscalendar";
 
 export default async function HomePage2(props: {
   filter: string;
@@ -19,7 +20,11 @@ export default async function HomePage2(props: {
   cacheTag(
     `calendar:${props.slug}:${props.filter}:${props.autoHide ? "hide" : "show"}`
   );
-  const calendar = await getCalendar(props.slug, props.filter, props.autoHide);
+  const [calendar, tasks] = await Promise.all([
+    getCalendar(props.slug, props.filter, props.autoHide),
+    getTasksCalendar(props.slug, props.filter, props.autoHide),
+  ]);
+
   const actualRowCount = calendar.length;
   const safeRowCount = Math.max(actualRowCount, 1);
 
@@ -41,6 +46,7 @@ export default async function HomePage2(props: {
       <div className="relative pointer-events-auto">
         <RoomRows
           calendar={calendar}
+          tasks={tasks}
           date={props.slug}
           filter={props.filter}
           autoHide={props.autoHide}

@@ -28,8 +28,6 @@ export default function Event({ event, rowHeightPx = 96 }: EventProps) {
     ? Math.max(0, realWidthPx - MAX_VISIBLE_WIDTH_PX)
     : 0;
   const maxVisibleWidthPx = MAX_VISIBLE_WIDTH_PX;
-
-  // Calculate event height and positioning relative to row height
   const ROW_HEIGHT_PX = rowHeightPx;
   const DEFAULT_EVENT_HEIGHT_PX = Math.max(ROW_HEIGHT_PX - 8, 32); // default: slight vertical padding
   const REDUCED_EVENT_HEIGHT_PX = Math.max(
@@ -38,10 +36,8 @@ export default function Event({ event, rowHeightPx = 96 }: EventProps) {
   );
   const AD_HOC_EVENT_HEIGHT_PX = Math.max(Math.round(ROW_HEIGHT_PX * 0.5), 28);
   const MERGED_ROOM_HEIGHT_PX = Math.round(ROW_HEIGHT_PX * 1.875);
-
   let eventHeightPx: number;
   let eventTopPx: string;
-
   if (event.derived.isMergedRoomEvent) {
     eventHeightPx = MERGED_ROOM_HEIGHT_PX;
     eventTopPx = "6px";
