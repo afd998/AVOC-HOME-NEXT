@@ -9,7 +9,7 @@ import {
   CALENDAR_ROW_HEIGHT_PX,
   CALENDAR_START_HOUR,
 } from "@/app/(dashboard)/calendar/[slug]/calendarConfig";
-import { getTasksCalendar } from "@/lib/data/tasks/taskscalendar";
+import { getTasksCalendar } from "@/lib/data/calendar/taskscalendar";
 
 export default async function HomePage2(props: {
   filter: string;

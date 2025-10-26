@@ -1,11 +1,24 @@
 import { getFilters } from "../filters";
 import { RoomFilter } from "@/lib/db/types";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-import { getTasksByDate } from "./tasks";
+import { getTasksByDate } from "../tasks/tasks";
 import { tasks as tasksTable } from "@/drizzle/schema";
 import { InferSelectModel } from "drizzle-orm";
-
+const TIMELINE_START_HOUR = 7;
+const TIMELINE_END_HOUR = 23;
+const PIXELS_PER_MINUTE = 2.5;
+const ROOM_LABEL_WIDTH = 96;
+const EVENT_MARGIN = 1;
 type TaskRow = InferSelectModel<typeof tasksTable>;
+
+export type DerivedTaskMetrics = {
+  startMinutes: number;
+  left: string;
+};
+
+export type HydratedTask = TaskRow & {
+  derived: DerivedTaskMetrics;
+};
 
 export async function getTasksCalendar(
   date: string,
@@ -21,9 +34,10 @@ export async function getTasksCalendar(
       throw error;
     }
   })();
-  
+
   const filteredTasks = await filterTasks(rawTasks, filter);
-  const roomGroups = groupTasksByRoom(filteredTasks);
+  const HydrateTasks = addDisplayColumns(filteredTasks);
+  const roomGroups = groupTasksByRoom(HydrateTasks);
   const finalRoomGroups = handleMergedRooms(roomGroups);
   const visibleRoomGroups = autoHide
     ? finalRoomGroups.filter((group) => group.tasks.length > 0)
@@ -53,8 +67,8 @@ export async function getTasksCalendar(
 }
 
 function groupTasksByRoom(
-  tasks: TaskRow[]
-): { roomName: string; tasks: TaskRow[] }[] {
+  tasks: HydratedTask[]
+): { roomName: string; tasks: HydratedTask[] }[] {
   // Group events by roomName
   const groupedTasks = tasks.reduce((acc, task) => {
     const roomName = task.room;
@@ -63,7 +77,7 @@ function groupTasksByRoom(
     }
     acc[roomName].push(task);
     return acc;
-  }, {} as Record<string, TaskRow[]>);
+  }, {} as Record<string, HydratedTask[]>);
 
   // Convert to array of objects
   return Object.entries(groupedTasks).map(([roomName, tasks]) => ({
@@ -73,8 +87,8 @@ function groupTasksByRoom(
 }
 
 function handleMergedRooms(
-  roomGroups: { roomName: string; tasks: TaskRow[] }[]
-): { roomName: string; tasks: TaskRow[] }[] {
+  roomGroups: { roomName: string; tasks: HydratedTask[] }[]
+): { roomName: string; tasks: HydratedTask[] }[] {
   // Ensure any "&" rooms also create groups for the additional rooms they reference.
   const existingRoomNames = new Set(roomGroups.map((group) => group.roomName));
   roomGroups.forEach((group) => {
@@ -83,7 +97,7 @@ function handleMergedRooms(
     const expandedNames = expandMergedRoomNames(group.roomName).slice(1);
     expandedNames.forEach((name) => {
       if (existingRoomNames.has(name)) return;
-      const emptyGroup: { roomName: string; tasks: TaskRow[] } = {
+      const emptyGroup: { roomName: string; tasks: HydratedTask[] } = {
         roomName: name,
         tasks: [],
       };
@@ -181,4 +195,23 @@ async function filterTasks(
 
   const allowedRooms = new Set(filterObject.display as string[]);
   return tasksToFilter.filter((task) => allowedRooms.has(task.room));
+}
+
+export function addDisplayColumns(tasks: TaskRow[]): HydratedTask[] {
+  return tasks.map((task) => {
+    const [startHour, startMin] = task.startTime.split(":").map(Number);
+    const taskStartMinutes = startHour * 60 + startMin;
+    const startMinutesRelative = taskStartMinutes - TIMELINE_START_HOUR * 60;
+    return {
+      ...task,
+      derived: {
+        startMinutes: startMinutesRelative,
+        left: `${
+          startMinutesRelative * PIXELS_PER_MINUTE +
+          EVENT_MARGIN -
+          ROOM_LABEL_WIDTH
+        }px`,
+      },
+    };
+  });
 }

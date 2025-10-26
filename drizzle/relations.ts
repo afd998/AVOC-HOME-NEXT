@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, events, notifications, profiles, tasks, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict } from "./schema";
+import { faculty, facultySetup, events, notifications, profiles, tasks, taskDict, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -64,6 +64,14 @@ export const tasksRelations = relations(tasks, ({one}) => ({
 		fields: [tasks.event],
 		references: [events.id]
 	}),
+	taskDict: one(taskDict, {
+		fields: [tasks.taskDict],
+		references: [taskDict.id]
+	}),
+}));
+
+export const taskDictRelations = relations(taskDict, ({many}) => ({
+	tasks: many(tasks),
 }));
 
 export const panoptoChecksRelations = relations(panoptoChecks, ({one}) => ({

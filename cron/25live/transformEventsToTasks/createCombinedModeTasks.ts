@@ -62,6 +62,7 @@ export function createCombinedModeTasks(events: ProcessedEvent[]) {
       resource: null,
       id: generateTaskId(task.event, task.taskType, task.startTime),
       room: task.room,
+      taskDict: "COMBINED MODE"
     };
   });
 }

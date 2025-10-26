@@ -1,16 +1,15 @@
 import { Badge } from "../../../../../components/ui/badge";
-import Event from "@/app/(dashboard)/calendar/[slug]/components/Event/components/Event";    
+import Event from "@/app/(dashboard)/calendar/[slug]/components/Event/components/Event";
 import { finalEvent } from "@/lib/data/calendar/calendar";
-import { InferSelectModel } from "drizzle-orm";
-import { tasks as tasksTable } from "@/drizzle/schema";
-type TaskRow = InferSelectModel<typeof tasksTable>;
-import Task from "@/app/(dashboard)/calendar/[slug]/components/Tasks/Task"; 
+
+import { HydratedTask } from "@/lib/data/calendar/taskscalendar";
+import Task from "@/app/(dashboard)/calendar/[slug]/components/Tasks/Task";
 interface RoomRowProps {
   room: string;
   roomEvents: finalEvent[];
   isEvenRow?: boolean; // Make optional with default
   isLastRow?: boolean; // Add prop for last row styling
-  tasks: TaskRow[];
+  tasks: HydratedTask[];
 }
 
 export default async function RoomRow({
@@ -84,7 +83,7 @@ export default async function RoomRow({
         {roomEvents?.map((event: finalEvent) => (
           <Event key={event.id} event={event} rowHeightPx={96} />
         ))}
-        {tasks?.map((task: TaskRow) => (
+        {tasks?.map((task: HydratedTask) => (
           <Task key={task.id} task={task} rowHeightPx={96} />
         ))}
       </div>

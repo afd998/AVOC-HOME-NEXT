@@ -66,6 +66,7 @@ export async function createFirstSessionTasks(events: ProcessedEvent[]) {
         completedBy: null,
         resource: null,
         id: generateTaskId(event.id, "FIRST SESSION", event.startTime),
+        taskDict: "FIRST SESSION"
       });
     }
   });

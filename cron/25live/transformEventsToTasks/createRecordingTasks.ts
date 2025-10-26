@@ -98,6 +98,7 @@ export function createRecordingTasks(event: ProcessedEvent, resource: EventResou
       event: event.id,
       resource: resourceName,
       room: event.roomName,
+      taskDict: "RECORDING CHECK"
     });
   }
 
