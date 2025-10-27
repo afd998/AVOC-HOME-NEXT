@@ -1,4 +1,3 @@
-import { CalendarShellProvider } from "@/app/(dashboard)/calendar/[slug]/components/CalendarShellProvider";
 import type { ReactNode } from "react";
 
 export default function CalendarPageLayout({
@@ -10,11 +9,5 @@ export default function CalendarPageLayout({
   eventModal: ReactNode;
   taskModal: ReactNode;
 }>) {
-  return (
-    <CalendarShellProvider>
-      {children}
-      {eventModal}
-      {taskModal}
-    </CalendarShellProvider>
-  );
+  return <>{children}{eventModal}{taskModal}</>;
 }

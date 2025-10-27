@@ -1,6 +1,4 @@
-import { getCalendar } from "@/lib/data/calendar/calendar";
 import VerticalLines from "@/app/(dashboard)/calendar/[slug]/components/VerticalLines";
-import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import RoomRows from "@/app/(dashboard)/calendar/[slug]/components/RoomRows";
 import CalendarShellMetricsUpdater from "@/app/(dashboard)/calendar/[slug]/components/CalendarShellMetricsUpdater";
 import {
@@ -9,22 +7,24 @@ import {
   CALENDAR_ROW_HEIGHT_PX,
   CALENDAR_START_HOUR,
 } from "@/app/(dashboard)/calendar/[slug]/calendarConfig";
-import { getTasksCalendar } from "@/lib/data/calendar/taskscalendar";
+import type { RoomRowData } from "@/lib/data/calendar/calendar";
+import type { HydratedTask } from "@/lib/data/calendar/taskscalendar";
 
-export default async function HomePage2(props: {
+type HomePage2Props = {
   filter: string;
   autoHide: boolean;
   slug: string;
-}) {
-  "use cache";
-  cacheTag(
-    `calendar:${props.slug}:${props.filter}:${props.autoHide ? "hide" : "show"}`
-  );
-  const [calendar, tasks] = await Promise.all([
-    getCalendar(props.slug, props.filter, props.autoHide),
-    getTasksCalendar(props.slug, props.filter, props.autoHide),
-  ]);
+  calendar: RoomRowData[];
+  tasks: { roomName: string; tasks: HydratedTask[] }[];
+};
 
+export default function HomePage2({
+  filter,
+  autoHide,
+  slug,
+  calendar,
+  tasks,
+}: HomePage2Props) {
   const actualRowCount = calendar.length;
   const safeRowCount = Math.max(actualRowCount, 1);
 
@@ -32,7 +32,7 @@ export default async function HomePage2(props: {
     <>
       <CalendarShellMetricsUpdater
         actualRowCount={actualRowCount}
-        autoHide={props.autoHide}
+        autoHide={autoHide}
       />
       <div className="pointer-events-none absolute inset-0">
         <VerticalLines
@@ -47,9 +47,9 @@ export default async function HomePage2(props: {
         <RoomRows
           calendar={calendar}
           tasks={tasks}
-          date={props.slug}
-          filter={props.filter}
-          autoHide={props.autoHide}
+          date={slug}
+          filter={filter}
+          autoHide={autoHide}
         />
       </div>
     </>
