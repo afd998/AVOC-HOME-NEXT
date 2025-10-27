@@ -18,7 +18,7 @@ export default function VerticalLines({ startHour, endHour, pixelsPerMinute, act
         style={{ 
           left: `${left}px`,
           height: `${actualContentHeight}px`,
-          zIndex: 40
+          zIndex: 12
         }}
       />
     );

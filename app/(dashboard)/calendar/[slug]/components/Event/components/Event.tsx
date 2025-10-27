@@ -56,8 +56,8 @@ export default function Event({ event, rowHeightPx = 96 }: EventProps) {
           event.derived.isMergedRoomEvent ? "pt-2 pb-2" : "pt-5 pb-1"
         } ${
           event.derived.isMergedRoomEvent
-            ? "hover:z-[70] z-[52]"
-            : "hover:z-[60] z-[49]"
+            ? "hover:z-[46] z-[42]"
+            : "hover:z-[44] z-[38]"
         }`}
         style={{
           top: eventTopPx,

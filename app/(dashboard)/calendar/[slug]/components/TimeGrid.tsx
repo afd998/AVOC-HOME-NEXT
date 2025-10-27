@@ -40,7 +40,7 @@ export default function TimeGrid({
         style={{
           left: `${left}px`,
           top: "-12px", // Adjust top position to center the scaled text
-          zIndex: 53,
+          zIndex: 24,
           height: "48px", // Give enough height for the scaled text
           display: "flex",
           alignItems: "center",
@@ -71,7 +71,7 @@ export default function TimeGrid({
           className="absolute top-1 h-4 transition-all duration-200 ease-in-out"
           style={{
             left: `${left}px`,
-            zIndex: 70,
+            zIndex: 18,
           }}
         />
       );
@@ -81,8 +81,8 @@ export default function TimeGrid({
   const baseProps = {
     className: `${
       sticky ? "sticky top-0" : ""
-    } w-full h-6 bg-background/50  border-b z-50 flex items-center relative overflow-hidden`,
-    style: { zIndex: 60, opacity: 1.0 },
+    } w-full h-6 bg-background/50  border-b z-30 flex items-center relative overflow-hidden`,
+    style: { zIndex: 28, opacity: 1.0 },
   };
 
   return (

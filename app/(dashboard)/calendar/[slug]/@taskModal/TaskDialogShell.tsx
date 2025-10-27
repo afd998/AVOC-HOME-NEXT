@@ -24,7 +24,7 @@ export default function TaskDialogShell({ children }: TaskDialogShellProps) {
   return (
     <Dialog defaultOpen open modal onOpenChange={handleOpenChange}>
       <DialogContent
-      title="Task"
+        title="Task"
         className="max-w-3xl w-[min(90vw,56rem)]"
         showCloseButton
       >

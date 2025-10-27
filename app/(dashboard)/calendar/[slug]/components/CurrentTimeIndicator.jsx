@@ -43,7 +43,7 @@ export default function CurrentTimeIndicator({ startHour, endHour, pixelsPerMinu
             borderRight: '6px solid transparent',
             borderTop: '8px solid #ef4444', // red-500 - red triangle
             filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.8)) drop-shadow(0 0 16px rgba(239, 68, 68, 0.4))',
-            zIndex: 1001,
+            zIndex: 47,
             position: 'absolute',
             pointerEvents: 'none'
           }}
@@ -58,7 +58,7 @@ export default function CurrentTimeIndicator({ startHour, endHour, pixelsPerMinu
             top: '10px', // Start below the playhead
             height: 'calc(100% - 10px)', // Extend to bottom of container minus top offset
             boxShadow: '0 0 8px rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.4), 0 0 24px rgba(239, 68, 68, 0.2)',
-            zIndex: 1000,
+            zIndex: 46,
             pointerEvents: 'none'
           }}
         />

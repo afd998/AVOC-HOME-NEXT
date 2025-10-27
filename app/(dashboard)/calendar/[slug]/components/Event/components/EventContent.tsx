@@ -156,7 +156,7 @@ function KECEvent({ event }: { event: finalEvent }) {
           className="text-left bg-transparent border-0 py-0 h-auto text-xs"
           style={{ color: "#DAA520" }}
         >
-          EXECUTIVE EDUCATION
+          EXEC ED
         </Badge>
       </ItemContent>
     </Item>

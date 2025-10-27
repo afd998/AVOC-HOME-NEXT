@@ -50,25 +50,25 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 }));
 
 export const tasksRelations = relations(tasks, ({one}) => ({
-	profile_assignedTo: one(profiles, {
-		fields: [tasks.assignedTo],
-		references: [profiles.id],
-		relationName: "tasks_assignedTo_profiles_id"
-	}),
+ 	profile_assignedTo: one(profiles, {
+ 		fields: [tasks.assignedTo],
+ 		references: [profiles.id],
+ 		relationName: "tasks_assignedTo_profiles_id"
+ 	}),
 	profile_completedBy: one(profiles, {
 		fields: [tasks.completedBy],
 		references: [profiles.id],
 		relationName: "tasks_completedBy_profiles_id"
 	}),
-	event: one(events, {
-		fields: [tasks.event],
-		references: [events.id]
-	}),
-	taskDict: one(taskDict, {
-		fields: [tasks.taskDict],
-		references: [taskDict.id]
-	}),
-}));
+ 	eventDetails: one(events, {
+ 		fields: [tasks.event],
+ 		references: [events.id]
+ 	}),
+ 	taskDictDetails: one(taskDict, {
+ 		fields: [tasks.taskDict],
+ 		references: [taskDict.id]
+ 	}),
+ }));
 
 export const taskDictRelations = relations(taskDict, ({many}) => ({
 	tasks: many(tasks),

@@ -23,7 +23,7 @@ export default function Task({
   return (
     <Link href={`/tasks/${task.id}`}>
       <div
-        className="absolute inset-y-0 flex z-[100] items-center"
+        className="absolute inset-y-0 flex  items-center"
         style={{
           left: task.derived.left,
           height: `${ROW_HEIGHT_PX}px`,

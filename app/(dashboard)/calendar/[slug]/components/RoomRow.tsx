@@ -20,20 +20,6 @@ export default async function RoomRow({
   tasks,
 }: RoomRowProps) {
   const roomText = room.replace(/^GH\s+/, "");
-  // const roomSpelling = useRoom(room); // Commented out since we're not using spelling anymore
-
-  // Check if this room has any merged room events
-  const hasMergedRoomEvents =
-    roomEvents?.some(
-      (event) =>
-        event.roomName?.includes("&") ||
-        (event.eventType === "CMC" &&
-          (event.roomName === "GH 2410A" ||
-            event.roomName === "GH 2410B" ||
-            event.roomName?.includes("2410A") ||
-            event.roomName?.includes("2410B")))
-    ) || false;
-
   const rowHeightStyle = { height: `96px` } as const;
 
   return (
@@ -42,8 +28,8 @@ export default async function RoomRow({
         isLastRow ? "rounded-b-md" : ""
       } ${
         isEvenRow
-          ? "bg-muted/20 dark:bg-muted/30"
-          : "bg-muted/5 dark:bg-muted/45"
+          ? "bg-muted/80 dark:bg-muted/100"
+          : "bg-muted/5 dark:bg-muted/85"
       }`}
       style={{
         ...rowHeightStyle,
@@ -54,7 +40,7 @@ export default async function RoomRow({
           isLastRow ? "rounded-bl-md" : ""
         }`}
         style={{
-          zIndex: 100,
+          zIndex: 36,
           ...rowHeightStyle,
         }}
         data-room-label="true"
