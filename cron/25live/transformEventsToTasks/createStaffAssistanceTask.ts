@@ -12,7 +12,7 @@ export function createStaffAssistanceTask(
     id: generateTaskId(event.id, "STAFF ASSISTANCE", event.startTime),
     taskType: "STAFF ASSISTANCE",
     date: event.date,
-    startTime: adjustTimeByMinutes(event.startTime, -10),
+    startTime: adjustTimeByMinutes(event.startTime, -7.5),
     createdAt: new Date().toISOString(),
     status: "pending",
     assignedTo: null,

@@ -17,9 +17,8 @@ export default async function RoomRows({
   filter: string;
   autoHide: boolean;
 }) {
-
   return (
-    <div >
+    <div>
       {calendar.map(
         (
           { roomName, events }: { roomName: string; events: finalEvent[] },
@@ -27,7 +26,13 @@ export default async function RoomRows({
         ) => {
           return (
             <RoomRow
-              tasks={tasks.find((task) => task.roomName === roomName)?.tasks || []}
+              tasks={
+                tasks
+                  .find((task) => task.roomName === roomName)
+                  ?.tasks.filter(
+                    (task) => task.taskType !== "RECORDING CHECK"
+                  ) || []
+              }
               key={`${roomName}`}
               room={roomName}
               roomEvents={events}

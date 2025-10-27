@@ -80,7 +80,7 @@ export default async function EventHeader({ event }: { event: finalEvent }) {
                 <TooltipTrigger asChild>
                   <div className="transition-all duration-250 ease-in-out cursor-pointer relative">
                     <div className="relative">
-                      <ResourceIcon icon={resource.icon} />
+                      {/* <ResourceIcon icon={resource.icon} /> */}
 
                       {/* {resource.displayName === "Video Recording" &&
                         allChecksComplete && (

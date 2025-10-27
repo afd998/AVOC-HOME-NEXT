@@ -56,7 +56,7 @@ export async function createFirstSessionTasks(events: ProcessedEvent[]) {
   events.forEach((event) => {
     if (earliestLectureByName.get(event.eventName!)?.id === event.id) {
       tasks.push({
-        startTime: adjustTimeByMinutes(event.startTime, -10),
+        startTime: adjustTimeByMinutes(event.startTime, -7.5),
         taskType: "FIRST SESSION",
         event: event.id,
         room: event.roomName,

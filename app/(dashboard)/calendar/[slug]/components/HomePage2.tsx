@@ -1,6 +1,7 @@
 import VerticalLines from "@/app/(dashboard)/calendar/[slug]/components/VerticalLines";
 import RoomRows from "@/app/(dashboard)/calendar/[slug]/components/RoomRows";
 import CalendarShellMetricsUpdater from "@/app/(dashboard)/calendar/[slug]/components/CalendarShellMetricsUpdater";
+import CurrentTimeIndicator from "@/app/(dashboard)/calendar/[slug]/components/CurrentTimeIndicator";
 import {
   CALENDAR_END_HOUR,
   CALENDAR_PIXELS_PER_MINUTE,
@@ -41,6 +42,11 @@ export default function HomePage2({
           pixelsPerMinute={CALENDAR_PIXELS_PER_MINUTE}
           actualRowCount={safeRowCount}
           rowHeightPx={CALENDAR_ROW_HEIGHT_PX}
+        />
+        <CurrentTimeIndicator
+          startHour={CALENDAR_START_HOUR}
+          endHour={CALENDAR_END_HOUR}
+          pixelsPerMinute={CALENDAR_PIXELS_PER_MINUTE}
         />
       </div>
       <div className="relative pointer-events-auto">

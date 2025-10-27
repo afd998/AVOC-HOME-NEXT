@@ -1,7 +1,6 @@
 import { ProcessedEvent } from "../transformRawEventsToEvents/transformRawEventsToEvents";
 import { generateTaskId, adjustTimeByMinutes } from "./utils";
 
-
 export function createCombinedModeTasks(events: ProcessedEvent[]) {
   //create sorted array by time of 1420 or 30 events and 1420 and 30 events  and in between each transition
   //and also the begining, create a n uncombine/combine task at that time.
@@ -28,22 +27,22 @@ export function createCombinedModeTasks(events: ProcessedEvent[]) {
     return a.time.localeCompare(b.time);
   });
 
-
   const tasks = [];
-
-  tasks.push({
-    startTime: adjustTimeByMinutes(sorted[0].time, -10),
-    taskType: sorted[0].type,
-    event: sorted[0].eventId,
-    room: sorted[0].room,
-  });
-
-  for (let i = 0; i < sorted.length-1; i++) {
+  if (sorted.length > 0) {
+    tasks.push({
+      startTime: adjustTimeByMinutes(sorted[0].time, -7.5),
+      taskType: sorted[0].type,
+      event: sorted[0].eventId,
+      room: sorted[0].room,
+    });
+  }
+  
+  for (let i = 0; i < sorted.length - 1; i++) {
     const e = sorted[i];
     const nextEvent = sorted[i + 1];
     if (e.type !== nextEvent.type) {
       tasks.push({
-        startTime: adjustTimeByMinutes(e.endTime, 5),
+        startTime: adjustTimeByMinutes(e.endTime, 7.5),
         taskType: nextEvent.type,
         event: e.eventId,
         room: "GH 1420&30",
@@ -64,7 +63,7 @@ export function createCombinedModeTasks(events: ProcessedEvent[]) {
       resource: null,
       id: generateTaskId(task.event, task.taskType, task.startTime),
       room: task.room,
-      taskDict: task.taskType
+      taskDict: task.taskType,
     };
   });
 }

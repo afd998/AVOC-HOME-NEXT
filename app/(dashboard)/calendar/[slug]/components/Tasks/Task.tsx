@@ -30,17 +30,27 @@ export default function Task({
           transform: "translateX(-50%)",
         }}
       >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={task.taskType}
-          className="h-8 w-8 rounded-full p-1 bg-transparent shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
-          style={{ transformOrigin: "center center" }}
-          data-event="true"
-        >
-          <TaskIcon task={task} className="w-full h-full" />
-        </Button>
+        <div className="flex flex-col items-center gap-1">
+          <span
+            aria-hidden="true"
+            className="h-2 w-px rounded-full bg-muted-foreground/60"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={task.taskType}
+            className="h-8 w-8 rounded-full p-1 bg-transparent shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
+            style={{ transformOrigin: "center center" }}
+            data-event="true"
+          >
+            <TaskIcon task={task} className="w-full h-full" />
+          </Button>
+          <span
+            aria-hidden="true"
+            className="h-2 w-px rounded-full bg-muted-foreground/60"
+          />
+        </div>
       </div>
     </Link>
   );

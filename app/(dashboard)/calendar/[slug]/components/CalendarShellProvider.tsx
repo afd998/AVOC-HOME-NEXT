@@ -61,7 +61,7 @@ export function CalendarShellProvider({ children }: { children: ReactNode }) {
         actualRowCount={actualRowCount}
         rowHeightPx={CALENDAR_ROW_HEIGHT_PX}
         pageZoom={CALENDAR_PAGE_ZOOM}
-        className="h-[calc(100vh-8rem)]"
+        className="h-[calc(100vh-4rem)]"
         dataAutoHide={dataAutoHide}
         header={
           <TimeGrid
