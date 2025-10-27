@@ -69,25 +69,25 @@ async function TaskDialogContent({ taskId }: TaskDialogContentProps) {
   const formattedDate = formatTaskDate(task.date);
   const formattedTime = formatTaskTime(task.startTime);
   const formattedStatus = formatNullable(task.status, "No status set");
-  const formattedResource = formatNullable(task.resource, "No resource listed");
   const createdAtLabel = formatDateTime(task.createdAt);
   const eventDetailText = task.eventDetails
     ? `${task.eventDetails.eventName} - ${formatTaskDate(task.eventDetails.date)} | ${formatTaskTime(task.eventDetails.startTime)} - ${formatTaskTime(task.eventDetails.endTime)}`
     : "No linked event";
   const resourceEvents = task.eventDetails?.resourceEvents ?? [];
+  const taskResourceId =
+    typeof task.resource === "string" && task.resource.trim().length > 0
+      ? task.resource.trim()
+      : null;
   const hasResourceEvents = resourceEvents.length > 0;
 
   const taskDetails: Array<{ label: string; value: ReactNode; href?: string }> = [
     { label: "Room", value: task.room },
     { label: "Status", value: formattedStatus },
-    { label: "Resource", value: formattedResource },
-    { label: "Task Dictionary", value: formatNullable(task.taskDict, "None") },
     {
       label: "Event",
       value: eventDetailText,
       href: task.eventDetails ? `/events/${task.eventDetails.id}` : undefined,
     },
-    { label: "Start Time", value: formattedTime },
   ];
 
   return (
@@ -157,7 +157,7 @@ async function TaskDialogContent({ taskId }: TaskDialogContentProps) {
         </section>
         <section className="space-y-2">
           <h3 className="text-sm font-semibold uppercase text-muted-foreground">
-            Event Resources
+            Resource Details
           </h3>
           {hasResourceEvents ? (
             <ItemGroup className="flex flex-col gap-3">
@@ -193,15 +193,7 @@ async function TaskDialogContent({ taskId }: TaskDialogContentProps) {
                           <span className="text-sm font-medium text-foreground">
                             {resourceEvent.resourceId}
                           </span>
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-semibold uppercase tracking-wide">
-                            Event ID
-                          </span>
-                          <span className="text-sm font-medium text-foreground">
-                            {resourceEvent.eventId}
-                          </span>
-                        </div>
+                    </div>
                         <div className="flex flex-col gap-0.5">
                           <span className="font-semibold uppercase tracking-wide">
                             Quantity
@@ -230,9 +222,26 @@ async function TaskDialogContent({ taskId }: TaskDialogContentProps) {
                 );
               })}
             </ItemGroup>
+          ) : taskResourceId ? (
+            <ItemGroup className="flex flex-col gap-3">
+              <Item
+                variant="outline"
+                size="sm"
+                className="flex w-full flex-col items-start gap-3"
+              >
+                <ItemContent className="flex w-full flex-col gap-2">
+                  <ItemTitle className="text-base font-semibold text-foreground">
+                    {taskResourceId}
+                  </ItemTitle>
+                  <ItemDescription className="text-sm text-muted-foreground">
+                    This task references resource ID {taskResourceId}, but no linked event resource details were found.
+                  </ItemDescription>
+                </ItemContent>
+              </Item>
+            </ItemGroup>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No event resources linked to this task.
+              No resources linked to this task.
             </p>
           )}
         </section>
