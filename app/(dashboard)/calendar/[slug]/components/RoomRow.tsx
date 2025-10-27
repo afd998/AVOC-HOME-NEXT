@@ -38,7 +38,7 @@ export default async function RoomRow({
 
   return (
     <div
-      className={`pl-24 flex overflow-visible ${
+      className={` flex overflow-visible ${
         isLastRow ? "rounded-b-md" : ""
       } ${
         isEvenRow

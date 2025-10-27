@@ -1,6 +1,5 @@
 import EventDialogShell from "@/app/(dashboard)/calendar/[slug]/@eventModal/EventDialogShell";
 import { getEventById } from "@/lib/data/calendar/event/events";
-import { get } from "http";
 type EventsPageProps = {
   params: { slug: string; eventId: string };
 };
