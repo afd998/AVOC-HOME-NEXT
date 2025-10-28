@@ -1,18 +1,21 @@
-import { db } from "@/lib/db";
+import { eq, InferSelectModel } from "drizzle-orm";
+
 import {
   events as eventsTable,
+  profiles as profilesTable,
   resourceEvents as resourceEventsTable,
   resourcesDict as resourcesDictTable,
   taskDict as taskDictTable,
   tasks as tasksTable,
 } from "@/drizzle/schema";
-import { eq, InferSelectModel } from "drizzle-orm";
+import { db } from "@/lib/db";
 
 export type TaskRow = InferSelectModel<typeof tasksTable>;
 export type TaskDictRow = InferSelectModel<typeof taskDictTable>;
 export type EventRow = InferSelectModel<typeof eventsTable>;
 export type ResourceEventRow = InferSelectModel<typeof resourceEventsTable>;
 export type ResourceDictRow = InferSelectModel<typeof resourcesDictTable>;
+export type ProfileRow = InferSelectModel<typeof profilesTable>;
 
 export type EventWithResourceDetails = EventRow & {
   resourceEvents: (ResourceEventRow & {
@@ -23,14 +26,15 @@ export type EventWithResourceDetails = EventRow & {
 export type TaskWithDict = TaskRow & {
   taskDictDetails: TaskDictRow | null;
   eventDetails: EventWithResourceDetails | null;
+  completedByProfile: ProfileRow | null;
 };
 
 export async function getTasksByDate(date: string): Promise<TaskWithDict[]> {
   const rows = await db.query.tasks.findMany({
     where: eq(tasksTable.date, date),
     with: {
-      taskDictDetails: true,
-      eventDetails: {
+      taskDict: true,
+      event: {
         with: {
           resourceEvents: {
             with: {
@@ -39,23 +43,24 @@ export async function getTasksByDate(date: string): Promise<TaskWithDict[]> {
           },
         },
       },
+      profile_completedBy: true,
     },
   });
 
-  return rows.map(({ taskDictDetails, eventDetails, ...taskData }) => {
+  return rows.map(({ taskDict, event, profile_completedBy, ...taskData }) => {
     const normalizedResourceId =
       typeof taskData.resource === "string" &&
       taskData.resource.trim().length > 0
         ? taskData.resource.trim()
         : null;
 
-    const normalizedEventDetails = eventDetails
+    const normalizedEventDetails = event
       ? {
-          ...eventDetails,
+          ...event,
           resourceEvents:
             normalizedResourceId == null
               ? []
-              : (eventDetails.resourceEvents ?? [])
+              : (event.resourceEvents ?? [])
                   .filter(
                     (resourceEvent) =>
                       resourceEvent.resourceId.trim() === normalizedResourceId
@@ -69,8 +74,9 @@ export async function getTasksByDate(date: string): Promise<TaskWithDict[]> {
 
     return {
       ...taskData,
-      taskDictDetails: taskDictDetails ?? null,
+      taskDictDetails: taskDict ?? null,
       eventDetails: normalizedEventDetails,
+      completedByProfile: profile_completedBy ?? null,
     };
   });
 }

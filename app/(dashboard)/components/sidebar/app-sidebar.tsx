@@ -148,7 +148,7 @@ export async function AppSidebar({
         {/* Quick Actions */}
         <SidebarGroup className="px-0 group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Quick Actions!!!!!!zz
+            Quick Actions
           </SidebarGroupLabel>
           <SidebarGroupContent className="px-3">
             <SidebarMenu>

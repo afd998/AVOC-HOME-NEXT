@@ -24,22 +24,56 @@ export async function getTasksCalendar(
   autoHide: boolean
 ) {
   "use cache";
+  console.log("[calendar.getTasksCalendar] start", {
+    date,
+    filter,
+    autoHide,
+    timestamp: new Date().toISOString(),
+  });
+  cacheTag(`calendar:${date}`);
   cacheTag(`calendar:${date}:${filter}:${autoHide ? "hide" : "show"}`);
   const rawTasks = await (async () => {
     try {
-      return await getTasksByDate(date);
+      const result = await getTasksByDate(date);
+      console.log("[calendar.getTasksCalendar] getTasksByDate resolved", {
+        date,
+        count: Array.isArray(result) ? result.length : null,
+        timestamp: new Date().toISOString(),
+      });
+      return result;
     } catch (error) {
+      console.error(
+        "[calendar.getTasksCalendar] getTasksByDate error",
+        error instanceof Error ? error.message : error,
+        {
+          date,
+          filter,
+          autoHide,
+        }
+      );
       throw error;
     }
   })();
 
   const filteredTasks = await filterTasks(rawTasks, filter);
+  console.log("[calendar.getTasksCalendar] filterTasks complete", {
+    inputCount: rawTasks.length,
+    outputCount: filteredTasks.length,
+    filter,
+    timestamp: new Date().toISOString(),
+  });
   const HydrateTasks = addDisplayColumns(filteredTasks);
   const roomGroups = groupTasksByRoom(HydrateTasks);
   const finalRoomGroups = handleMergedRooms(roomGroups);
   const visibleRoomGroups = autoHide
     ? finalRoomGroups.filter((group) => group.tasks.length > 0)
     : finalRoomGroups;
+  console.log("[calendar.getTasksCalendar] final groups ready", {
+    totalGroups: finalRoomGroups.length,
+    visibleGroups: visibleRoomGroups.length,
+    autoHide,
+    timestamp: new Date().toISOString(),
+  });
 
   // Sort by roomName with letters before numbers, omitting first 3 chars ("GH ")
   visibleRoomGroups.sort((a, b) => {

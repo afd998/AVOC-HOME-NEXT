@@ -9,14 +9,12 @@ import {
   CALENDAR_START_HOUR,
 } from "@/app/(dashboard)/calendar/[slug]/calendarConfig";
 import type { RoomRowData } from "@/lib/data/calendar/calendar";
-import type { HydratedTask } from "@/lib/data/calendar/taskscalendar";
 
 type HomePage2Props = {
   filter: string;
   autoHide: boolean;
   slug: string;
   calendar: RoomRowData[];
-  tasks: { roomName: string; tasks: HydratedTask[] }[];
 };
 
 export default function HomePage2({
@@ -24,7 +22,6 @@ export default function HomePage2({
   autoHide,
   slug,
   calendar,
-  tasks,
 }: HomePage2Props) {
   const actualRowCount = calendar.length;
   const safeRowCount = Math.max(actualRowCount, 1);
@@ -52,10 +49,6 @@ export default function HomePage2({
       <div className="relative pointer-events-auto">
         <RoomRows
           calendar={calendar}
-          tasks={tasks}
-          date={slug}
-          filter={filter}
-          autoHide={autoHide}
         />
       </div>
     </>

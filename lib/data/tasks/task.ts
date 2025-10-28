@@ -14,8 +14,8 @@ export async function getTaskById(
   const task = await db.query.tasks.findFirst({
     where: eq(tasksTable.id, numericId),
     with: {
-      taskDictDetails: true,
-      eventDetails: {
+      taskDict: true,
+      event: {
         with: {
           resourceEvents: {
             with: {
@@ -24,6 +24,7 @@ export async function getTaskById(
           },
         },
       },
+      profile_completedBy: true,
     },
   });
 
@@ -31,7 +32,7 @@ export async function getTaskById(
     return null;
   }
 
-  const { taskDictDetails, eventDetails, ...taskData } = task;
+  const { taskDict, event, profile_completedBy, ...taskData } = task;
   const normalizedResourceId =
     typeof taskData.resource === "string" && taskData.resource.trim().length > 0
       ? taskData.resource.trim()
@@ -39,14 +40,15 @@ export async function getTaskById(
 
   return {
     ...taskData,
-    taskDictDetails: taskDictDetails ?? null,
-    eventDetails: eventDetails
+    taskDictDetails: taskDict ?? null,
+    completedByProfile: profile_completedBy ?? null,
+    eventDetails: event
       ? {
-          ...eventDetails,
+          ...event,
           resourceEvents:
             normalizedResourceId == null
               ? []
-              : (eventDetails.resourceEvents ?? [])
+              : (event.resourceEvents ?? [])
                   .filter(
                     (resourceEvent) =>
                       resourceEvent.resourceId.trim() === normalizedResourceId
@@ -54,7 +56,7 @@ export async function getTaskById(
                   .map((resourceEvent) => ({
                     ...resourceEvent,
                     resourcesDict: resourceEvent.resourcesDict ?? null,
-                  })),
+                    })),
         }
       : null,
   };

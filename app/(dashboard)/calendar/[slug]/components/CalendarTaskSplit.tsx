@@ -35,7 +35,7 @@ export default function CalendarTaskSplit({
       className={cn("flex h-full rounded-md border bg-background", className)}
     >
       <ResizablePanel
-        defaultSize={70}
+        defaultSize={80}
         minSize={40}
         className="min-w-[32rem]"
       >
@@ -44,7 +44,7 @@ export default function CalendarTaskSplit({
         </div>
       </ResizablePanel>
       <ResizableHandle withHandle className="bg-border" />
-      <ResizablePanel defaultSize={30} minSize={20} className="min-w-[20rem]">
+      <ResizablePanel defaultSize={20} minSize={20} className="min-w-[20rem]">
         <div className="flex h-full flex-col overflow-hidden">
           {taskPanel}
         </div>

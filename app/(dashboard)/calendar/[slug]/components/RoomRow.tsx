@@ -2,22 +2,19 @@ import { Badge } from "../../../../../components/ui/badge";
 import Event from "@/app/(dashboard)/calendar/[slug]/components/Event/components/Event";
 import { finalEvent } from "@/lib/data/calendar/calendar";
 
-import { HydratedTask } from "@/lib/data/calendar/taskscalendar";
-import Task from "@/app/(dashboard)/calendar/[slug]/components/Tasks/Task";
+import Tasks from "@/app/(dashboard)/calendar/[slug]/components/Tasks/Tasks";
 interface RoomRowProps {
   room: string;
   roomEvents: finalEvent[];
   isEvenRow?: boolean; // Make optional with default
   isLastRow?: boolean; // Add prop for last row styling
-  tasks: HydratedTask[];
 }
 
-export default async function RoomRow({
+export default function RoomRow({
   room,
   roomEvents,
   isLastRow,
   isEvenRow = false,
-  tasks,
 }: RoomRowProps) {
   const roomText = room.replace(/^GH\s+/, "");
   const rowHeightStyle = { height: `96px` } as const;
@@ -69,9 +66,7 @@ export default async function RoomRow({
         {roomEvents?.map((event: finalEvent) => (
           <Event key={event.id} event={event} rowHeightPx={96} />
         ))}
-        {tasks?.map((task: HydratedTask) => (
-          <Task key={task.id} task={task} rowHeightPx={96} />
-        ))}
+        <Tasks roomName={room} rowHeightPx={96} />
       </div>
     </div>
   );
