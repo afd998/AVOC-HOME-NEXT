@@ -4,19 +4,22 @@ type CalendarPageLayoutProps = Readonly<{
   children: ReactNode;
   eventModal: ReactNode;
   taskModal: ReactNode;
+  facultyModal: ReactNode;
 }>;
 
 export default function CalendarPageLayout({
   children,
   eventModal,
   taskModal,
+  facultyModal,
 }: CalendarPageLayoutProps) {
-  console.log("slug layout");
+
   return (
     <>
       {children}
       {eventModal}
       {taskModal}
+      {facultyModal}
     </>
   );
 }

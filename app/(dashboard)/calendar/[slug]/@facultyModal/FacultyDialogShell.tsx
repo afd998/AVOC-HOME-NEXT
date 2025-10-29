@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import type { ReactNode } from "react";
 
-interface EventDialogShellProps {
+interface FacultyDialogShellProps {
   children: ReactNode;
 }
 
-export default function EventDialogShell({ children }: EventDialogShellProps) {
+export default function FacultyDialogShell({ children }: FacultyDialogShellProps) {
   const router = useRouter();
 
   const handleOpenChange = useCallback(
@@ -24,7 +24,7 @@ export default function EventDialogShell({ children }: EventDialogShellProps) {
   return (
     <Dialog defaultOpen open modal onOpenChange={handleOpenChange}>
       <DialogContent
-        className="max-w-5xl w-[min(95vw,72rem)]"
+        className=" px-1 py-5 w-[50vw] max-w-[90vw] max-h-[85vh] overflow-hidden rounded-xl border border-border  shadow-2xl flex flex-col"
         showCloseButton
       >
         {children}

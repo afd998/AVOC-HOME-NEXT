@@ -4,7 +4,7 @@ export default function CalendarLayout({
   children: React.ReactNode;
 }) {
   return (
-    console.log("calendar layout"),
+  
     <div>{children}</div>
   );
 }

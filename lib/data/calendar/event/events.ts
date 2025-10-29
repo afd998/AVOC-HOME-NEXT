@@ -2,24 +2,24 @@ import { events, resourcesDict } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import type { finalEvent } from "../calendar";
-import { shiftBlocks } from "@/drizzle/schema";
-import { ShiftBlock } from "@/lib/db/types";
-import { addFirstSessionFlags } from "./utils/hydrate-first-session";
-import {
-  FacultyMember,
-  hydrateEventsWithFaculty,
-} from "./utils/hyrdate-faculty";
 import { addDisplayColumns } from "./utils/hydrate-display-columns";
-import { hydrateEventsWithResources } from "./utils/hydrate-event-resources";
-import { Event as EventType } from "@/lib/db/types";
+import type { CalendarEventResource } from "./utils/hydrate-event-resources";
+import type { FacultyMember } from "./utils/hyrdate-faculty";
+import type { Event as EventType } from "@/lib/db/types";
 
 export type EventWithRelations = EventType & {
-  facultyEvents?: { faculty: FacultyMember }[];
+  facultyEvents?: { faculty: FacultyMember | null }[];
   resourceEvents?: {
-    resourcesDict: typeof resourcesDict.$inferSelect;
+    resourcesDict: typeof resourcesDict.$inferSelect | null;
     quantity: number | null;
     instructions: string | null;
   }[];
+};
+
+type HydratedEvent = EventType & {
+  faculty: FacultyMember[];
+  resources: CalendarEventResource[];
+  isFirstSession: boolean;
 };
 
 export async function getEventsByDate(
@@ -49,20 +49,71 @@ export async function getEventsByDate(
   }
 }
 
+function toFinalEvent(eventWithRelations: EventWithRelations): finalEvent {
+  const { facultyEvents, resourceEvents, ...event } = eventWithRelations;
+
+  const facultyMembers = (facultyEvents ?? [])
+    .map((relation) => relation.faculty)
+    .filter((member): member is FacultyMember => Boolean(member));
+
+  const resources = (resourceEvents ?? [])
+    .map((relation) => {
+      const resource = relation.resourcesDict;
+      if (!resource) {
+        return null;
+      }
+
+      return {
+        id: resource.id,
+        quantity: relation.quantity ?? 0,
+        instruction: relation.instructions ?? "",
+        displayName: resource.name ?? resource.id,
+        isAVResource: Boolean(resource.isAv),
+        is_av: Boolean(resource.isAv),
+        icon: resource.icon ?? null,
+      } satisfies CalendarEventResource;
+    })
+    .filter(
+      (resource): resource is CalendarEventResource => resource !== null
+    );
+
+  const hydratedEvent: HydratedEvent = {
+    ...event,
+    faculty: facultyMembers,
+    resources,
+    isFirstSession: false,
+  };
+
+  return addDisplayColumns([hydratedEvent])[0] as finalEvent;
+}
+
 export const getEventById = async (
   eventId: string
 ): Promise<finalEvent | null> => {
-  const event: EventType | undefined = await db.query.events.findFirst({
-    where: eq(events.id, parseInt(eventId)),
-  });
-  if (!event) {
+  const id = Number.parseInt(eventId, 10);
+  if (Number.isNaN(id)) {
     return null;
   }
-  const eventsWithFirstSessionFlag = await addFirstSessionFlags([event]);
-  const hydratedEvents = await hydrateEventsWithFaculty(
-    eventsWithFirstSessionFlag
-  );
-  const enhancedEvents = addDisplayColumns(hydratedEvents);
-  const eventsWithResources = await hydrateEventsWithResources(enhancedEvents);
-  return eventsWithResources[0];
+
+  const eventWithRelations = await db.query.events.findFirst({
+    where: eq(events.id, id),
+    with: {
+      facultyEvents: {
+        with: {
+          faculty: true,
+        },
+      },
+      resourceEvents: {
+        with: {
+          resourcesDict: true,
+        },
+      },
+    },
+  });
+
+  if (!eventWithRelations) {
+    return null;
+  }
+
+  return toFinalEvent(eventWithRelations as EventWithRelations);
 };

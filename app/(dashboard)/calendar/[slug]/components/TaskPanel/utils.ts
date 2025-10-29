@@ -20,7 +20,7 @@ export function formatTime(time?: string) {
   return timeFormatter.format(date);
 }
 
-function convertTimeToMinutes(time?: string) {
+export function convertTimeToMinutes(time?: string) {
   if (!time) return null;
   const [hour, minute] = time.split(":").map(Number);
   if (Number.isNaN(hour) || Number.isNaN(minute)) {

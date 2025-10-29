@@ -511,7 +511,7 @@ export default function SessionSetups({
                           <p className="text-xs sm:text-sm  mb-2">Left Panel</p>
                           <Button
                             onClick={() => openLocalPanelModal("left")}
-                            className="w-full h-24 sm:h-32 rounded-lg border border-white/10 dark:border-white/5 flex items-center justify-center transition-colors cursor-pointer backdrop-blur-sm shadow-lg hover:shadow-xl relative overflow-hidden"
+                            className="w-full h-20 sm:h-24 rounded-lg border border-white/10 dark:border-white/5 flex items-center justify-center transition-colors cursor-pointer backdrop-blur-sm shadow-lg hover:shadow-xl relative overflow-hidden"
                             title="Click to change panel setup"
                             variant="outline"
                           >
@@ -603,7 +603,7 @@ export default function SessionSetups({
                           </p>
                           <Button
                             onClick={() => openLocalPanelModal("right")}
-                            className="w-full h-24 sm:h-32 rounded-lg border border-white/10 dark:border-white/5 flex items-center justify-center transition-colors cursor-pointer backdrop-blur-sm shadow-lg hover:shadow-xl relative overflow-hidden"
+                            className="w-full h-20 sm:h-24 rounded-lg border border-white/10 dark:border-white/5 flex items-center justify-center transition-colors cursor-pointer backdrop-blur-sm shadow-lg hover:shadow-xl relative overflow-hidden"
                             title="Click to change panel setup"
                             variant="outline"
                           >

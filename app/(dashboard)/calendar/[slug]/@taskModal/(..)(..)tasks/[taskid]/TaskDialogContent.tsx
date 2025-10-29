@@ -14,13 +14,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Item,
   ItemContent,
@@ -314,40 +312,35 @@ export default function TaskDialogContent({
 
   if (fetchState === "loading" && !task) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Loading task details...</CardTitle>
-          <CardDescription>
+      <>
+        <DialogHeader>
+          <DialogTitle>Loading task details...</DialogTitle>
+          <DialogDescription>
             Fetching the latest task information. Hang tight!
-          </CardDescription>
-        </CardHeader>
-      </Card>
+          </DialogDescription>
+        </DialogHeader>
+      </>
     );
   }
 
   if (!task) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Task not found</CardTitle>
-          <CardDescription>
+      <>
+        <DialogHeader>
+          <DialogTitle>Task not found</DialogTitle>
+          <DialogDescription>
             We could not find a task for ID {taskId}. It may have been removed.
-          </CardDescription>
-        </CardHeader>
+          </DialogDescription>
+        </DialogHeader>
         {errorMessage ? (
-          <CardContent>
-            <p className="text-sm text-destructive">{errorMessage}</p>
-          </CardContent>
+          <p className="text-sm text-destructive">{errorMessage}</p>
         ) : null}
-        <CardFooter className="justify-end">
-          <Link
-            href="/tasks"
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            View all tasks
-          </Link>
-        </CardFooter>
-      </Card>
+        <DialogFooter className="justify-end">
+          <Button variant="outline" asChild>
+            <Link href="/tasks">View all tasks</Link>
+          </Button>
+        </DialogFooter>
+      </>
     );
   }
 
@@ -363,35 +356,34 @@ export default function TaskDialogContent({
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-background">
-                <TaskIcon task={task} className="h-12 w-12 p-3" />
-              </span>
-              <div className="flex flex-col gap-1">
-                <CardTitle className="text-xl font-semibold text-foreground">
-                  {(task.taskType ?? "").trim() || "Task"}
-                </CardTitle>
-                <CardDescription>
-                  {formattedDate} | {formattedTime}
-                </CardDescription>
-              </div>
+    <>
+      <DialogHeader className="gap-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-background">
+              <TaskIcon task={task} className="h-12 w-12 p-3" />
+            </span>
+            <div className="flex flex-col gap-1 text-left">
+              <DialogTitle className="text-xl font-semibold">
+                {(task.taskType ?? "").trim() || "Task"}
+              </DialogTitle>
+              <DialogDescription>
+                {formattedDate} | {formattedTime}
+              </DialogDescription>
             </div>
-            {hasStatus ? (
-              <Badge variant={statusVariant} className="uppercase tracking-wide">
-                {formattedStatus}
-              </Badge>
-            ) : null}
           </div>
-          {errorMessage ? (
-            <p className="text-sm text-destructive">{errorMessage}</p>
+          {hasStatus ? (
+            <Badge variant={statusVariant} className="uppercase tracking-wide">
+              {formattedStatus}
+            </Badge>
           ) : null}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        {errorMessage ? (
+          <p className="text-sm text-destructive">{errorMessage}</p>
+        ) : null}
+      </DialogHeader>
+
+      <div className="space-y-6">
         <section className="space-y-2">
           <h3 className="text-sm font-semibold uppercase text-muted-foreground">
             Task Details
@@ -492,8 +484,9 @@ export default function TaskDialogContent({
             </p>
           )}
         </section>
-      </CardContent>
-      <CardFooter className="flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:gap-4 sm:justify-between">
+      </div>
+
+      <DialogFooter className="flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:gap-4 sm:justify-between">
         {isCompleted && (completedByDisplayName || completedAtLabel) ? (
           <div className="flex items-center gap-3">
             {completedByDisplayName && completedByInitials ? (
@@ -548,8 +541,8 @@ export default function TaskDialogContent({
             </>
           )}
         </Button>
-      </CardFooter>
-    </Card>
+      </DialogFooter>
+    </>
   );
 }
 

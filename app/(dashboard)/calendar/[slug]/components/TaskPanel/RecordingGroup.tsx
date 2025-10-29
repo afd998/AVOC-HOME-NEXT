@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
 import {
@@ -6,20 +5,19 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   Item,
-  ItemActions,
   ItemContent,
   ItemDescription,
   ItemGroup,
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
-import { cn } from "@/lib/utils";
 import { TaskIcon } from "@/core/task/taskIcon";
 
-import { formatTime } from "./utils";
+import TaskRow from "./TaskRow";
+import { convertTimeToMinutes } from "./utils";
 import type { RecordingGroupItem } from "./types";
 
 type RecordingGroupProps = {
@@ -27,25 +25,70 @@ type RecordingGroupProps = {
 };
 
 export default function RecordingGroup({ group }: RecordingGroupProps) {
-  const { tasks, startLabel, roomNames, groupKey } = group;
+  const { tasks, groupKey } = group;
 
-  const uniqueRoomsLabel =
-    roomNames.length <= 2 ? roomNames.join(", ") : `${roomNames.length} rooms`;
   const title = tasks.length === 1 ? "Recording Check" : "Recording Checks";
-  const checkCountLabel = tasks.length === 1 ? "1 check" : `${tasks.length} checks`;
+  const completedCount = tasks.reduce((count, { task }) => {
+    const normalizedStatus = task.status?.trim().toLowerCase();
+    return normalizedStatus === "completed" ? count + 1 : count;
+  }, 0);
+  const isAllCompleted = tasks.length > 0 && completedCount === tasks.length;
+  const checkCountLabel =
+    tasks.length === 0
+      ? "No checks"
+      : `${completedCount}/${tasks.length} completed`;
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const todayIso = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+  const hasOverdueTask = tasks.some(({ task }) => {
+    const normalizedStatus = task.status?.trim().toLowerCase();
+    if (normalizedStatus === "completed") return false;
+    if (task.date !== todayIso) return false;
+    const startMinutes = convertTimeToMinutes(task.startTime);
+    if (startMinutes === null) return false;
+    return startMinutes <= nowMinutes;
+  });
 
   return (
     <Collapsible className="w-full">
       <Item
         variant="outline"
         size="sm"
-        className="flex flex-col gap-0 bg-muted/40 p-0"
+        className={cn("flex flex-col gap-0 p-0", {
+          "border-rose-200 bg-rose-100/70 dark:border-rose-900 dark:bg-rose-950/40 task-overdue":
+            hasOverdueTask,
+          "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/60":
+            isAllCompleted,
+          "bg-muted/40": !hasOverdueTask && !isAllCompleted,
+        })}
       >
-        <CollapsibleTrigger className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&[data-state=open]>svg]:rotate-180">
-          <ItemMedia variant="default" className="mt-1 text-muted-foreground">
+        <CollapsibleTrigger
+          className={cn(
+            "flex w-full items-center gap-3 px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&[data-state=open]>svg]:rotate-180",
+            hasOverdueTask
+              ? "hover:bg-rose-200 dark:hover:bg-rose-900/70"
+              : isAllCompleted
+                ? "hover:bg-emerald-100 dark:hover:bg-emerald-900/60"
+                : "hover:bg-muted/70 dark:hover:bg-muted/40"
+          )}
+        >
+          <ItemMedia
+            variant="default"
+            className={cn(
+              "mt-1",
+              isAllCompleted ? "text-emerald-600" : "text-muted-foreground"
+            )}
+          >
             <TaskIcon
               task={tasks[0].task}
-              className="size-full p-1 text-muted-foreground"
+              className={cn(
+                "size-full p-1",
+                isAllCompleted ? "text-emerald-600" : "text-muted-foreground"
+              )}
             />
           </ItemMedia>
           <ItemContent className="flex flex-1 flex-col gap-1">
@@ -53,96 +96,19 @@ export default function RecordingGroup({ group }: RecordingGroupProps) {
               {title}
             </ItemTitle>
             <ItemDescription className="text-xs text-muted-foreground">
-              {startLabel} | {checkCountLabel}
+              {checkCountLabel}
             </ItemDescription>
           </ItemContent>
-          <ItemActions className="items-center text-xs font-medium uppercase text-muted-foreground">
-            {uniqueRoomsLabel}
-          </ItemActions>
           <ChevronDown className="ml-2 size-4 shrink-0 text-muted-foreground transition-transform" />
         </CollapsibleTrigger>
         <CollapsibleContent className="border-t px-3 pb-3 pt-2">
           <ItemGroup className="gap-2">
-            {tasks.map(({ task, roomName }) => {
-              const taskTitle = task.taskType?.trim() || "Task";
-              const normalizedStatus = task.status?.trim() || null;
-              const isCompleted =
-                normalizedStatus?.toLowerCase() === "completed";
-              const subtitleParts = [
-                formatTime(task.startTime),
-                task.eventDetails?.eventName?.trim(),
-              ].filter(Boolean);
-              const subtitle = subtitleParts.join(" | ");
-
-              return (
-                <Item
-                  key={`${groupKey}-${task.id}`}
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "items-start gap-3 px-3 py-2 transition-colors",
-                    isCompleted
-                      ? "border-emerald-200 bg-emerald-50"
-                      : "bg-background"
-                  )}
-                  asChild
-                >
-                  <Link
-                    href={`/tasks/${task.id}`}
-                    className={cn(
-                      "flex w-full items-start gap-3 no-underline transition-colors",
-                      isCompleted ? "hover:bg-emerald-100" : "hover:bg-muted/80"
-                    )}
-                  >
-                    <ItemMedia
-                      variant="icon"
-                      className={cn(
-                        "mt-1 border",
-                        isCompleted
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-600"
-                          : "bg-muted/40 text-muted-foreground"
-                      )}
-                    >
-                      <TaskIcon
-                        task={task}
-                        className={cn(
-                          "size-full p-1",
-                          isCompleted
-                            ? "text-emerald-600"
-                            : "text-muted-foreground"
-                        )}
-                      />
-                    </ItemMedia>
-                    <ItemContent className="flex-1 gap-1">
-                      <ItemTitle className="text-sm font-medium leading-tight">
-                        {taskTitle}
-                      </ItemTitle>
-                      <ItemDescription className="text-xs text-muted-foreground">
-                        {subtitle || "No additional details"}
-                      </ItemDescription>
-                    </ItemContent>
-                    <ItemActions className="ml-auto flex flex-col items-end gap-2 text-xs font-medium uppercase">
-                      {normalizedStatus ? (
-                        <Badge
-                          variant={isCompleted ? "affirmative" : "secondary"}
-                          className="uppercase tracking-wide"
-                        >
-                          {normalizedStatus.toUpperCase()}
-                        </Badge>
-                      ) : null}
-                      <span
-                        className={cn(
-                          "text-muted-foreground",
-                          isCompleted && "text-emerald-700"
-                        )}
-                      >
-                        {roomName}
-                      </span>
-                    </ItemActions>
-                  </Link>
-                </Item>
-              );
-            })}
+            {tasks.map((entry) => (
+              <TaskRow
+                key={`${groupKey}-${entry.task.id}`}
+                entry={entry}
+              />
+            ))}
           </ItemGroup>
         </CollapsibleContent>
       </Item>
