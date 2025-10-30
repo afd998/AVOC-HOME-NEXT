@@ -198,6 +198,7 @@ export const taskDict = pgTable("task_dict", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	id: text().primaryKey().notNull(),
 	icon: jsonb(),
+	displayName: text("display_name"),
 }, (table) => [
 	unique("task_dict_id_key").on(table.id),
 ]);

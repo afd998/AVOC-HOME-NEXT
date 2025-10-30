@@ -53,9 +53,7 @@ export default async function EventHeader({ event }: { event: finalEvent }) {
         </span>
       </div>
       {/* Only show the container if there are resources or assignees */}
-      {(event.isFirstSession ||
-        event.resources.map((resource) => resource.isAVResource).length > 0 ||
-        timeline.length > 0) && (
+      {false && (
         <div
           className={`flex items-center gap-1 shrink-0 transition-all duration-200 ease-in-out overflow-visible bg-black/25  rounded-md px-2 py-1 mt-2`}
         >

@@ -1,22 +1,12 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ResourceIcon } from "@/core/event/resourceIcon";
 import { getEventOccurrences } from "@/lib/data/calendar/event/occurrences";
 import type { finalEvent } from "@/lib/data/calendar/calendar";
-import type { CalendarEventResource } from "@/lib/data/calendar/event/utils/hydrate-event-resources";
 import {
   formatDate,
   formatTimeFromHHMMSS,
 } from "@/lib/utils/timeUtils";
+import TwentyFiveLiveResources from "./25LiveResources";
 
 interface OccurrencesDialogContentProps {
   currentEvent: finalEvent;
@@ -149,7 +139,7 @@ function CardMeta({ label, value }: { label: string; value: string }) {
 function OccurrenceResources({
   resources,
 }: {
-  resources: CalendarEventResource[] | undefined;
+  resources: finalEvent["resources"];
 }) {
   if (!resources || resources.length === 0) {
     return null;
@@ -160,30 +150,12 @@ function OccurrenceResources({
       <p className="text-xs uppercase tracking-wide text-muted-foreground">
         Resources
       </p>
-      <ItemGroup>
-        {resources.map((resource) => (
-          <Item key={`resource-${resource.id}`} size="sm">
-            <ItemMedia variant="icon">
-              <ResourceIcon icon={resource.icon} />
-            </ItemMedia>
-            <ItemContent>
-              <ItemTitle>{resource.displayName}</ItemTitle>
-              {resource.instruction && (
-                <ItemDescription title={resource.instruction}>
-                  {resource.instruction}
-                </ItemDescription>
-              )}
-            </ItemContent>
-            {resource.quantity && resource.quantity > 1 && (
-              <ItemActions>
-                <Badge variant="outline" className="text-[10px] font-semibold">
-                  x{resource.quantity}
-                </Badge>
-              </ItemActions>
-            )}
-          </Item>
-        ))}
-      </ItemGroup>
+      <TwentyFiveLiveResources
+        resources={resources}
+        className="mt-2"
+        emptyAvMessage="No AV resources for this occurrence."
+        emptyGeneralMessage="No general resources for this occurrence."
+      />
     </div>
   );
 }

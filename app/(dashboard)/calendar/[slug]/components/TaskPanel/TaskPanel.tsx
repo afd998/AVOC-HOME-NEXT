@@ -57,6 +57,7 @@ export default function TaskPanel() {
       <TaskPanelHeader
         onGoToNow={handleGoToNow}
         goNowDisabled={!hasIndicator}
+        totalTasks={totalTasks}
       />
       <div
         ref={scrollContainerRef}

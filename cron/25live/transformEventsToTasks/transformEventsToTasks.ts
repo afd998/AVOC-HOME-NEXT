@@ -9,6 +9,7 @@ import { createStaffAssistanceTask } from "./createStaffAssistanceTask";
 import { createLaptopTasks } from "./createLaptopTasks";
 import { createPollingTasks } from "./createPollingTasks";
 import { createWebConferenceTask } from "./createWebConferenceTask";
+import { createSurfaceHubTasks } from "./createSurfaceHubTasks";
 type TaskRow = InferInsertModel<typeof tasks>;
 
 export async function transformEventsToTasks(events: ProcessedEvent[]) {
@@ -27,6 +28,9 @@ export async function transformEventsToTasks(events: ProcessedEvent[]) {
 
       if (lowercaseItemName.includes("laptop")) {
         tasks.push(...createLaptopTasks(event, resource));
+      }
+      if (lowercaseItemName.includes("surface hub")) {
+        tasks.push(...createSurfaceHubTasks(event, resource));
       }
 
       if (lowercaseItemName.includes("polling")) {

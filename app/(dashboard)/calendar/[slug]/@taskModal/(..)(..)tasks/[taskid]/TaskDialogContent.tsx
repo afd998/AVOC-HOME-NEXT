@@ -1,13 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Check, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -74,7 +68,7 @@ export default function TaskDialogContent({
     selectTask ? "idle" : "loading"
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isCompleting, startTransition] = useTransition();
+  const [isCompleting, setIsCompleting] = useState(false);
 
   const isCompleted =
     (task?.status ?? "").trim().toLowerCase() === "completed";
@@ -168,40 +162,72 @@ export default function TaskDialogContent({
   }, [fetchTask, numericTaskId]);
 
   const handleMarkCompleted = useCallback(() => {
-    if (!Number.isInteger(numericTaskId) || !task || isCompleted) {
+    if (
+      !Number.isInteger(numericTaskId) ||
+      !task ||
+      isCompleted ||
+      isCompleting
+    ) {
       return;
     }
 
-    startTransition(async () => {
-      try {
-        const result = await markTaskCompletedAction({
-          taskId: numericTaskId,
-          date: slug,
-        });
+    const previousTask = task;
+    const optimisticTask: HydratedTask = {
+      ...task,
+      status: "COMPLETED",
+      completedTime: new Date().toISOString(),
+      completedByProfile: task.completedByProfile ?? null,
+    };
 
+    setIsCompleting(true);
+    setErrorMessage(null);
+    applyTask(optimisticTask);
+
+    if (typeof window !== "undefined" && window.requestAnimationFrame) {
+      window.requestAnimationFrame(() => {
+        setIsCompleting(false);
+      });
+    } else {
+      setIsCompleting(false);
+    }
+
+    void markTaskCompletedAction({
+      taskId: numericTaskId,
+      date: slug,
+    })
+      .then((result) => {
         if (!result.success) {
           setErrorMessage(result.error);
+          applyTask(previousTask);
           return;
         }
 
         if (result.task) {
           applyTask(result.task);
-        } else {
-          applyTask({
-            ...task,
-            status: "COMPLETED",
-            completedTime: new Date().toISOString(),
-            completedByProfile: task.completedByProfile ?? null,
-          });
         }
         setFetchState("idle");
         setErrorMessage(null);
-      } catch (error) {
-        console.error("[TaskModal] Failed to mark task completed", error);
+      })
+      .catch((error) => {
+        try {
+          console.error("[TaskModal] Failed to mark task completed", error);
+        } catch {
+          // noop: console may fail in edge cases
+        }
         setErrorMessage("Unable to mark task as completed.");
-      }
-    });
-  }, [applyTask, isCompleted, numericTaskId, slug, task]);
+        applyTask(previousTask);
+      })
+      .finally(() => {
+        setIsCompleting(false);
+      });
+  }, [
+    applyTask,
+    isCompleted,
+    isCompleting,
+    numericTaskId,
+    slug,
+    task,
+  ]);
 
   const formattedDate = useMemo(
     () => formatTaskDate(task?.date ?? ""),
@@ -525,11 +551,11 @@ export default function TaskDialogContent({
           onClick={handleMarkCompleted}
           disabled={isCompleting || isCompleted}
           variant="secondary"
-          className={`w-full justify-center gap-2 bg-emerald-600 text-emerald-50 hover:bg-emerald-700 focus-visible:ring-emerald-500 disabled:bg-emerald-600 disabled:text-emerald-50 disabled:opacity-100 sm:w-auto ${
+          className={`w-full justify-center gap-2 bg-emerald-600 text-emerald-50 hover:bg-emerald-700 focus-visible:ring-emerald-500 disabled:bg-emerald-600 disabled:text-emerald-50 disabled:opacity-100 sm:w-auto sm:ml-auto ${
             isCompleted ? "opacity-100" : ""
           }`}
         >
-          {isCompleting ? (
+          {isCompleting && !isCompleted ? (
             <>
               <Loader2 className="size-4 animate-spin" />
               Marking...

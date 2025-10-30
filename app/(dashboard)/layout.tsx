@@ -4,6 +4,7 @@ import { SidebarTrigger } from "@/app/(dashboard)/components/sidebar/sidebar";
 import React, { Suspense } from "react";
 import { SidebarShell } from "@/app/(dashboard)/components/sidebar/sidebar-shell";
 import HeaderBreadcrumb from "@/app/(dashboard)/components/sidebar/header-breadcrumb";
+import ChicagoTime from "@/app/(dashboard)/components/header/chicago-time";
 
 export default async function DashboardLayout({
   children,
@@ -27,7 +28,9 @@ export default async function DashboardLayout({
             </div>
             <div className="flex-1" />
             <div className="flex items-center gap-2 px-4">
-              {/* Placeholder for header actions */}
+              <React.Suspense fallback={null}>
+                <ChicagoTime />
+              </React.Suspense>
             </div>
           </header>
           <main className="flex-1 w-full p-2 overflow-y-auto min-h-0">
