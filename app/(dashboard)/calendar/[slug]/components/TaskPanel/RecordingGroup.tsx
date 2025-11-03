@@ -19,6 +19,7 @@ import { TaskIcon } from "@/core/task/taskIcon";
 import TaskRow from "./TaskRow";
 import { convertTimeToMinutes } from "./utils";
 import type { RecordingGroupItem } from "./types";
+import { taskOverdueClassName } from "./taskOverdueStyles";
 
 type RecordingGroupProps = {
   group: RecordingGroupItem;
@@ -58,13 +59,16 @@ export default function RecordingGroup({ group }: RecordingGroupProps) {
       <Item
         variant="outline"
         size="sm"
-        className={cn("flex flex-col gap-0 p-0", {
-          "border-rose-200 bg-rose-100/70 dark:border-rose-900 dark:bg-rose-950/40 task-overdue":
-            hasOverdueTask,
-          "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/60":
-            isAllCompleted,
-          "bg-muted/40": !hasOverdueTask && !isAllCompleted,
-        })}
+        className={cn(
+          "flex flex-col gap-0 p-0",
+          hasOverdueTask && [
+            "border-rose-200 bg-rose-100/70 dark:border-rose-900 dark:bg-rose-950/40",
+            taskOverdueClassName,
+          ],
+          isAllCompleted &&
+            "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/60",
+          !hasOverdueTask && !isAllCompleted && "bg-muted/40"
+        )}
       >
         <CollapsibleTrigger
           className={cn(

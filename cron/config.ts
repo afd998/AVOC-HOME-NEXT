@@ -3,9 +3,51 @@
  */
 
 // Load environment variables from .env file
-require("dotenv").config({ path: ".env.local" });
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
-const config = {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+dotenv.config({ path: join(__dirname, "..", ".env.local") });
+
+interface SupabaseConfig {
+  url: string | undefined;
+  serviceKey: string | undefined;
+}
+
+interface NorthwesternConfig {
+  username: string | undefined;
+  password: string | undefined;
+}
+
+interface PanoptoConfig {
+  server: string;
+  searchTimeout: number;
+  navigationTimeout: number;
+}
+
+interface TwentyFiveLiveConfig {
+  baseUrl: string;
+  apiEndpoint: string;
+}
+
+interface BrowserConfig {
+  headless: boolean;
+  timeout: number;
+}
+
+interface Config {
+  supabase: SupabaseConfig;
+  northwestern: NorthwesternConfig;
+  panopto: PanoptoConfig;
+  twentyFiveLive: TwentyFiveLiveConfig;
+  browser: BrowserConfig;
+  validate(): boolean;
+}
+
+const config: Config = {
   // Supabase configuration
   supabase: {
     url: process.env.SUPABASE_URL,
@@ -60,4 +102,4 @@ const config = {
   },
 };
 
-module.exports = config;
+export default config;

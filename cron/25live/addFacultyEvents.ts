@@ -2,11 +2,11 @@ import { inArray } from "drizzle-orm";
 import { db } from "../../lib/db";
 import { facultyEvents, faculty } from "../../lib/db/schema";
 import { type ProcessedEvent } from "./transformRawEventsToEvents/transformRawEventsToEvents";
+import { EventGraph } from "./scrape";
 
-export async function saveFacultyEvents(
-  processedEvents: ProcessedEvent[]
-): Promise<void> {
-  const processedEventIds = processedEvents
+export async function addFacultyEvents(eventGraph: EventGraph[]): EventGraph[] {
+  const processedEvents = eventGraph.map((event) => event.events).flat();
+  const processedEventIds = eventGraph.events
     .map((event) => event.id)
     .filter((id): id is number => typeof id === "number");
 

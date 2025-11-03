@@ -29,6 +29,50 @@ export function convertTimeToMinutes(time?: string) {
   return hour * 60 + minute;
 }
 
+const DISPLAY_NAME_KEYS = [
+  "displayName",
+  "display_name",
+  "name",
+  "label",
+] as const;
+
+type TaskDictLike =
+  | (HydratedTask["taskDictDetails"] & {
+      [K in (typeof DISPLAY_NAME_KEYS)[number]]?: unknown;
+    })
+  | null
+  | undefined;
+
+export function getTaskDisplayName(task: HydratedTask) {
+  const dictDetails = task.taskDictDetails as TaskDictLike;
+  if (dictDetails && typeof dictDetails === "object") {
+    for (const key of DISPLAY_NAME_KEYS) {
+      const value = dictDetails[key];
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed.length > 0) {
+          return trimmed;
+        }
+      }
+    }
+
+    if (typeof dictDetails?.id === "string") {
+      const id = dictDetails.id.trim();
+      if (id.length > 0) {
+        return id;
+      }
+    }
+  }
+
+  const taskType =
+    typeof task.taskType === "string" ? task.taskType.trim() : "";
+  if (taskType.length > 0) {
+    return taskType;
+  }
+
+  return "Task";
+}
+
 function getStartMinutes(task: HydratedTask) {
   if (typeof task.derived?.startMinutes === "number") {
     return task.derived.startMinutes;
@@ -53,9 +97,9 @@ export function buildTaskListItems(
     const bStart = b.startMinutes ?? Number.MAX_SAFE_INTEGER;
 
     if (aStart === bStart) {
-      const typeA = a.task.taskType ?? "";
-      const typeB = b.task.taskType ?? "";
-      return typeA.localeCompare(typeB);
+      const nameA = getTaskDisplayName(a.task);
+      const nameB = getTaskDisplayName(b.task);
+      return nameA.localeCompare(nameB);
     }
 
     return aStart - bStart;

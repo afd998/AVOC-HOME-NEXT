@@ -3,7 +3,7 @@ import { db } from "../../lib/db";
 import { events } from "../../lib/db/schema";
 import { type ProcessedEvent } from "./transformRawEventsToEvents/transformRawEventsToEvents";
 
-export async function saveEvents(
+export async function saveData( 
   processedEvents: ProcessedEvent[],
   scrapeDate: string
 ): Promise<void> {
@@ -75,4 +75,25 @@ export async function saveEvents(
   console.log(`✅ Successfully upserted events`);
 
   console.log(`🎉 Save events completed for ${scrapeDate}\n`);
+}
+
+
+
+ // STEP 10: Delete existing resource-event relationships for these events
+  // This ensures we have a clean slate before inserting the new relationships
+  // (handles cases where resources were removed from events)
+  const processedEventIds = processedEvents.map((event) => event.id);
+  if (processedEventIds.length > 0) {
+    await db
+      .delete(resourceEvents)
+      .where(inArray(resourceEvents.eventId, processedEventIds));
+  }
+
+  // STEP 11: Insert the new resource-event relationships
+  if (joinRows.length > 0) {
+    console.log(`Inserting ${joinRows.length} resource-event relationships`);
+    await db.insert(resourceEvents).values(joinRows);
+  } else {
+    console.log("No resource-event relationships to insert");
+  }
 }

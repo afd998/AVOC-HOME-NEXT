@@ -1,10 +1,10 @@
-import * as utils from "./index.js";    
+import * as utils from "./index.js";
 import { parseEventResources } from "./parse-resourses";
 import type { InferInsertModel } from "drizzle-orm";
 import { events } from "../../../lib/db/schema";
 import type { RawEvent as RawEventFromSchema } from "../schemas";
 import { mergeAdjacentRoomEvents } from "./mergeAdjacentRoomEvents";
-
+import type { EventAggregate } from "../scrape";
 const {
   generateDeterministicId,
   getEventType,
@@ -16,14 +16,16 @@ const {
 } = utils;
 
 export type RawEvent = RawEventFromSchema;
-
 export type EventResource = {
   itemName: string;
   quantity: number | null;
   instruction: string | null;
 };
 
-export type ProcessedEvent = Omit<InferInsertModel<typeof events>, 'resources'> & {
+export type ProcessedEvent = Omit<
+  InferInsertModel<typeof events>,
+  "resources"
+> & {
   resources: EventResource[];
 };
 
@@ -62,7 +64,7 @@ function removeKECNoAcademicEvents(
 
 export function transformRawEventsToEvents(
   rawData: RawEvent[]
-): ProcessedEvent[] {
+): EventAggregate[] {
   if (!rawData || !Array.isArray(rawData)) {
     return [];
   }
@@ -79,7 +81,7 @@ export function transformRawEventsToEvents(
     );
   });
 
-  const processedEvents = filteredData.map<ProcessedEvent>((event ) => {
+  const processedEvents = filteredData.map<ProcessedEvent>((event) => {
     const { startTimeStr, endTimeStr } = toTimeStrings(event.start, event.end);
 
     const eventDate = event.subject_item_date
@@ -111,7 +113,14 @@ export function transformRawEventsToEvents(
 
   const mergedEvents = mergeAdjacentRoomEvents(processedEvents);
   const filteredEvents = removeKECNoAcademicEvents(mergedEvents);
-  return filteredEvents;
+  return filteredEvents.map((event) => ({
+    ...event,
+    joins: {
+      resources: [],
+      faculty: [],
+      tasks: [],
+    },
+  }));
 }
 
 export {

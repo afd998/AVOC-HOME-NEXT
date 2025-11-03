@@ -32,11 +32,9 @@ export async function transformEventsToTasks(events: ProcessedEvent[]) {
       if (lowercaseItemName.includes("surface hub")) {
         tasks.push(...createSurfaceHubTasks(event, resource));
       }
-
       if (lowercaseItemName.includes("polling")) {
         tasks.push(...createPollingTasks(event, resource));
       }
-
       if (
         !staffAssistanceResource &&
         lowercaseItemName.includes("staff assistance")
@@ -51,7 +49,6 @@ export async function transformEventsToTasks(events: ProcessedEvent[]) {
         webConferenceResource = resource;
       }
     });
-
     if (staffAssistanceResource && webConferenceResource) {
       // Create one combined task with web conference resource and staff assistance instructions
       tasks.push(createWebConferenceTask(event, webConferenceResource));

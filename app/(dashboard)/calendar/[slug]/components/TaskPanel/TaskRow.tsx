@@ -12,7 +12,8 @@ import {
 import { cn } from "@/lib/utils";
 import { TaskIcon } from "@/core/task/taskIcon";
 
-import { convertTimeToMinutes } from "./utils";
+import { convertTimeToMinutes, getTaskDisplayName } from "./utils";
+import { taskOverdueClassName } from "./taskOverdueStyles";
 import type { EnhancedTask } from "./types";
 
 type TaskRowProps = {
@@ -22,7 +23,7 @@ type TaskRowProps = {
 export default function TaskRow({ entry }: TaskRowProps) {
   const { task, roomName } = entry;
 
-  const title = task.taskType?.trim() || "Task";
+  const title = getTaskDisplayName(task);
   const normalizedStatus = task.status?.trim() || null;
   const isCompleted =
     normalizedStatus?.toLowerCase() === "completed";
@@ -57,7 +58,7 @@ export default function TaskRow({ entry }: TaskRowProps) {
           : isOverdue
             ? "border-rose-200 bg-rose-100/70 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/50"
             : "bg-muted/40 dark:bg-muted/90",
-        isOverdue && "task-overdue"
+        isOverdue && taskOverdueClassName
       )}
       asChild
     >

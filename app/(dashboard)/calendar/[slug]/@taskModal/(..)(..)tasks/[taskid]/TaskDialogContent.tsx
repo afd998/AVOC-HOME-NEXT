@@ -25,6 +25,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { HydratedTask } from "@/lib/data/calendar/taskscalendar";
 import { useCalendarTasksStore } from "@/app/(dashboard)/calendar/[slug]/stores/useCalendarTasksStore";
 import { markTaskCompletedAction } from "./actions";
+import CaptureQC from "./CaptureQC";
 
 type TaskDialogContentProps = {
   taskId: string;
@@ -335,6 +336,13 @@ export default function TaskDialogContent({
   }, [task?.eventDetails]);
 
   const eventLink = task?.eventDetails ? `/events/${task.eventDetails.id}` : null;
+  const shouldShowCaptureQC = useMemo(() => {
+    const taskType = task?.taskType;
+    if (!taskType) {
+      return false;
+    }
+    return taskType.trim().toUpperCase() === "RECORDING CHECK";
+  }, [task?.taskType]);
 
   if (fetchState === "loading" && !task) {
     return (
@@ -377,7 +385,7 @@ export default function TaskDialogContent({
   const hasInstructions = instructionEntries.length > 0;
 
   const taskDetails: Array<{ label: string; value: ReactNode; href?: string }> = [
-    { label: "Room", value: task.room },
+    { label: "Venue", value: task.room },
     { label: "Status", value: formattedStatus },
   ];
 
@@ -391,7 +399,7 @@ export default function TaskDialogContent({
             </span>
             <div className="flex flex-col gap-1 text-left">
               <DialogTitle className="text-xl font-semibold">
-                {(task.taskType ?? "").trim() || "Task"}
+                {(task.taskDictDetails?.displayName || "Task").trim()}
               </DialogTitle>
               <DialogDescription>
                 {formattedDate} | {formattedTime}
@@ -489,6 +497,8 @@ export default function TaskDialogContent({
           </section>
         ) : null}
 
+        {shouldShowCaptureQC ? <CaptureQC task={task} /> : null}
+
         <section className="space-y-2">
           <h3 className="text-sm font-semibold uppercase text-muted-foreground">
             Instructions
@@ -577,7 +587,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
 });
 
 const timeFormatter = new Intl.DateTimeFormat(undefined, {
-  hour: "numeric",
+  hour: "numeric", 
   minute: "2-digit",
 });
 

@@ -5,7 +5,7 @@
  * It uses Playwright to automate browser interactions for authentication, then makes API calls to fetch
  * event availability data and detailed event information.
  */
-
+import { pipe } from "remeda";
 import { chromium, type Browser } from "playwright";
 import dayjs from "dayjs";
 import config from "../config";
@@ -16,8 +16,7 @@ import {
   transformRawEventsToEvents,
   type ProcessedEvent,
 } from "./transformRawEventsToEvents/transformRawEventsToEvents";
-import { saveEvents } from "./saveEvents";
-import { transformEventsToTasks } from "./transformEventsToTasks/transformEventsToTasks";
+import { transformEventsToTasks } from "./addTasks/addTasks";
 import {
   availabilityResponseSchema,
   eventDetailResponseSchema,
@@ -25,12 +24,19 @@ import {
   type AvailabilitySubject,
   type RawEvent,
 } from "./schemas";
-import { saveFacultyEvents } from "./saveFacultyEvents";
-import { saveResourceEvents } from "./saveResourceEvents";
+
+import { addResourceEvents } from "./AddResourceEvents";
+import { saveData } from "./saveData";
 import { saveTasks } from "./saveTasks";
+import { type TaskRow } from "../../lib/data/tasks/tasks";
+import { addFacultyEvents } from "./addFacultyEvents";
+import { resourceEvents } from "../../lib/db/schema";
+import { InferSelectModel } from "drizzle-orm";
+
 // Validate configuration to ensure all required environment variables are present
 config.validate();
-
+type ResourceEventRow = InferSelectModel<typeof resourceEvents>;
+type FacultyEventRow = InferSelectModel<typeof facultyEvents>;
 // Global browser instance for reuse across requests
 let browser: Browser | null = null;
 
@@ -250,17 +256,29 @@ async function fetchEventsData(startDate: string): Promise<RawEvent[]> {
  * 3. Transforms raw data into processed events
  * 4. Saves processed events to the database
  */
+
+export type EventAggregate = ProcessedEvent & {
+  joins: {
+    resourcesEvents: ResourceEventRow[] | null | undefined;
+    facultyEvents: FacultyEventRow[] | null | undefined;
+    tasks: TaskRow[] | null | undefined;
+  };
+};
 async function main(): Promise<void> {
   // Parse command line argument for date offset (defaults to 0 = today)
   const offset = Number.parseInt(process.argv[2] ?? "0", 10);
   const date = dayjs().add(offset, "day").format("YYYY-MM-DD");
 
   // Initialize browser and perform the scraping workflow
-  const data = await fetchEventsData(date);
-  const processedEvents = transformRawEventsToEvents(data);
-  await saveEvents(processedEvents, date);
-  await saveResourceEvents(processedEvents);
-  await saveFacultyEvents(processedEvents);
+  const eventGraph = pipe(
+    await fetchEventsData(date),
+    transformRawEventsToEvents,
+    addResourceEvents,
+    addFacultyEvents,
+    addTasks
+  );
+
+  await saveData(processedEvents, date);
   const tasks = await transformEventsToTasks(processedEvents);
   await saveTasks(tasks, date);
 }

@@ -5,19 +5,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import TaskEmptyState from "./TaskEmptyState";
 import TaskList from "./TaskList";
 import TaskPanelHeader from "./TaskPanelHeader";
+import { TaskOverdueKeyframes } from "./taskOverdueStyles";
 import { buildTaskListItems } from "./utils";
 import { useCalendarTasksStore } from "../../stores/useCalendarTasksStore";
 
 export default function TaskPanel() {
+  const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
   const taskGroups = useCalendarTasksStore((state) => state.taskGroups);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const indicatorElementRef = useRef<HTMLDivElement | null>(null);
   const [hasIndicator, setHasIndicator] = useState(false);
 
-  const { items, totalTasks } = useMemo(
-    () => buildTaskListItems(taskGroups),
-    [taskGroups]
-  );
+  const { items, totalTasks } = useMemo(() => {
+    if (activeTab !== "all") {
+      return { items: [], totalTasks: 0 };
+    }
+    return buildTaskListItems(taskGroups);
+  }, [activeTab, taskGroups]);
 
   useEffect(() => {
     if (totalTasks === 0) {
@@ -53,22 +57,32 @@ export default function TaskPanel() {
   }, []);
 
   return (
-    <div className="flex h-full flex-col">
-      <TaskPanelHeader
-        onGoToNow={handleGoToNow}
-        goNowDisabled={!hasIndicator}
-        totalTasks={totalTasks}
-      />
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-3"
-      >
-        {totalTasks === 0 ? (
-          <TaskEmptyState />
-        ) : (
-          <TaskList items={items} onIndicatorUpdate={handleIndicatorUpdate} />
-        )}
+    <>
+      <TaskOverdueKeyframes />
+      <div className="flex h-full flex-col">
+        <TaskPanelHeader
+          onGoToNow={handleGoToNow}
+          goNowDisabled={activeTab !== "all" || !hasIndicator}
+          tabValue={activeTab}
+          onTabValueChange={setActiveTab}
+          totalTasks={totalTasks}
+        />
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto px-4 py-3"
+        >
+          {activeTab === "all" ? (
+            totalTasks === 0 ? (
+              <TaskEmptyState />
+            ) : (
+              <TaskList
+                items={items}
+                onIndicatorUpdate={handleIndicatorUpdate}
+              />
+            )
+          ) : null}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
