@@ -1,5 +1,4 @@
 import { createRecordingTasks } from "./createRecordingTasks";
-import type { ProcessedEvent } from "../transformRawEventsToEvents/transformRawEventsToEvents";
 import { InferInsertModel } from "drizzle-orm";
 import { tasks } from "../../../drizzle/schema";
 import { createCombinedModeTasks } from "./createCombinedModeTasks";
@@ -10,22 +9,20 @@ import { createLaptopTasks } from "./createLaptopTasks";
 import { createPollingTasks } from "./createPollingTasks";
 import { createWebConferenceTask } from "./createWebConferenceTask";
 import { createSurfaceHubTasks } from "./createSurfaceHubTasks";
-type TaskRow = InferInsertModel<typeof tasks>;
+import { type ProcessedEvent } from "../scrape";
+import { type EventResource } from "../scrape";
+import { type TaskRow } from "../scrape";
 
-export async function transformEventsToTasks(events: ProcessedEvent[]) {
+export async function getTasks(events: ProcessedEvent[]): Promise<TaskRow[]> {
   const tasks: TaskRow[] = [];
   events.forEach((event) => {
-    let staffAssistanceResource:
-      | ProcessedEvent["resources"][number]
-      | undefined;
-    let webConferenceResource: ProcessedEvent["resources"][number] | undefined;
-
+    let staffAssistanceResource: EventResource | undefined;
+    let webConferenceResource: EventResource | undefined;
     event.resources.forEach((resource) => {
       const lowercaseItemName = resource.itemName?.toLowerCase() ?? "";
       if (lowercaseItemName.includes("recording")) {
         tasks.push(...createRecordingTasks(event, resource));
       }
-
       if (lowercaseItemName.includes("laptop")) {
         tasks.push(...createLaptopTasks(event, resource));
       }
@@ -41,7 +38,6 @@ export async function transformEventsToTasks(events: ProcessedEvent[]) {
       ) {
         staffAssistanceResource = resource;
       }
-
       if (
         !webConferenceResource &&
         lowercaseItemName.includes("web conference")

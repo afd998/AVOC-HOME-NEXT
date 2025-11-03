@@ -1,4 +1,4 @@
-import { ProcessedEvent } from "../transformRawEventsToEvents/transformRawEventsToEvents";
+import { ProcessedEvent } from "../Events/transformRawEventsToEvents";
 import { generateTaskId, adjustTimeByMinutes } from "./utils";
 
 export function createCombinedModeTasks(events: ProcessedEvent[]) {

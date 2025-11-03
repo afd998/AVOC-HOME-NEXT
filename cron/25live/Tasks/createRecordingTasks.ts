@@ -1,7 +1,7 @@
 const THIRTY_MINUTES_IN_SECONDS = 30 * 60;
 import { tasks } from "../../../drizzle/schema";
 import { InferInsertModel } from "drizzle-orm";
-import { type ProcessedEvent, type EventResource } from "../transformRawEventsToEvents/transformRawEventsToEvents";
+import { type ProcessedEvent, type EventResource } from "../Events/transformRawEventsToEvents";
 import { generateTaskId } from "./utils";
 /**
  * Convert a HH:MM[:SS] string into seconds from midnight.

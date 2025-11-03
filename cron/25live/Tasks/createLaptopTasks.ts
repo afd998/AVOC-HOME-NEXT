@@ -1,7 +1,7 @@
 import {
   ProcessedEvent,
   EventResource,
-} from "../transformRawEventsToEvents/transformRawEventsToEvents";
+} from "../Events/transformRawEventsToEvents";
 import { generateTaskId, adjustTimeByMinutes } from "./utils";
 export function createLaptopTasks(
   event: ProcessedEvent,

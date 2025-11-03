@@ -2,7 +2,7 @@ import { generateTaskId, adjustTimeByMinutes } from "./utils";
 import {
   type ProcessedEvent,
   type EventResource,
-} from "../transformRawEventsToEvents/transformRawEventsToEvents";
+} from "../Events/transformRawEventsToEvents";
 
 export function createWebConferenceTask(
   event: ProcessedEvent,

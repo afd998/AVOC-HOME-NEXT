@@ -96,11 +96,9 @@ export const notifications = pgTable("notifications", {
 ]);
 
 export const captureQc = pgTable("capture_qc", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "capture_qc_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	task: bigint({ mode: "number" }).notNull(),
+	task: bigint({ mode: "number" }).primaryKey().notNull(),
 	programVideoCamera: boolean("program_video_camera"),
 	programVideoContent1: boolean("program_video_content_1"),
 	programVideoContent2: boolean("program_video_content_2"),
@@ -128,7 +126,7 @@ export const facultyUpdates = pgTable("faculty_updates", {
 
 export const tasks = pgTable("tasks", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "services_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	id: bigint({ mode: "number" }).primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	event: bigint({ mode: "number" }),

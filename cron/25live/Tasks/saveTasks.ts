@@ -1,8 +1,8 @@
-import { tasks as tasksTable } from "../../drizzle/schema";
+import { tasks as tasksTable } from "../../../lib/db/schema";
 import { and, eq, inArray, sql, type InferInsertModel } from "drizzle-orm";
-import { db } from "../../lib/db";
+import { db } from "../../../lib/db";
 type TaskRow = InferInsertModel<typeof tasksTable>;
-export async function saveTasks(incoming: TaskRow[] , date: string) {
+export async function saveTasks(incoming: TaskRow[], date: string) {
   console.log(`\n📝 Saving tasks for date: ${date}`);
   console.log(`📊 Incoming tasks: ${incoming.length}`);
 
@@ -13,7 +13,11 @@ export async function saveTasks(incoming: TaskRow[] , date: string) {
     .where(eq(tasksTable.date, date));
 
   const existingIds = existing.map((r) => r.id);
-  const incomingIds = new Set(incoming.map((t) => t.id).filter((id): id is number => typeof id === "number"));
+  const incomingIds = new Set(
+    incoming
+      .map((t) => t.id)
+      .filter((id): id is number => typeof id === "number")
+  );
 
   // Determine which existing tasks should be removed (no longer present in input)
   const toDelete = existingIds.filter((id) => !incomingIds.has(id));
@@ -52,6 +56,4 @@ export async function saveTasks(incoming: TaskRow[] , date: string) {
   console.log(`✅ Upserted tasks for ${date}`);
 }
 
-
-
-//event-id, starttime, tasktype. 
+//event-id, starttime, tasktype.

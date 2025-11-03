@@ -1,4 +1,4 @@
-import { ProcessedEvent } from "../transformRawEventsToEvents/transformRawEventsToEvents";
+import { ProcessedEvent } from "../Events/transformRawEventsToEvents";
 import { db } from "../../../lib/db";
 import { events as eventsTable } from "../../../drizzle/schema";
 import { and, asc, eq, inArray } from "drizzle-orm";

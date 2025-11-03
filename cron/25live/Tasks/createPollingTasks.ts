@@ -1,18 +1,18 @@
 import {
     ProcessedEvent,
     EventResource,
-  } from "../transformRawEventsToEvents/transformRawEventsToEvents";
+  } from "../Events/transformRawEventsToEvents";
   import { generateTaskId, adjustTimeByMinutes } from "./utils";
-  export function createSurfaceHubTasks(
+  export function createPollingTasks( 
     event: ProcessedEvent,
     resource: EventResource
   ) {
     return [
       {
-        id: generateTaskId(event.id, "NEAT BOARD DEPLOY", event.startTime),
-        taskType: "NEAT BOARD DEPLOY",
+        id: generateTaskId(event.id, "POLLING CLICKER DEPLOY", event.startTime),
+        taskType: "POLLING CLICKER DEPLOY",
         date: event.date,
-        startTime: adjustTimeByMinutes(event.startTime, -30),
+        startTime: adjustTimeByMinutes(event.startTime, -7.5),
         createdAt: new Date().toISOString(),
         status: "pending",
         assignedTo: null,
@@ -20,14 +20,14 @@ import {
         event: event.id,
         resource: resource.itemName,
         room: event.roomName,
-        taskDict: "NEAT BOARD DEPLOY",
+        taskDict: "POLLING CLICKER DEPLOY",
       },
   
       {
-        id: generateTaskId(event.id, "NEAT BOARD RETRIEVAL", event.endTime),
-        taskType: "NEAT BOARD RETRIEVAL",
+        id: generateTaskId(event.id, "POLLING CLICKER RETRIEVAL", event.endTime),
+        taskType: "POLLING CLICKER RETRIEVAL", 
         date: event.date,
-        startTime: adjustTimeByMinutes(event.endTime, 30),
+        startTime: adjustTimeByMinutes(event.endTime, 7.5),
         createdAt: new Date().toISOString(),
         status: "pending",
         assignedTo: null,
@@ -35,7 +35,7 @@ import {
         event: event.id,
         resource: resource.itemName,
         room: event.roomName,
-        taskDict: "NEAT BOARD RETRIEVAL", 
+        taskDict: "POLLING CLICKER RETRIEVAL", 
       },
     ];
   }

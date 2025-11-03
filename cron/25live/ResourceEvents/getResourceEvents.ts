@@ -1,20 +1,9 @@
-/**
- * Resource Events Management
- *
- * This module handles the relationship between events and their associated resources (AV equipment, furniture, etc.)
- * It maintains a dictionary of known resources and a join table linking resources to events.
- *
- * Database structure:
- * - resourcesDict: Master list of all resources (resource_id, name, isAv, icon)
- * - resourceEvents: Join table linking events to resources (event_id, resource_id, quantity, instructions)
- */
-
 import { inArray } from "drizzle-orm";
-import { db } from "../../lib/db";
-import { resourceEvents, resourcesDict } from "../../lib/db/schema";
-import { type ProcessedEvent } from "./transformRawEventsToEvents/transformRawEventsToEvents";
+import { db } from "../../../lib/db";
+import { resourceEvents, resourcesDict } from "../../../lib/db/schema";
+import { type ProcessedEvent } from "../scrape";
 import { type InferInsertModel } from "drizzle-orm";
-import { type EventAggregate } from "./scrape";
+
 type ResourceEventRow = InferInsertModel<typeof resourceEvents>;
 type ResourceDictRow = InferInsertModel<typeof resourcesDict>;
 
@@ -55,12 +44,12 @@ const normalizeQuantity = (value: unknown): number => {
  * 3. Add any new resources to the dictionary
  * It returns the processed event IDs so callers can refresh join rows.
  */
-const prepareResourceDictionary = async (eventGraph: EventAggregate[]) => {
+const prepareResourceDictionary = async (processedEvents: ProcessedEvent[]) => {
   // Build a collection of unique resource IDs and their metadata.
   const resourceIdSet = new Set<string>();
   const resourceMetadata = new Map<string, { name: string }>();
 
-  eventGraph.forEach((event) => {
+  processedEvents.forEach((event) => {
     event.resources.forEach((resource) => {
       const resourceId = resource.itemName;
       if (!resourceId) {
@@ -119,26 +108,17 @@ const prepareResourceDictionary = async (eventGraph: EventAggregate[]) => {
   }
 };
 
-/**
- * Save resource-event relationships to the database
- *
- * This function performs the remaining operations:
- * 4. Create join table entries linking resources to events
- * 5. Replace old relationships with new ones (delete + insert)
- *
- * @param processedEvents - Array of events with their associated resources
- */
-export async function addResourceEvents(
-  eventGraph: EventAggregate[]
-): Promise<void> {
-  await prepareResourceDictionary(eventGraph);
+export async function getResourceEvents(
+  processedEvents: ProcessedEvent[]
+): Promise<ResourceEventRow[]> {
+  await prepareResourceDictionary(processedEvents);
 
   // STEP 9: Build join table rows linking events to resources
   // Track seen pairs to prevent duplicate entries for the same event-resource combination
   const seenPairs = new Set<string>();
   const joinRows: ResourceEventRow[] = [];
 
-  eventGraph.forEach((event) => {
+  processedEvents.forEach((event) => {
     event.resources.forEach((resource) => {
       const resourceId = resource.itemName;
 
@@ -159,21 +139,5 @@ export async function addResourceEvents(
     });
   });
 
-  // STEP 10: Delete existing resource-event relationships for these events
-  // This ensures we have a clean slate before inserting the new relationships
-  // (handles cases where resources were removed from events)
-  const processedEventIds = processedEvents.map((event) => event.id);
-  if (processedEventIds.length > 0) {
-    await db
-      .delete(resourceEvents)
-      .where(inArray(resourceEvents.eventId, processedEventIds));
-  }
-
-  // STEP 11: Insert the new resource-event relationships
-  if (joinRows.length > 0) {
-    console.log(`Inserting ${joinRows.length} resource-event relationships`);
-    await db.insert(resourceEvents).values(joinRows);
-  } else {
-    console.log("No resource-event relationships to insert");
-  }
+  return joinRows;
 }

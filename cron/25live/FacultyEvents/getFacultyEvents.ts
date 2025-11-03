@@ -1,12 +1,14 @@
 import { inArray } from "drizzle-orm";
-import { db } from "../../lib/db";
-import { facultyEvents, faculty } from "../../lib/db/schema";
-import { type ProcessedEvent } from "./transformRawEventsToEvents/transformRawEventsToEvents";
-import { EventGraph } from "./scrape";
+import { db } from "../../../lib/db";
+import { facultyEvents, faculty } from "../../../lib/db/schema";
+import { type ProcessedEvent } from "../scrape";
+import { type InferInsertModel } from "drizzle-orm";
 
-export async function addFacultyEvents(eventGraph: EventGraph[]): EventGraph[] {
-  const processedEvents = eventGraph.map((event) => event.events).flat();
-  const processedEventIds = eventGraph.events
+type FacultyEventRow = InferInsertModel<typeof facultyEvents>;
+export async function getFacultyEvents(
+  processedEvents: ProcessedEvent[]
+): Promise<FacultyEventRow[]> {
+  const processedEventIds = processedEvents
     .map((event) => event.id)
     .filter((id): id is number => typeof id === "number");
 
@@ -93,19 +95,5 @@ export async function addFacultyEvents(eventGraph: EventGraph[]): EventGraph[] {
     `🔗 Created ${facultyEventRows.length} faculty-event relationships`
   );
 
-  if (processedEventIds.length > 0) {
-    console.log(`🧹 Cleaning up existing faculty-event relationships...`);
-    await db
-      .delete(facultyEvents)
-      .where(inArray(facultyEvents.event, processedEventIds));
-    console.log(`🗑️  Deleted existing faculty-event relationships`);
-  }
-
-  if (facultyEventRows.length > 0) {
-    console.log(
-      `👥 Inserting ${facultyEventRows.length} faculty-event relationships...`
-    );
-    await db.insert(facultyEvents).values(facultyEventRows);
-    console.log(`✅ Successfully inserted faculty-event relationships`);
-  }
+  return facultyEventRows;
 }

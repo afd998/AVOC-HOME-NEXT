@@ -1,10 +1,9 @@
 import * as utils from "./index.js";
-import { parseEventResources } from "./parse-resourses";
-import type { InferInsertModel } from "drizzle-orm";
-import { events } from "../../../lib/db/schema";
-import type { RawEvent as RawEventFromSchema } from "../schemas";
-import { mergeAdjacentRoomEvents } from "./mergeAdjacentRoomEvents";
-import type { EventAggregate } from "../scrape";
+import { parseEventResources } from "./parse-resourses.js";
+import { mergeAdjacentRoomEvents } from "./mergeAdjacentRoomEvents.js";
+import type { ProcessedEvent } from "../scrape";
+import type { RawEvent } from "../schemas";
+
 const {
   generateDeterministicId,
   getEventType,
@@ -14,20 +13,6 @@ const {
   parseRoomName,
   toTimeStrings,
 } = utils;
-
-export type RawEvent = RawEventFromSchema;
-export type EventResource = {
-  itemName: string;
-  quantity: number | null;
-  instruction: string | null;
-};
-
-export type ProcessedEvent = Omit<
-  InferInsertModel<typeof events>,
-  "resources"
-> & {
-  resources: EventResource[];
-};
 
 function removeKECNoAcademicEvents(
   eventsList: ProcessedEvent[]
@@ -62,9 +47,7 @@ function removeKECNoAcademicEvents(
   });
 }
 
-export function transformRawEventsToEvents(
-  rawData: RawEvent[]
-): EventAggregate[] {
+export function getEvents(rawData: RawEvent[]): ProcessedEvent[] {
   if (!rawData || !Array.isArray(rawData)) {
     return [];
   }
@@ -134,4 +117,4 @@ export {
   removeKECNoAcademicEvents,
 };
 
-export { mergeAdjacentRoomEvents } from "./mergeAdjacentRoomEvents";
+export { mergeAdjacentRoomEvents } from "./mergeAdjacentRoomEvents.js";
