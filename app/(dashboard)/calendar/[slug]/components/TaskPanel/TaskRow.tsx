@@ -10,7 +10,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { cn } from "@/lib/utils";
-import { TaskIcon } from "@/core/task/taskIcon";
+import { TaskIcon } from "@/core/tasks/taskIcon";
 
 import { convertTimeToMinutes, getTaskDisplayName } from "./utils";
 import { taskOverdueClassName } from "./taskOverdueStyles";

@@ -1,4 +1,4 @@
-import type { HydratedTask } from "@/lib/data/calendar/taskscalendar";
+import type { HydratedTask } from "@/lib/data/calendar/taskUtils";
 
 import type { EnhancedTask, TaskListItem } from "./types";
 

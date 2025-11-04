@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import type { HydratedTask } from "@/lib/data/calendar/taskscalendar";
+import type { HydratedTask } from "@/lib/data/calendar/taskUtils";
 
 export type TaskGroup = {
   roomName: string;

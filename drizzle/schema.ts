@@ -132,7 +132,7 @@ export const tasks = pgTable("tasks", {
 	event: bigint({ mode: "number" }),
 	taskType: text("task_type").notNull(),
 	startTime: time("start_time").notNull(),
-	status: text(),
+	status: text().notNull(),
 	assignedTo: uuid("assigned_to"),
 	completedBy: uuid("completed_by"),
 	date: date().notNull(),

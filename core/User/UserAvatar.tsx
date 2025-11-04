@@ -1,96 +1,124 @@
-import { Avatar, AvatarFallback } from '../../components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
-import { getProfile } from '@/lib/data/profile';
+"use client";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { getProfile } from "@/lib/data/profile";
+import type { ProfileRow } from "@/lib/data/tasks/tasks";
 
-// Generate a consistent color based on user ID
+type UserAvatarProps = {
+  profile: ProfileRow;
+  size?: "xs" | "sm" | "md" | "lg";
+  className?: string;
+  variant?: "default" | "solid";
+};
+
+const sizeClasses: Record<NonNullable<UserAvatarProps["size"]>, string> = {
+  xs: "h-4 w-4",
+  sm: "h-6 w-6",
+  md: "h-8 w-8",
+  lg: "h-12 w-12",
+};
+
+const fontSizeBySize: Record<NonNullable<UserAvatarProps["size"]>, string> = {
+  xs: "8px",
+  sm: "10px",
+  md: "12px",
+  lg: "14px",
+};
+
 const generateUserColor = (userId: string): string => {
-  // Create a simple hash from the user ID
   let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  for (let index = 0; index < userId.length; index += 1) {
+    hash = userId.charCodeAt(index) + ((hash << 5) - hash);
   }
-  
-  // Use the hash to select from a predefined set of colors (hex values)
+
   const colors = [
-    '#ef4444', // red-500
-    '#3b82f6', // blue-500
-    '#10b981', // green-500
-    '#eab308', // yellow-500
-    '#8b5cf6', // purple-500
-    '#ec4899', // pink-500
-    '#6366f1', // indigo-500
-    '#14b8a6', // teal-500
-    '#f97316', // orange-500
-    '#06b6d4', // cyan-500
-    '#10b981', // emerald-500
-    '#8b5cf6', // violet-500
-    '#f43f5e', // rose-500
-    '#f59e0b', // amber-500
-    '#84cc16', // lime-500
-    '#0ea5e9'  // sky-500
+    "#ef4444",
+    "#3b82f6",
+    "#10b981",
+    "#eab308",
+    "#8b5cf6",
+    "#ec4899",
+    "#6366f1",
+    "#14b8a6",
+    "#f97316",
+    "#06b6d4",
+    "#10b981",
+    "#8b5cf6",
+    "#f43f5e",
+    "#f59e0b",
+    "#84cc16",
+    "#0ea5e9",
   ];
-  
+
   return colors[Math.abs(hash) % colors.length];
 };
 
-interface UserAvatarProps {
-  userId: string;
-  size?: 'xs' | 'sm' | 'md' | 'lg';
-  className?: string;
-  variant?: 'default' | 'solid';
-}
+const getInitials = (value: string | null | undefined): string => {
+  if (!value) {
+    return "??";
+  }
 
-const sizeClasses = {
-  xs: 'h-4 w-4',
-  sm: 'h-6 w-6',
-  md: 'h-8 w-8',
-  lg: 'h-12 w-12'
+  const parts = value
+    .trim()
+    .split(/\s+/)
+    .filter((part) => part.length > 0);
+
+  if (parts.length === 0) {
+    return "??";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join("")
+    .toUpperCase();
 };
 
-export  default async function UserAvatar({ userId, size = 'md', className = '', variant = 'default' }: UserAvatarProps) {
-const profile = await getProfile(userId)
- 
-  const displayName = profile?.name || userId;
-  const initials = displayName
-    .split(' ')
-    .map((name: string) => name.charAt(0))
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+export default function UserAvatar({
+  profile,
+  size = "md",
+  className,
+  variant = "default",
+}: UserAvatarProps) {
+  const displayName = profile?.name?.trim() || profile?.id;
+  const initials = getInitials(profile?.name ?? profile?.id);
+  const color = generateUserColor(profile?.id ?? "");
 
-  const userColor = generateUserColor(userId);
-  
-  
-  // Style based on variant
-  const avatarStyle = variant === 'solid' 
-    ? {
-        backgroundColor: userColor,
-        color: 'white',
-        fontSize: size === 'xs' ? '8px' : size === 'sm' ? '10px' : size === 'md' ? '12px' : '14px'
-      }
-    : {
-        backgroundColor: `${userColor}40`,
-        color: userColor,
-        fontSize: size === 'xs' ? '8px' : size === 'sm' ? '10px' : size === 'md' ? '12px' : '14px'
-      };
+  const style =
+    variant === "solid"
+      ? {
+          backgroundColor: color,
+          color: "#ffffff",
+        }
+      : {
+          backgroundColor: `${color}40`,
+          color,
+        };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Avatar className={`${sizeClasses[size]} ${className}`}>
-            <AvatarFallback 
-              className="font-medium flex items-center justify-center" 
-              style={avatarStyle}
-            >
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{displayName}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Avatar
+          className={cn(sizeClasses[size], "font-medium", className)}
+          data-variant={variant}
+        >
+          <AvatarFallback
+            className="flex h-full w-full items-center justify-center uppercase"
+            style={{
+              ...style,
+              fontSize: fontSizeBySize[size],
+            }}
+          >
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+      </TooltipTrigger>
+      <TooltipContent>{displayName}</TooltipContent>
+    </Tooltip>
   );
 }

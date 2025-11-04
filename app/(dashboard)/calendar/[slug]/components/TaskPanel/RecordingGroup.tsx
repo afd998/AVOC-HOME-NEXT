@@ -14,7 +14,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
-import { TaskIcon } from "@/core/task/taskIcon";
+import { TaskIcon } from "@/core/tasks/taskIcon";
 
 import TaskRow from "./TaskRow";
 import { convertTimeToMinutes } from "./utils";

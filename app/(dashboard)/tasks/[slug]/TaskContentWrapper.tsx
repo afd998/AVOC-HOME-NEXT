@@ -5,23 +5,22 @@ import TaskContent from "@/core/tasks/TaskContent";
 import { useCalendarTasksStore } from "@/app/(dashboard)/calendar/[slug]/stores/useCalendarTasksStore";
 import type { HydratedTask } from "@/lib/data/calendar/taskUtils";
 
-type TaskDialogContentProps = {
+type TaskContentWrapperProps = {
   taskId: string;
-  slug: string;
-  initialTask: HydratedTask | null;
+  initialTask: HydratedTask;
 };
 
-export default function TaskDialogContent({
+export default function TaskContentWrapper({
+  taskId,
   initialTask,
-  ...props
-}: TaskDialogContentProps) {
+}: TaskContentWrapperProps) {
   const updateTask = useCalendarTasksStore((state) => state.updateTask);
-  
+
   // Get task from store (will be updated by real-time updates)
   const task = useCalendarTasksStore(
     useCallback(
       (state) => {
-        const numericId = Number(props.taskId);
+        const numericId = Number(taskId);
         if (!Number.isInteger(numericId)) {
           return null;
         }
@@ -33,23 +32,18 @@ export default function TaskDialogContent({
         }
         return null;
       },
-      [props.taskId]
+      [taskId]
     )
   );
 
   // Add initial task to store if provided
   useEffect(() => {
-    if (initialTask) {
-      updateTask(initialTask);
-    }
+    updateTask(initialTask);
   }, [initialTask, updateTask]);
 
   // Use task from store if available, otherwise fall back to initialTask
   const currentTask = task ?? initialTask;
 
-  if (!currentTask) {
-    return null;
-  }
-
   return <TaskContent task={currentTask} />;
 }
+

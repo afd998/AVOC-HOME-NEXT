@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import type { HydratedTask } from "@/lib/data/calendar/taskscalendar";
+import type { HydratedTask } from "@/lib/data/calendar/taskUtils";
 import Task from "./Task";
 import { createClient } from "@/lib/supabase/client";
 import { useCalendarTasksStore } from "../../stores/useCalendarTasksStore";

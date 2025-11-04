@@ -47,12 +47,12 @@ export async function getTasksByDate(date: string): Promise<TaskWithDict[]> {
         },
       },
       profile_completedBy: true,
-      captureQc: true,
+      captureQcs: true,
     },
   });
 
   return rows.map(
-    ({ taskDict, event, profile_completedBy, captureQc, ...taskData }) => {
+    ({ taskDict, event, profile_completedBy, captureQcs, ...taskData }) => {
       const normalizedResourceId =
         typeof taskData.resource === "string" &&
         taskData.resource.trim().length > 0
@@ -82,7 +82,7 @@ export async function getTasksByDate(date: string): Promise<TaskWithDict[]> {
         taskDictDetails: taskDict ?? null,
         eventDetails: normalizedEventDetails,
         completedByProfile: profile_completedBy ?? null,
-        captureQcDetails: captureQc ?? null,
+        captureQcDetails: captureQcs?.[0] ?? null,
       };
     }
   );

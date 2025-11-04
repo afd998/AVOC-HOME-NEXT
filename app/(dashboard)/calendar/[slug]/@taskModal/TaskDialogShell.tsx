@@ -24,10 +24,12 @@ export default function TaskDialogShell({ children }: TaskDialogShellProps) {
   return (
     <Dialog defaultOpen open modal onOpenChange={handleOpenChange}>
       <DialogContent
-        className="w-[min(90vw,56rem)] max-w-3xl"
+        className="w-[min(90vw,56rem)] max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0"
         showCloseButton
       >
-        {children}
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col h-full">
+          {children}
+        </div>
       </DialogContent>
     </Dialog>
   );

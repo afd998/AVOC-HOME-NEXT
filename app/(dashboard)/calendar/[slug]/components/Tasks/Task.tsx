@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
 
-import { HydratedTask } from "@/lib/data/calendar/taskscalendar";
-import { TaskIcon } from "@/core/task/taskIcon";
+import type { HydratedTask } from "@/lib/data/calendar/taskUtils";
+import { TaskIcon } from "@/core/tasks/taskIcon";
 import { cn } from "@/lib/utils";
 
 export default function Task({

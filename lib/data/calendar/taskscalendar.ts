@@ -2,21 +2,9 @@ import { getFilters } from "../filters";
 import { RoomFilter } from "@/lib/db/types";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { getTasksByDate, type TaskWithDict } from "../tasks/tasks";
-const TIMELINE_START_HOUR = 7;
-const TIMELINE_END_HOUR = 23;
-const PIXELS_PER_MINUTE = 2.5;
-const ROOM_LABEL_WIDTH = 96;
-const EVENT_MARGIN = 1;
+import { addDisplayColumns, type HydratedTask } from "./taskUtils";
+
 type TaskRow = TaskWithDict;
-
-export type DerivedTaskMetrics = {
-  startMinutes: number;
-  left: string;
-};
-
-export type HydratedTask = TaskRow & {
-  derived: DerivedTaskMetrics;
-};
 
 export async function getTasksCalendar(
   date: string,
@@ -229,21 +217,6 @@ async function filterTasks(
   return tasksToFilter.filter((task) => allowedRooms.has(task.room));
 }
 
-export function addDisplayColumns(tasks: TaskRow[]): HydratedTask[] {
-  return tasks.map((task) => {
-    const [startHour, startMin] = task.startTime.split(":").map(Number);
-    const taskStartMinutes = startHour * 60 + startMin;
-    const startMinutesRelative = taskStartMinutes - TIMELINE_START_HOUR * 60;
-    return {
-      ...task,
-      derived: {
-        startMinutes: startMinutesRelative,
-        left: `${
-          startMinutesRelative * PIXELS_PER_MINUTE +
-          EVENT_MARGIN -
-          ROOM_LABEL_WIDTH
-        }px`,
-      },
-    };
-  });
-}
+// Re-export types and functions for backward compatibility
+export type { HydratedTask, DerivedTaskMetrics } from "./taskUtils";
+export { addDisplayColumns } from "./taskUtils";

@@ -38,6 +38,14 @@ export default function TaskPanelHeader({
   return (
     <header className="border-b px-4 py-3">
       <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-semibold leading-none">Task View</h2>
+          {showTotalBadge ? (
+            <Badge variant="secondary" className="text-xs font-medium">
+              {totalLabel}
+            </Badge>
+          ) : null}
+        </div>
         <div className="flex items-center justify-between gap-3">
           <Tabs
             value={tabValue}
@@ -59,19 +67,7 @@ export default function TaskPanelHeader({
             <ArrowDown className="h-4 w-4" />
           </Button>
         </div>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold leading-none">Task View</h2>
-            {showTotalBadge ? (
-              <Badge variant="secondary" className="text-xs font-medium">
-                {totalLabel}
-              </Badge>
-            ) : null}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Review upcoming tasks alongside the calendar.
-          </p>
-        </div>
+        <div className="space-y-1"></div>
       </div>
     </header>
   );
