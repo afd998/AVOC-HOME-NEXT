@@ -1,21 +1,14 @@
-import { createHash } from "crypto";
+export { generateDeterministicId } from "../utils";
 
 /**
- * Generates a deterministic, safe numeric task ID based on the event id,
- * task type, and start time.
- *
- * The returned number is derived from a SHA-256 hash truncated to 13 hex
- * digits (52 bits) to stay within JavaScript's safe integer range, which
- * maps cleanly to the Drizzle `bigint({ mode: "number" })` column.
+ * Builds the canonical task identifier string used to derive deterministic IDs.
  */
-export function generateTaskId(
+export function composeTaskIdInput(
   eventId: number | string,
   taskType: string,
   startTime: string
-): number {
-  const input = `${eventId}|${taskType}|${startTime}`;
-  const hex = createHash("sha256").update(input).digest("hex").slice(0, 13); // 52 bits
-  return parseInt(hex, 16);
+): string {
+  return `${eventId}|${taskType}|${startTime}`;
 }
 
 export const adjustTimeByMinutes = (

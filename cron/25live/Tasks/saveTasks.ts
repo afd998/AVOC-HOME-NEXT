@@ -13,11 +13,7 @@ export async function saveTasks(incoming: TaskRow[], date: string) {
     .where(eq(tasksTable.date, date));
 
   const existingIds = existing.map((r) => r.id);
-  const incomingIds = new Set(
-    incoming
-      .map((t) => t.id)
-      .filter((id): id is number => typeof id === "number")
-  );
+  const incomingIds = new Set(incoming.map((t) => t.id));
 
   // Determine which existing tasks should be removed (no longer present in input)
   const toDelete = existingIds.filter((id) => !incomingIds.has(id));

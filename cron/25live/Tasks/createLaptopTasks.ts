@@ -2,14 +2,17 @@ import {
   ProcessedEvent,
   EventResource,
 } from "../Events/transformRawEventsToEvents";
-import { generateTaskId, adjustTimeByMinutes } from "./utils";
+import { generateDeterministicId } from "../utils";
+import { composeTaskIdInput, adjustTimeByMinutes } from "./utils";
 export function createLaptopTasks(
   event: ProcessedEvent,
   resource: EventResource
 ) {
   return [
     {
-      id: generateTaskId(event.id, "LAPTOP DEPLOY", event.startTime),
+      id: generateDeterministicId(
+        composeTaskIdInput(event.id, "LAPTOP DEPLOY", event.startTime),
+      ),
       taskType: "LAPTOP DEPLOY",
       date: event.date,
       startTime: adjustTimeByMinutes(event.startTime, -7.5),
@@ -24,7 +27,9 @@ export function createLaptopTasks(
     },
 
     {
-      id: generateTaskId(event.id, "LAPTOP RETRIEVAL", event.endTime),
+      id: generateDeterministicId(
+        composeTaskIdInput(event.id, "LAPTOP RETRIEVAL", event.endTime),
+      ),
       taskType: "LAPTOP RETRIEVAL",
       date: event.date,
       startTime: adjustTimeByMinutes(event.endTime, 7.5),

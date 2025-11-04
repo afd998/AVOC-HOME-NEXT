@@ -25,6 +25,7 @@ export async function getTaskById(
         },
       },
       profile_completedBy: true,
+      captureQc: true,
     },
   });
 
@@ -32,7 +33,7 @@ export async function getTaskById(
     return null;
   }
 
-  const { taskDict, event, profile_completedBy, ...taskData } = task;
+  const { taskDict, event, profile_completedBy, captureQc, ...taskData } = task;
   const normalizedResourceId =
     typeof taskData.resource === "string" && taskData.resource.trim().length > 0
       ? taskData.resource.trim()
@@ -42,6 +43,7 @@ export async function getTaskById(
     ...taskData,
     taskDictDetails: taskDict ?? null,
     completedByProfile: profile_completedBy ?? null,
+    captureQcDetails: captureQc ?? null,
     eventDetails: event
       ? {
           ...event,

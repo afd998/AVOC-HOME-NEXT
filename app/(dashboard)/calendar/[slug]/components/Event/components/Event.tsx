@@ -10,7 +10,7 @@ interface EventProps {
   rowHeightPx?: number;
 }
 
-export default function Event({ event, rowHeightPx = 96 }: EventProps) {
+export default function Event({ event, rowHeightPx = 90 }: EventProps) {
   // const { hasOverdueChecks, isLoading: isOverdueChecksLoading } =
   //   useEventOverduePanoptoChecks(event);
   // const hasOverduePanoptoChecks = hasOverdueChecks;

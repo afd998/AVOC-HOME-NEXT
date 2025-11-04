@@ -1,31 +1,11 @@
 // Helper functions to extract data from event objects
+export { generateDeterministicId } from "../utils";
 
-/**
- * Generate a deterministic ID from source data that can handle large numbers
- * Uses BigInt to avoid precision issues with large concatenated numbers
- * @param {number} itemId - The item ID
- * @param {number} itemId2 - The second item ID  
- * @param {number} subjectItemId - The subject item ID
- * @returns {number} A unique integer ID
- */
-const generateDeterministicId = (itemId: number, itemId2: number, subjectItemId: number) => {
-  // Create a deterministic ID that combines the three numbers in a way that's guaranteed unique
-  // and fits within PostgreSQL int8 limits (19 digits max)
-  
-  // Convert to strings and pad to ensure consistent length
-  const itemIdStr = itemId.toString().padStart(10, '0');
-  const itemId2Str = itemId2.toString().padStart(10, '0');
-  const subjectItemIdStr = subjectItemId.toString().padStart(5, '0');
-  
-  // Take the last 6 digits of each to keep the total manageable
-  const itemIdPart = parseInt(itemIdStr.slice(-6));
-  const itemId2Part = parseInt(itemId2Str.slice(-6));
-  const subjectPart = parseInt(subjectItemIdStr.slice(-5));
-  
-  // Combine using a formula that ensures uniqueness
-  // This will produce a number around 15-16 digits, well within int8 limits
-  return itemIdPart * 1000000000 + itemId2Part * 10000 + subjectPart;
-};
+export const composeEventIdInput = (
+  itemId: number,
+  itemId2: number,
+  subjectItemId: number,
+) => `${itemId}|${itemId2}|${subjectItemId}`;
 
 const getEventType = (data) => {
   const panels = data.itemDetails?.defn?.panel || [];

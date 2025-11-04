@@ -2,17 +2,17 @@ import { chromium, type Browser } from "playwright";
 import dayjs from "dayjs";
 import config from "../config";
 import { eq, inArray, InferInsertModel, sql } from "drizzle-orm";
-import { events, facultyEvents, faculty, tasks, captureQc } from "../../lib/db/schema";
+import {
+  events,
+  facultyEvents,
+  faculty,
+  tasks,
+  captureQc,
+} from "../../lib/db/schema";
 import { pipe } from "remeda";
 import { getEvents } from "./Events/getEvents";
 import { getTasks } from "./Tasks/getTasks";
-import {
-  availabilityResponseSchema,
-  eventDetailResponseSchema,
-  rawEventSchema,
-  type AvailabilitySubject,
-  type RawEvent,
-} from "./schemas";
+import { type AvailabilitySubject, type RawEvent } from "./schemas";
 
 import { getResourceEvents } from "./ResourceEvents/getResourceEvents";
 import { saveResourceEvents } from "./ResourceEvents/saveResourceEvents";
@@ -24,7 +24,6 @@ import { getFacultyEvents } from "./FacultyEvents/getFacultyEvents";
 import { saveFacultyEvents } from "./FacultyEvents/SaveFacultyEvents";
 import { resourceEvents } from "../../lib/db/schema";
 import { InferSelectModel } from "drizzle-orm";
-import type { RawEvent as RawEventFromSchema } from "./schemas";
 import { fetchEventsData } from "./fetchData";
 
 export type CaptureQcRow = InferInsertModel<typeof captureQc>;
@@ -83,7 +82,7 @@ async function main(): Promise<void> {
   };
   const browserInstance = await initBrowser();
   const raw = await fetchEventsData(browserInstance, date);
-  
+
   const batch = await pipe(
     raw,
     (raw: RawEvent[]): Batch => {
@@ -106,6 +105,7 @@ async function main(): Promise<void> {
     saveResourceEvents([...batch.resourcesEvents], batch.events, date),
     saveFacultyEvents([...batch.facultyEvents], batch.events, date),
     saveTasks([...batch.tasks], date),
+    saveCaptureQc([...batch.captureQc]),
   ]);
 }
 

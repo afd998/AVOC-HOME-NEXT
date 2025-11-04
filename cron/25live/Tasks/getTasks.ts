@@ -1,4 +1,4 @@
-import { createRecordingTasks } from "./createRecordingTasks";
+import { createCaptureQCTasks } from "./createCaptureQCTasks";
 import { InferInsertModel } from "drizzle-orm";
 import { tasks } from "../../../drizzle/schema";
 import { createCombinedModeTasks } from "./createCombinedModeTasks";
@@ -21,7 +21,7 @@ export async function getTasks(events: ProcessedEvent[]): Promise<TaskRow[]> {
     event.resources.forEach((resource) => {
       const lowercaseItemName = resource.itemName?.toLowerCase() ?? "";
       if (lowercaseItemName.includes("recording")) {
-        tasks.push(...createRecordingTasks(event, resource));
+        tasks.push(...createCaptureQCTasks(event, resource));
       }
       if (lowercaseItemName.includes("laptop")) {
         tasks.push(...createLaptopTasks(event, resource));

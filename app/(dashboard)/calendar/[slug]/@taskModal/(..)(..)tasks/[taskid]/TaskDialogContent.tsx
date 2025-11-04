@@ -386,8 +386,24 @@ export default function TaskDialogContent({
 
   const taskDetails: Array<{ label: string; value: ReactNode; href?: string }> = [
     { label: "Venue", value: task.room },
-    { label: "Status", value: formattedStatus },
   ];
+
+  if (task.eventDetails) {
+    taskDetails.push({
+      label: "Event",
+      value: (
+        <>
+          <span className="font-medium text-foreground">{eventTitle}</span>
+          {eventTimingLabel ? (
+            <span className="block text-xs text-muted-foreground">
+              {eventTimingLabel}
+            </span>
+          ) : null}
+        </>
+      ),
+      href: eventLink ?? undefined,
+    });
+  }
 
   return (
     <>
@@ -463,42 +479,6 @@ export default function TaskDialogContent({
           </ItemGroup>
         </section>
 
-        {task.eventDetails ? (
-          <section className="space-y-2">
-            <h3 className="text-sm font-semibold uppercase text-muted-foreground">
-              Event
-            </h3>
-            {eventLink ? (
-              <Link
-                href={eventLink}
-                className="block rounded-md border border-border/60 bg-muted/20 px-4 py-3 no-underline transition-colors hover:bg-muted/40"
-              >
-                <p className="text-base font-semibold text-foreground">
-                  {eventTitle}
-                </p>
-                {eventTimingLabel ? (
-                  <p className="text-sm text-muted-foreground">
-                    {eventTimingLabel}
-                  </p>
-                ) : null}
-              </Link>
-            ) : (
-              <div className="rounded-md border border-border/60 bg-muted/20 px-4 py-3">
-                <p className="text-base font-semibold text-foreground">
-                  {eventTitle}
-                </p>
-                {eventTimingLabel ? (
-                  <p className="text-sm text-muted-foreground">
-                    {eventTimingLabel}
-                  </p>
-                ) : null}
-              </div>
-            )}
-          </section>
-        ) : null}
-
-        {shouldShowCaptureQC ? <CaptureQC task={task} /> : null}
-
         <section className="space-y-2">
           <h3 className="text-sm font-semibold uppercase text-muted-foreground">
             Instructions
@@ -520,6 +500,8 @@ export default function TaskDialogContent({
             </p>
           )}
         </section>
+
+        {shouldShowCaptureQC ? <CaptureQC task={task} /> : null}
       </div>
 
       <DialogFooter className="flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:gap-4 sm:justify-between">

@@ -1,5 +1,6 @@
 import { ProcessedEvent } from "../Events/transformRawEventsToEvents";
-import { generateTaskId, adjustTimeByMinutes } from "./utils";
+import { generateDeterministicId } from "../utils";
+import { composeTaskIdInput, adjustTimeByMinutes } from "./utils";
 
 export function createCombinedModeTasks(events: ProcessedEvent[]) {
   //create sorted array by time of 1420 or 30 events and 1420 and 30 events  and in between each transition
@@ -61,7 +62,9 @@ export function createCombinedModeTasks(events: ProcessedEvent[]) {
       completedBy: null,
       event: task.event,
       resource: null,
-      id: generateTaskId(task.event, task.taskType, task.startTime),
+      id: generateDeterministicId(
+        composeTaskIdInput(task.event, task.taskType, task.startTime),
+      ),
       room: task.room,
       taskDict: task.taskType,
     };

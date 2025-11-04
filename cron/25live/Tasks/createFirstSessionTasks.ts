@@ -4,8 +4,8 @@ import { events as eventsTable } from "../../../drizzle/schema";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { InferInsertModel } from "drizzle-orm";
 import { tasks } from "../../../drizzle/schema";
-import { generateTaskId } from "./utils";
-import { adjustTimeByMinutes } from "./utils";
+import { generateDeterministicId } from "../utils";
+import { composeTaskIdInput, adjustTimeByMinutes } from "./utils";
 type TaskRow = InferInsertModel<typeof tasks>;
 export async function createFirstSessionTasks(events: ProcessedEvent[]) {
   const lectureEvents = events.filter((event) => event.eventType === "Lecture");
@@ -66,7 +66,9 @@ export async function createFirstSessionTasks(events: ProcessedEvent[]) {
         assignedTo: null,
         completedBy: null,
         resource: null,
-        id: generateTaskId(event.id, "FIRST SESSION", event.startTime),
+        id: generateDeterministicId(
+          composeTaskIdInput(event.id, "FIRST SESSION", event.startTime),
+        ),
         taskDict: "FIRST SESSION"
       });
     }

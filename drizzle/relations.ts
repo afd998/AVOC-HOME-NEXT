@@ -56,8 +56,11 @@ export const captureQcRelations = relations(captureQc, ({one}) => ({
 	}),
 }));
 
-export const tasksRelations = relations(tasks, ({one, many}) => ({
-	captureQcs: many(captureQc),
+export const tasksRelations = relations(tasks, ({one}) => ({
+	captureQc: one(captureQc, {
+		fields: [tasks.id],
+		references: [captureQc.task]
+	}),
 	profile_assignedTo: one(profiles, {
 		fields: [tasks.assignedTo],
 		references: [profiles.id],

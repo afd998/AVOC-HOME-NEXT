@@ -24,7 +24,7 @@ export default function FacultyDialogShell({ children }: FacultyDialogShellProps
   return (
     <Dialog defaultOpen open modal onOpenChange={handleOpenChange}>
       <DialogContent
-        className=" px-16 py-10 w-[50vw] max-w-[90vw] max-h-[85vh] overflow-hidden rounded-xl border border-border  shadow-2xl flex flex-col"
+        className="  py-5 w-[50vw] max-w-[90vw] max-h-[85vh] overflow-hidden rounded-xl border border-border  shadow-2xl flex flex-col"
         showCloseButton
       >
         {children}

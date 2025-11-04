@@ -5,6 +5,7 @@ import type { ProcessedEvent } from "../scrape";
 import type { RawEvent } from "../schemas";
 
 const {
+  composeEventIdInput,
   generateDeterministicId,
   getEventType,
   getOrganization,
@@ -75,9 +76,11 @@ export function getEvents(rawData: RawEvent[]): ProcessedEvent[] {
       itemId: event.itemId,
       itemId2: event.itemId2,
       id: generateDeterministicId(
-        event.itemId,
-        event.itemId2,
-        event.subject_itemId
+        composeEventIdInput(
+          event.itemId,
+          event.itemId2,
+          event.subject_itemId
+        )
       ),
       date: eventDate,
       startTime: startTimeStr,

@@ -1,4 +1,5 @@
-import { generateTaskId, adjustTimeByMinutes } from "./utils";
+import { composeTaskIdInput, adjustTimeByMinutes } from "./utils";
+import { generateDeterministicId } from "../utils";
 import {
   type ProcessedEvent,
   type EventResource,
@@ -9,7 +10,9 @@ export function createWebConferenceTask(
   resource: EventResource,
 ) {
   return {
-    id: generateTaskId(event.id, "ZOOM SETUP", event.startTime),
+    id: generateDeterministicId(
+      composeTaskIdInput(event.id, "ZOOM SETUP", event.startTime),
+    ),
     taskType: "ZOOM SETUP",
     date: event.date,
     startTime: adjustTimeByMinutes(event.startTime, -7.5),

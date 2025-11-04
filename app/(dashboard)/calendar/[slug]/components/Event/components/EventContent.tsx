@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { finalEvent } from "@/lib/data/calendar/calendar";
 import localFont from "next/font/local";
 const myFont = localFont({
-  src: "../../../../../../../public/fonts/Kenyan Coffee Rg.otf", 
+  src: "../../../../../../../public/fonts/Kenyan Coffee Rg.otf",
 });
 function LectureEvent({ event }: { event: finalEvent }) {
   // Special case: Ad Hoc Class Meeting uses same background as main event (themeColors[5])
@@ -47,9 +47,7 @@ function LectureEvent({ event }: { event: finalEvent }) {
     >
       <EventFacultySummary
         faculty={event.faculty}
-        instructorNames={
-          instructorNames.length ? instructorNames : undefined
-        }
+        instructorNames={instructorNames.length ? instructorNames : undefined}
         maxVisible={3}
         size="md"
         className={cn(
@@ -118,11 +116,13 @@ function KECEvent({ event }: { event: finalEvent }) {
   return (
     <Item
       className={cn(
-        "relative border-0 shadow-none bg-transparent py-0 my-0",
+        "border-0 shadow-none bg-transparent text-foreground rounded transition-all duration-200 ease-in-out min-w-0 overflow-hidden relative p-0",
         getEventHeight(),
+
+        event.eventType === "Ad Hoc Class Meeting" ? "flex items-center" : "",
         event.derived.isMergedRoomEvent
           ? "flex items-center justify-center"
-          : "flex items-center justify-center"
+          : ""
       )}
     >
       <ItemContent
@@ -134,7 +134,7 @@ function KECEvent({ event }: { event: finalEvent }) {
         {/* Main title */}
         <div
           className={`py-0
-      
+      text-foreground
           
            font-bold text-left`}
           style={{
@@ -143,7 +143,6 @@ function KECEvent({ event }: { event: finalEvent }) {
               : event.eventName && event.eventName.length > 15
               ? "0.7rem"
               : "0.8rem",
-            color: "#B8860B",
           }}
           title={event.eventName || ""}
         >
@@ -223,11 +222,7 @@ function DefaultEvent({ event }: { event: finalEvent }) {
   );
 }
 
-export default async function EventContent({
-  event,
-}: {
-  event: finalEvent;
-}) {
+export default async function EventContent({ event }: { event: finalEvent }) {
   // const shouldFetchOrg =
   //   event.organization === "JAPAN CLUB" ||
   //   event.organization === "KELLOGG MARKETING CLUB" ||
@@ -255,4 +250,3 @@ export default async function EventContent({
     </div>
   );
 }
-

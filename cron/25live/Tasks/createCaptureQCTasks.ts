@@ -1,8 +1,9 @@
 const THIRTY_MINUTES_IN_SECONDS = 30 * 60;
 import { tasks } from "../../../drizzle/schema";
 import { InferInsertModel } from "drizzle-orm";
-import { type ProcessedEvent, type EventResource } from "../Events/transformRawEventsToEvents";
-import { generateTaskId } from "./utils";
+import { type ProcessedEvent, type EventResource } from "../scrape";
+import { generateDeterministicId } from "../utils";
+import { composeTaskIdInput } from "./utils";
 /**
  * Convert a HH:MM[:SS] string into seconds from midnight.
  * @param {string} timeStr
@@ -48,7 +49,10 @@ const formatSecondsToTime = (totalSeconds: number) => {
  * @param {Object} resource
  * @returns {Array<Object>}
  */
-export function createRecordingTasks(event: ProcessedEvent, resource: EventResource) {
+export function createCaptureQCTasks(
+  event: ProcessedEvent,
+  resource: EventResource
+) {
   if (!event || !resource) {
     return [];
   }
@@ -87,7 +91,9 @@ export function createRecordingTasks(event: ProcessedEvent, resource: EventResou
     const startTime = formatSecondsToTime(checkSeconds);
 
     tasks.push({
-      id: generateTaskId(event.id, taskType, startTime),
+      id: generateDeterministicId(
+        composeTaskIdInput(event.id, taskType, startTime)
+      ),
       taskType: "RECORDING CHECK",
       date: event.date,
       startTime,
@@ -98,7 +104,7 @@ export function createRecordingTasks(event: ProcessedEvent, resource: EventResou
       event: event.id,
       resource: resourceName,
       room: event.roomName,
-      taskDict: "RECORDING CHECK"
+      taskDict: "RECORDING CHECK",
     });
   }
 

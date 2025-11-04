@@ -37,26 +37,18 @@ export default function EventDetailHeader({ event }: EventDetailHeaderProps) {
           <CardContent className="p-4">
             <div className="space-y-2">
               {event.eventName && (
-                <h1
-                  className="text-2xl sm:text-4xl font-bold mb-0.5 uppercase"
-                  style={{ fontFamily: "'Olympus Mount', sans-serif" }}
-                >
+                <h1 className="text-2xl sm:text-4xl font-bold mb-0.5 uppercase">
                   {truncateEventName(event)}
                 </h1>
               )}
 
               {event.lectureTitle && (
-                <h2
-                  className="text-lg sm:text-2xl font-medium mb-2 ml-4 break-words"
-                  style={{ fontFamily: "'GoudyBookletter1911', serif" }}
-                >
-                  {event.lectureTitle}
+                <h2 className="text-md sm:text-lg font-medium mb-2 = break-words">
+                  "{event.lectureTitle}"
                 </h2>
               )}
 
-              <p className="text-xs sm:text-sm mb-0">
-                {event.eventName || ""}
-              </p>
+              <p className="text-xs sm:text-sm mb-0">{event.eventName || ""}</p>
             </div>
           </CardContent>
         </Card>
@@ -122,7 +114,9 @@ export default function EventDetailHeader({ event }: EventDetailHeaderProps) {
           <Card className="mb-3">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Resources</CardTitle>
+                <CardTitle className="text-base">
+                  25Live{"\u00ae"} Resources
+                </CardTitle>
                 <Badge variant="default" className="text-xs px-2 py-0.5">
                   {event.resources.length} total
                 </Badge>

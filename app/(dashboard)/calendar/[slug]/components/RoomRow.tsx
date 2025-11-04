@@ -16,14 +16,13 @@ export default function RoomRow({
   isLastRow,
   isEvenRow = false,
 }: RoomRowProps) {
+  const rowHeightPx = 90;
   const roomText = room.replace(/^GH\s+/, "");
-  const rowHeightStyle = { height: `96px` } as const;
+  const rowHeightStyle = { height: `${rowHeightPx}px` } as const;
 
   return (
     <div
-      className={` flex overflow-visible ${
-        isLastRow ? "rounded-b-md" : ""
-      } ${
+      className={` flex overflow-visible ${isLastRow ? "rounded-b-md" : ""} ${
         isEvenRow
           ? "bg-muted/80 dark:bg-muted/100"
           : "bg-muted/5 dark:bg-muted/85"
@@ -64,9 +63,9 @@ export default function RoomRow({
         style={{ ...rowHeightStyle }}
       >
         {roomEvents?.map((event: finalEvent) => (
-          <Event key={event.id} event={event} rowHeightPx={96} />
+          <Event key={event.id} event={event} rowHeightPx={rowHeightPx} />
         ))}
-        <Tasks roomName={room} rowHeightPx={96} />
+        <Tasks roomName={room} rowHeightPx={rowHeightPx} />
       </div>
     </div>
   );
