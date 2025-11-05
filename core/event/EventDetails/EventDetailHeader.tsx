@@ -70,7 +70,7 @@ export default function EventDetailHeader({ event }: EventDetailHeaderProps) {
               <MapPin className="size-4" />
             </ItemMedia>
             <ItemContent>
-              <ItemTitle>Room</ItemTitle>
+              <ItemTitle>Venue</ItemTitle>
               <ItemDescription>
                 {(event.roomName || "Unknown").replace(/^GH\s+/i, "")}
               </ItemDescription>
