@@ -16,7 +16,6 @@ export default function TaskDialogContent({
   ...props
 }: TaskDialogContentProps) {
   const updateTask = useCalendarTasksStore((state) => state.updateTask);
-
   // Get task from store (will be updated by real-time updates)
   const task = useCalendarTasksStore(
     useCallback(

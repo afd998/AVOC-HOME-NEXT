@@ -43,3 +43,37 @@ export function useTaskRealtime(
   }, [taskId, onUpdate]);
 }
 
+/**
+ * Hook to subscribe to real-time updates for QC items for a specific task
+ * @param taskId - The numeric task ID (qc value) to subscribe to
+ * @param onUpdate - Callback function called when QC items are updated, triggers a task refresh
+ */
+export function useCaptureQCRealtime(
+  taskId: number,
+  onUpdate: () => void
+) {
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    const channel = supabase
+      .channel(`qc-items:${taskId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "qc_items",
+          filter: `qc=eq.${taskId}`,
+        },
+        () => {
+          // When QC items change, trigger a refresh
+          onUpdate();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [taskId, onUpdate]);
+}
+

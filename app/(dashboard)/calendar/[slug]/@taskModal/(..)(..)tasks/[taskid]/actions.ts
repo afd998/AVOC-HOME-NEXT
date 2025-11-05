@@ -7,10 +7,16 @@ import { getTaskById } from "@/lib/data/tasks/task";
 import { addDisplayColumns } from "@/lib/data/calendar/taskscalendar";
 import type { HydratedTask } from "@/lib/data/calendar/taskscalendar";
 import { requireUserId } from "@/lib/auth/requireUser";
+import { saveCaptureQcItemsAction } from "./qcActions";
+import type { InferInsertModel } from "drizzle-orm";
+import { qcItems } from "@/drizzle/schema";
+
+export type QCItemInsert = InferInsertModel<typeof qcItems>;
 
 type MarkTaskCompletedPayload = {
   taskId: number;
   date: string;
+  qcItemsData?: QCItemInsert[];
 };
 
 type MarkTaskCompletedResult =
@@ -20,6 +26,7 @@ type MarkTaskCompletedResult =
 export async function markTaskCompletedAction({
   taskId,
   date,
+  qcItemsData,
 }: MarkTaskCompletedPayload): Promise<MarkTaskCompletedResult> {
   if (!Number.isInteger(taskId)) {
     return { success: false, error: "Invalid task id" };
@@ -42,6 +49,19 @@ export async function markTaskCompletedAction({
     return { success: false, error: "Failed to update task status" };
   }
 
+  // Save QC items if provided
+  if (qcItemsData && qcItemsData.length > 0) {
+    const qcResult = await saveCaptureQcItemsAction({
+      taskId,
+      qcItemsData,
+    });
+    if (!qcResult.success) {
+      // Note: Task is already marked complete, but QC items failed
+      // We still return success for task completion, but log the QC error
+      console.error("[TaskAction] Failed to save QC items", qcResult.error);
+    }
+  }
+
   let updatedTask: HydratedTask | null = null;
   try {
     const task = await getTaskById(String(taskId));
@@ -53,9 +73,9 @@ export async function markTaskCompletedAction({
     console.error("[TaskAction] Failed to reload task details", error);
   }
 
-  revalidateTag(`task:${taskId}`);
-  revalidateTag(`calendar:${date}`);
-  revalidatePath(`/calendar/${date}`);
+  revalidateTag(`task:${taskId}`, "page");
+  revalidateTag(`calendar:${date}`, "page");
+  revalidatePath(`/calendar/${date}`, "page");
 
   return { success: true, task: updatedTask };
 }

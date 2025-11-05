@@ -23,7 +23,9 @@ import {
 } from "@/components/ui/item";
 import { TaskIcon } from "@/core/tasks/taskIcon";
 import UserAvatar from "@/core/User/UserAvatar";
-import CaptureQC from "@/core/tasks/CaptureQC";
+import CaptureQC, { useCaptureQCForm } from "@/core/tasks/CaptureQC";
+import { transformFormValuesToQcItems } from "@/core/tasks/captureQcUtils";
+import type { QCItemInsert } from "@/app/(dashboard)/calendar/[slug]/@taskModal/(..)(..)tasks/[taskid]/actions";
 import type { HydratedTask } from "@/lib/data/calendar/taskUtils";
 import { useCalendarTasksStore } from "@/app/(dashboard)/calendar/[slug]/stores/useCalendarTasksStore";
 import { markTaskCompletedAction } from "@/app/(dashboard)/calendar/[slug]/@taskModal/(..)(..)tasks/[taskid]/actions";
@@ -32,7 +34,7 @@ import {
   formatTime as formatTaskTime,
   formatDateTime,
 } from "@/app/utils/dateTime";
-import { useTaskRealtime } from "@/core/tasks/hooks/useTaskRealtime";
+import { useTaskRealtime, useCaptureQCRealtime } from "@/core/tasks/hooks/useTaskRealtime";
 import { getProfileDisplayName } from "@/core/User/utils";
 
 type TaskContentProps = {
@@ -49,6 +51,18 @@ export default function TaskContent({ task: taskProp }: TaskContentProps) {
   const [isCompleting, setIsCompleting] = useState(false);
   const isCompleted = task.status.trim().toLowerCase() === "completed";
   const completedByProfile = task.completedByProfile ?? null;
+
+  // Check if this is a CaptureQC task
+  const shouldShowCaptureQC = (() => {
+    const taskType = task.taskType;
+    if (!taskType) {
+      return false;
+    }
+    return taskType.trim().toUpperCase() === "RECORDING CHECK";
+  })();
+
+  // Get QC form instance if available (will be null if not CaptureQC or form not mounted)
+  const qcForm = useCaptureQCForm();
 
   // Update Zustand store when real-time updates occur
   // Fetch from API route which handles hydration on the server
@@ -75,15 +89,36 @@ export default function TaskContent({ task: taskProp }: TaskContentProps) {
     }
   }, [updateTask, numericTaskId]);
 
-  // Set up real-time subscription
+  // Set up real-time subscription for task
   useTaskRealtime(numericTaskId, handleRealtimeUpdate);
 
-  const handleMarkCompleted = useCallback(() => {
+  // Set up real-time subscription for QC items if this is a CaptureQC task
+  useCaptureQCRealtime(numericTaskId, handleRealtimeUpdate);
+
+  const handleMarkCompleted = useCallback(async () => {
     if (isCompleted || isCompleting) {
       return;
     }
 
     const previousTask = task;
+    
+    // Validate QC form if present
+    if (shouldShowCaptureQC && qcForm) {
+      const isValid = await qcForm.trigger();
+      if (!isValid) {
+        setErrorMessage("Please complete all required QC fields before marking as complete.");
+        return;
+      }
+    }
+
+    // Get QC items data if form exists
+    let qcItemsData: QCItemInsert[] | undefined;
+    if (shouldShowCaptureQC && qcForm) {
+      const formValues = qcForm.getValues();
+      qcItemsData = transformFormValuesToQcItems(formValues, numericTaskId);
+    }
+
+    // Create optimistic task update
     const optimisticTask: HydratedTask = {
       ...task,
       status: "COMPLETED",
@@ -91,39 +126,43 @@ export default function TaskContent({ task: taskProp }: TaskContentProps) {
       completedByProfile: task.completedByProfile ?? null,
     };
 
+    // Note: QC data will be updated from server response after save
+    // We're not doing optimistic QC update to avoid complex type issues
+    // The server response will include updated QC items
+
     setIsCompleting(true);
     setErrorMessage(null);
     updateTask(optimisticTask);
 
-    void markTaskCompletedAction({
-      taskId: numericTaskId,
-      date: task.date ?? new Date().toISOString(),
-    })
-      .then((result) => {
-        if (!result.success) {
-          setErrorMessage(result.error);
-          updateTask(previousTask);
-          return;
-        }
-
-        if (result.task) {
-          updateTask(result.task);
-        }
-        setErrorMessage(null);
-      })
-      .catch((error) => {
-        try {
-          console.error("[TaskModal] Failed to mark task completed", error);
-        } catch {
-          // noop: console may fail in edge cases
-        }
-        setErrorMessage("Unable to mark task as completed.");
-        updateTask(previousTask);
-      })
-      .finally(() => {
-        setIsCompleting(false);
+    try {
+      const result = await markTaskCompletedAction({
+        taskId: numericTaskId,
+        date: task.date ?? new Date().toISOString(),
+        qcItemsData,
       });
-  }, [updateTask, isCompleted, isCompleting, task]);
+
+      if (!result.success) {
+        setErrorMessage(result.error);
+        updateTask(previousTask);
+        return;
+      }
+
+      if (result.task) {
+        updateTask(result.task);
+      }
+      setErrorMessage(null);
+    } catch (error) {
+      try {
+        console.error("[TaskModal] Failed to mark task completed", error);
+      } catch {
+        // noop: console may fail in edge cases
+      }
+      setErrorMessage("Unable to mark task as completed.");
+      updateTask(previousTask);
+    } finally {
+      setIsCompleting(false);
+    }
+  }, [updateTask, isCompleted, isCompleting, task, shouldShowCaptureQC, numericTaskId, qcForm]);
 
   const formattedDate = formatTaskDate(task.date ?? "");
   const formattedTime = formatTaskTime(task.startTime);
@@ -148,13 +187,6 @@ export default function TaskContent({ task: taskProp }: TaskContentProps) {
   const eventLink = task.eventDetails
     ? `/events/${task.eventDetails.id}`
     : null;
-  const shouldShowCaptureQC = (() => {
-    const taskType = task.taskType;
-    if (!taskType) {
-      return false;
-    }
-    return taskType.trim().toUpperCase() === "RECORDING CHECK";
-  })();
 
   const resourceEvents = task.eventDetails?.resourceEvents ?? [];
   const instructionEntries = resourceEvents

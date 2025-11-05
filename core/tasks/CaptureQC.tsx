@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { createContext, useContext, useEffect, useMemo, useRef } from "react";
+import { Controller, useForm, type UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -44,7 +44,7 @@ type WaivedReason = (typeof waitedReason.enumValues)[number] | null;
 // Fail mode fields: `${qc}-${qcItemDictId}-failMode` -> FailMode
 // Waived reason fields: `${qc}-${qcItemDictId}-waivedReason` -> WaivedReason
 // Ticket number fields: `${qc}-${qcItemDictId}-ticket` -> string
-type CaptureQcFormValues = Record<string, QCStatus | FailMode | WaivedReason | string>;
+export type CaptureQcFormValues = Record<string, QCStatus | FailMode | WaivedReason | string>;
 
 // Convert database status to form status
 const statusFromDbValue = (
@@ -70,6 +70,14 @@ type QcWithItems = QcRow & {
   qcItems?: QcItemWithDict[];
 };
 
+// Context to expose form instance
+type CaptureQCFormContextValue = UseFormReturn<CaptureQcFormValues> | null;
+const CaptureQCFormContext = createContext<CaptureQCFormContextValue>(null);
+
+export const useCaptureQCForm = () => {
+  const context = useContext(CaptureQCFormContext);
+  return context;
+};
 
 export default function CaptureQC({ task }: CaptureQCProps) {
   const referenceNumber = task.id;
@@ -140,7 +148,8 @@ export default function CaptureQC({ task }: CaptureQCProps) {
   }, [qcItemsKey]); // Only depend on the stable key, not defaultValues or form
 
   return (
-    <section className="space-y-2">
+    <CaptureQCFormContext.Provider value={form}>
+      <section className="space-y-2">
       <h3 className="text-sm font-semibold uppercase text-muted-foreground">
         Capture QC
       </h3>
@@ -452,5 +461,6 @@ export default function CaptureQC({ task }: CaptureQCProps) {
         Reference #{referenceNumber} · Scheduled {scheduledTime ?? "TBD"}
       </div>
     </section>
+    </CaptureQCFormContext.Provider>
   );
 }
