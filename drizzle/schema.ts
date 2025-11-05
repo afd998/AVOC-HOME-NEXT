@@ -1,7 +1,9 @@
 import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, jsonb, time, date, index, check, real, doublePrecision, bigserial, primaryKey, integer, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
-export const qcStatus = pgEnum("qc_status", ['pass', 'fail', 'waived', 'na'])
+export const failMode = pgEnum("fail_mode", ['Ticketed', 'Resolved Immediately'])
+export const qcStatus = pgEnum("qc_status", ['na', 'pass', 'fail'])
+export const waitedReason = pgEnum("waited_reason", ['Faculty Noncompliance'])
 
 
 export const facultySetup = pgTable("faculty_setup", {
@@ -369,8 +371,11 @@ export const qcItems = pgTable("qc_items", {
 	qc: bigint({ mode: "number" }).notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	qcItemDict: bigint("qc_item_dict", { mode: "number" }).notNull(),
-	status: qcStatus(),
 	snTicket: text("sn_ticket"),
+	waived: boolean(),
+	waivedReason: waitedReason("waived_reason"),
+	failMode: failMode("fail_mode"),
+	status: qcStatus(),
 }, (table) => [
 	foreignKey({
 			columns: [table.qc],

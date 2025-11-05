@@ -7,6 +7,11 @@ export async function getTaskById(
   taskId: string
 ): Promise<TaskWithDict | null> {
   const numericId = Number(taskId);
+  
+  // Validate that taskId is a valid integer
+  if (!Number.isInteger(numericId) || numericId <= 0) {
+    return null;
+  }
 
   const task = await db.query.tasks.findFirst({
     where: eq(tasksTable.id, numericId),

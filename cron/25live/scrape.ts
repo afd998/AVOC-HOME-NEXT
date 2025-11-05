@@ -2,7 +2,13 @@ import { chromium, type Browser } from "playwright";
 import dayjs from "dayjs";
 import config from "../config";
 import { eq, inArray, InferInsertModel, sql } from "drizzle-orm";
-import { events, facultyEvents, faculty, tasks, qcs } from "../../lib/db/schema";
+import {
+  events,
+  facultyEvents,
+  faculty,
+  tasks,
+  qcs,
+} from "../../lib/db/schema";
 import { pipe } from "remeda";
 import { getEvents } from "./Events/getEvents";
 import { getTasks } from "./Tasks/getTasks";
@@ -105,9 +111,9 @@ async function main(): Promise<void> {
     saveResourceEvents([...batch.resourcesEvents], batch.events, date),
     saveFacultyEvents([...batch.facultyEvents], batch.events, date),
     saveTasks([...batch.tasks], date),
-    saveCaptureQcRows([...batch.captureQcRows]),
-    saveQcItemRows([...batch.qcItemsRows]),
   ]);
+  await saveCaptureQcRows(batch.captureQcRows);
+  await saveQcItemRows(batch.qcItemsRows);
 }
 
 void (async () => {

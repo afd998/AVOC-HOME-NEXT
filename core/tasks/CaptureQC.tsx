@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -16,44 +17,59 @@ import {
 } from "@/components/ui/field";
 import { Item, ItemContent } from "@/components/ui/item";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import type { HydratedTask } from "@/lib/data/calendar/taskscalendar";
+import { InferSelectModel } from "drizzle-orm";
+import { qcItems, qcItemDict, qcs, qcStatus, failMode, waitedReason } from "@/drizzle/schema";
+import { cn } from "@/lib/utils";
 
 type CaptureQCProps = {
   task: HydratedTask;
 };
 
-type QCStatus = "pass" | "fail" | "pending" | "waived" | "na";
+// Extract type from schema enum
+type QCStatus = (typeof qcStatus.enumValues)[number] | null;
+type FailMode = (typeof failMode.enumValues)[number] | "waived" | null;
+type WaivedReason = (typeof waitedReason.enumValues)[number] | null;
 
 // Dynamic form values based on qcItem IDs
-type CaptureQcFormValues = Record<string, QCStatus>;
+// Status fields: `${qc}-${qcItemDictId}` -> QCStatus
+// Fail mode fields: `${qc}-${qcItemDictId}-failMode` -> FailMode
+// Waived reason fields: `${qc}-${qcItemDictId}-waivedReason` -> WaivedReason
+// Ticket number fields: `${qc}-${qcItemDictId}-ticket` -> string
+type CaptureQcFormValues = Record<string, QCStatus | FailMode | WaivedReason | string>;
 
 // Convert database status to form status
 const statusFromDbValue = (
-  value: "pass" | "fail" | "waived" | "na" | null | undefined
+  value: "pass" | "fail" | "na" | null | undefined
 ): QCStatus => {
-  if (value === "pass" || value === "fail" || value === "waived" || value === "na") {
+  if (value === "pass" || value === "fail" || value === "na") {
     return value;
   }
-  return "pending";
+  return null;
 };
 
-// Get qcItems from captureQcDetails (with type assertion for nested relations)
-// When using Drizzle relations with 'with', the relation object replaces the foreign key
-type QcItemWithDict = {
-  qc: number;
-  qcItemDictId: number; // Foreign key ID
-  status: "pass" | "fail" | "waived" | "na" | null;
-  qcItemDict: {
-    // Nested relation object (when loaded via 'with')
-    id: number;
-    displayName: string;
-    instruction: string;
-  } | null;
+// Get types from schema
+type QcItemRow = InferSelectModel<typeof qcItems>;
+type QcItemDictRow = InferSelectModel<typeof qcItemDict>;
+type QcRow = InferSelectModel<typeof qcs>;
+
+// When using Drizzle relations with 'with', the relation object is nested
+type QcItemWithDict = QcItemRow & {
+  qcItemDict: QcItemDictRow;
 };
 
-type QcWithItems = {
+type QcWithItems = QcRow & {
   qcItems?: QcItemWithDict[];
 };
+
 
 export default function CaptureQC({ task }: CaptureQCProps) {
   const referenceNumber = task.id;
@@ -61,50 +77,67 @@ export default function CaptureQC({ task }: CaptureQCProps) {
   const captureQc = (task.captureQcDetails as QcWithItems | null) ?? null;
   const qcItems = captureQc?.qcItems ?? [];
 
-  // Create a stable serialized key from qcItems for memoization
-  // This only changes when the actual data changes, not when the array reference changes
-  const qcItemsSerialized = useMemo(() => {
+  // Create a stable serialized key from qcItems for comparison
+  const qcItemsKey = useMemo(() => {
     if (!qcItems || qcItems.length === 0) return "";
-    return JSON.stringify(
-      qcItems.map((item) => ({
-        qc: item.qc,
-        qcItemDictId: item.qcItemDict?.id ?? item.qcItemDictId,
-        status: item.status,
-      }))
-    );
-  }, [
-    // Use serialized representation for stable comparison
-    qcItems
-      ?.map((item) => `${item.qc}-${item.qcItemDict?.id ?? item.qcItemDictId}-${item.status}`)
-      .join("|") ?? "",
-  ]);
+    return qcItems
+      .map((item) => {
+        // qcItemDict is the foreign key column name in the schema
+        const qcItemDictId = item.qcItemDict?.id ?? item.qcItemDict;
+        return `${item.qc}-${qcItemDictId}-${item.status ?? null}`;
+      })
+      .sort()
+      .join("|");
+  }, [qcItems]);
 
   // Create form field names from qcItem IDs (composite key: qc-qcItemDictId)
   const defaultValues = useMemo<CaptureQcFormValues>(() => {
     const values: CaptureQcFormValues = {};
     qcItems.forEach((qcItem) => {
-      // Use the relation object's id if available, otherwise fallback
-      const qcItemDictId = qcItem.qcItemDict?.id ?? qcItem.qcItemDictId;
+      // qcItemDict is the foreign key column name in the schema
+      // When relation is loaded, use qcItemDict.id, otherwise use qcItemDict (the FK value)
+      const qcItemDictId = qcItem.qcItemDict?.id ?? qcItem.qcItemDict;
       const fieldKey = `${qcItem.qc}-${qcItemDictId}`;
+      const failModeKey = `${fieldKey}-failMode`;
+      const waivedReasonKey = `${fieldKey}-waivedReason`;
+      const ticketKey = `${fieldKey}-ticket`;
+      
+      // Set status
       values[fieldKey] = statusFromDbValue(qcItem.status);
+      
+      // Set fail mode based on waived and failMode fields
+      if (qcItem.waived === true) {
+        values[failModeKey] = "waived";
+      } else if (qcItem.failMode) {
+        values[failModeKey] = qcItem.failMode;
+      } else {
+        values[failModeKey] = null;
+      }
+      
+      // Set waived reason if it exists
+      values[waivedReasonKey] = qcItem.waivedReason ?? null;
+      
+      // Set ticket number if it exists
+      values[ticketKey] = qcItem.snTicket ?? "";
     });
     return values;
-  }, [qcItemsSerialized]);
+  }, [qcItemsKey]);
 
   const form = useForm<CaptureQcFormValues>({
     defaultValues,
   });
 
-  // Use a ref to track previous serialized values and only reset when they actually change
-  const previousValuesRef = useRef<string>("");
+  // Track previous key to avoid unnecessary resets
+  const previousKeyRef = useRef<string>("");
 
   useEffect(() => {
-    if (previousValuesRef.current !== qcItemsSerialized) {
-      previousValuesRef.current = qcItemsSerialized;
+    // Only reset if the actual data changed, not just the reference
+    if (previousKeyRef.current !== qcItemsKey) {
+      previousKeyRef.current = qcItemsKey;
       form.reset(defaultValues);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qcItemsSerialized]); // Only depend on the serialized key, not defaultValues or form
+  }, [qcItemsKey]); // Only depend on the stable key, not defaultValues or form
 
   return (
     <section className="space-y-2">
@@ -148,9 +181,6 @@ export default function CaptureQC({ task }: CaptureQCProps) {
                 <FieldGroup className="gap-3">
                   {qcItems.map((qcItem) => {
                     const qcItemDict = qcItem.qcItemDict;
-                    if (!qcItemDict) {
-                      return null;
-                    }
 
                     // Use composite key: qc-qcItemDictId for form field name
                     // Note: qcItemDict.id is the same as the foreign key, but we use the relation object
@@ -179,62 +209,236 @@ export default function CaptureQC({ task }: CaptureQCProps) {
                             {description}
                           </FieldDescription>
                         </div>
-                        <Controller
-                          name={fieldKey}
-                          control={form.control}
-                          render={({ field }) => (
-                            <ToggleGroup
-                              id={fieldId}
-                              type="single"
-                              variant="outline"
-                              size="sm"
-                              spacing={0}
-                              value={field.value}
-                              aria-labelledby={`${fieldId}-label`}
-                              aria-describedby={`${fieldId}-description`}
-                              onValueChange={(nextValue) =>
-                                field.onChange((nextValue as QCStatus) || "pending")
-                              }
-                              className="self-start sm:self-auto"
-                            >
-                              <ToggleGroupItem
-                                value="pending"
-                                aria-label={`${label} pending`}
-                                className="data-[state=on]:bg-muted data-[state=on]:text-foreground"
+                        <div className="flex flex-col gap-2 w-full">
+                          <Controller
+                            name={fieldKey}
+                            control={form.control}
+                            render={({ field }) => (
+                              <ToggleGroup
+                                id={fieldId}
+                                type="single"
+                                variant="outline"
+                                size="sm"
+                                spacing={0}
+                                value={field.value ?? ""}
+                                aria-labelledby={`${fieldId}-label`}
+                                aria-describedby={`${fieldId}-description`}
+                                onValueChange={(nextValue) => {
+                                  const newStatus = nextValue === "" ? null : (nextValue as QCStatus);
+                                  field.onChange(newStatus);
+                                  // Clear fail mode and ticket if status is not "fail"
+                                  if (newStatus !== "fail") {
+                                    form.setValue(`${fieldKey}-failMode`, null);
+                                    form.setValue(`${fieldKey}-ticket`, "");
+                                  }
+                                }}
+                                className="w-full"
                               >
-                                Pending
-                              </ToggleGroupItem>
-                              <ToggleGroupItem
-                                value="pass"
-                                aria-label={`${label} passed`}
-                                className="data-[state=on]:bg-emerald-500 data-[state=on]:text-white"
-                              >
-                                Pass
-                              </ToggleGroupItem>
-                              <ToggleGroupItem
-                                value="fail"
-                                aria-label={`${label} failed`}
-                                className="data-[state=on]:bg-red-500 data-[state=on]:text-white"
-                              >
-                                Fail
-                              </ToggleGroupItem>
-                              <ToggleGroupItem
-                                value="waived"
-                                aria-label={`${label} waived`}
-                                className="data-[state=on]:bg-amber-500 data-[state=on]:text-white"
-                              >
-                                Waived
-                              </ToggleGroupItem>
-                              <ToggleGroupItem
-                                value="na"
-                                aria-label={`${label} not applicable`}
-                                className="data-[state=on]:bg-slate-500 data-[state=on]:text-white"
-                              >
-                                N/A
-                              </ToggleGroupItem>
-                            </ToggleGroup>
+                                <ToggleGroupItem
+                                  value=""
+                                  aria-label={`${label} pending`}
+                                  className="data-[state=on]:bg-muted data-[state=on]:text-foreground flex-1 px-6"
+                                >
+                                  Pending
+                                </ToggleGroupItem>
+                                <ToggleGroupItem
+                                  value="pass"
+                                  aria-label={`${label} passed`}
+                                  className="data-[state=on]:bg-emerald-500 data-[state=on]:text-white flex-1 px-6"
+                                >
+                                  Pass
+                                </ToggleGroupItem>
+                                <ToggleGroupItem
+                                  value="fail"
+                                  aria-label={`${label} failed`}
+                                  className="data-[state=on]:bg-red-500 data-[state=on]:text-white flex-1 px-6"
+                                >
+                                  Fail
+                                </ToggleGroupItem>
+                                <ToggleGroupItem
+                                  value="na"
+                                  aria-label={`${label} not applicable`}
+                                  className="data-[state=on]:bg-slate-500 data-[state=on]:text-white flex-1 px-6"
+                                >
+                                  N/A
+                                </ToggleGroupItem>
+                              </ToggleGroup>
+                            )}
+                          />
+                          {/* Show fail mode options when status is "fail" */}
+                          {form.watch(fieldKey) === "fail" && (
+                            <div className="flex flex-col gap-2 w-full">
+                              <Controller
+                                name={`${fieldKey}-failMode`}
+                                control={form.control}
+                                rules={{
+                                  required: "Please select a fail mode option",
+                                }}
+                                render={({ field: failModeField, fieldState }) => (
+                                  <div className="flex flex-col gap-2">
+                                    <ToggleGroup
+                                      id={`${fieldId}-failMode`}
+                                      type="single"
+                                      variant="outline"
+                                      size="sm"
+                                      spacing={0}
+                                      value={failModeField.value ?? ""}
+                                      aria-labelledby={`${fieldId}-failMode-label`}
+                                      onValueChange={(value) => {
+                                        const newValue = value === "" ? null : (value as FailMode);
+                                        failModeField.onChange(newValue);
+                                        // Clear ticket if not ticketed
+                                        if (newValue !== "Ticketed") {
+                                          form.setValue(`${fieldKey}-ticket`, "");
+                                        }
+                                        // Clear waived reason if not waived
+                                        if (newValue !== "waived") {
+                                          form.setValue(`${fieldKey}-waivedReason`, null);
+                                        }
+                                      }}
+                                      className={cn(
+                                        "w-full",
+                                        fieldState.invalid && "border-destructive"
+                                      )}
+                                    >
+                                      <ToggleGroupItem
+                                        value="Resolved Immediately"
+                                        aria-label="Resolved"
+                                        className="flex-1 px-6"
+                                      >
+                                        Resolved
+                                      </ToggleGroupItem>
+                                      <ToggleGroupItem
+                                        value="waived"
+                                        aria-label="Waived"
+                                        className="flex-1 px-6"
+                                      >
+                                        Waived
+                                      </ToggleGroupItem>
+                                      <ToggleGroupItem
+                                        value="Ticketed"
+                                        aria-label="Ticketed"
+                                        className="flex-1 px-6"
+                                      >
+                                        Ticketed
+                                      </ToggleGroupItem>
+                                    </ToggleGroup>
+                                    <FieldError errors={fieldState.error ? [fieldState.error] : undefined} />
+                                  </div>
+                                )}
+                              />
+                              {/* Show waived reason select when fail mode is "waived" */}
+                              {form.watch(`${fieldKey}-failMode`) === "waived" && (
+                                <Controller
+                                  name={`${fieldKey}-waivedReason`}
+                                  control={form.control}
+                                  rules={{
+                                    required: "Please select a waived reason",
+                                    validate: (value) => {
+                                      const currentFailMode = form.getValues(`${fieldKey}-failMode`);
+                                      if (currentFailMode === "waived" && !value) {
+                                        return "Please select a waived reason";
+                                      }
+                                      return true;
+                                    },
+                                  }}
+                                  render={({ field: waivedReasonField, fieldState }) => (
+                                    <div className="flex flex-col gap-1">
+                                      <label
+                                        htmlFor={`${fieldId}-waivedReason`}
+                                        className="text-xs font-medium text-muted-foreground"
+                                      >
+                                        Waived Reason
+                                      </label>
+                                      <Select
+                                        value={waivedReasonField.value ?? ""}
+                                        onValueChange={(value) => {
+                                          waivedReasonField.onChange(value === "" ? null : value);
+                                        }}
+                                      >
+                                        <SelectTrigger
+                                          id={`${fieldId}-waivedReason`}
+                                          className={cn(
+                                            "h-8 text-sm",
+                                            fieldState.invalid && "border-destructive"
+                                          )}
+                                        >
+                                          <SelectValue placeholder="Select waived reason" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {waitedReason.enumValues.map((reason) => (
+                                            <SelectItem key={reason} value={reason}>
+                                              {reason}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FieldError errors={fieldState.error ? [fieldState.error] : undefined} />
+                                    </div>
+                                  )}
+                                />
+                              )}
+                              {/* Show ticket number input when fail mode is "Ticketed" */}
+                              {form.watch(`${fieldKey}-failMode`) === "Ticketed" && (
+                                <Controller
+                                  name={`${fieldKey}-ticket`}
+                                  control={form.control}
+                                  rules={{
+                                    required: "Ticket number is required when ticketed",
+                                    pattern: {
+                                      value: /^INC\d{7}$/,
+                                      message: "Must start with 'INC' followed by exactly 7 digits (e.g., INC1234567)",
+                                    },
+                                  }}
+                                  render={({ field: ticketField, fieldState }) => (
+                                    <div className="flex flex-col gap-1">
+                                      <label
+                                        htmlFor={`${fieldId}-ticket`}
+                                        className="text-xs font-medium text-muted-foreground"
+                                      >
+                                        Ticket Number
+                                      </label>
+                                      <Input
+                                        id={`${fieldId}-ticket`}
+                                        type="text"
+                                        placeholder="INC1234567"
+                                        value={ticketField.value || ""}
+                                        onChange={(e) => {
+                                          // Auto-format: ensure uppercase and limit input
+                                          const value = e.target.value.toUpperCase();
+                                          // Only allow INC prefix and digits
+                                          const filtered = value.replace(/[^INC0-9]/g, "");
+                                          // Limit to INC + 7 digits max
+                                          if (filtered.startsWith("INC")) {
+                                            const digits = filtered.slice(3);
+                                            if (digits.length <= 7) {
+                                              ticketField.onChange(`INC${digits}`);
+                                            } else {
+                                              ticketField.onChange(`INC${digits.slice(0, 7)}`);
+                                            }
+                                          } else if (filtered.startsWith("IN")) {
+                                            ticketField.onChange("IN");
+                                          } else if (filtered.startsWith("I")) {
+                                            ticketField.onChange("I");
+                                          } else if (filtered === "") {
+                                            ticketField.onChange("");
+                                          }
+                                        }}
+                                        onBlur={ticketField.onBlur}
+                                        aria-invalid={fieldState.invalid}
+                                        className={cn(
+                                          "h-8 text-sm",
+                                          fieldState.invalid && "border-destructive"
+                                        )}
+                                      />
+                                      <FieldError errors={fieldState.error ? [fieldState.error] : undefined} />
+                                    </div>
+                                  )}
+                                />
+                              )}
+                            </div>
                           )}
-                        />
+                        </div>
                       </Field>
                     );
                   })}
