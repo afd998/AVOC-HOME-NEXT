@@ -1,6 +1,7 @@
-import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, jsonb, time, date, index, check, real, doublePrecision, bigserial, primaryKey, integer } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, jsonb, time, date, index, check, real, doublePrecision, bigserial, primaryKey, integer, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
+export const qcStatus = pgEnum("qc_status", ['pass', 'fail', 'waived', 'na'])
 
 
 export const facultySetup = pgTable("faculty_setup", {
@@ -27,6 +28,14 @@ export const facultySetup = pgTable("faculty_setup", {
 	pgPolicy("allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
 ]);
 
+export const qcItemDict = pgTable("qc_item_dict", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "qc_item_def_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	displayName: text("display_name").notNull(),
+	instruction: text().notNull(),
+});
+
 export const academicCalendar = pgTable("academic_calendar", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "academic_calendar_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
@@ -48,6 +57,18 @@ export const organizations = pgTable("organizations", {
 	url: text(),
 }, (table) => [
 	pgPolicy("Policy with security definer functions", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
+]);
+
+export const qcs = pgTable("qcs", {
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	task: bigint({ mode: "number" }).primaryKey().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.task],
+			foreignColumns: [tasks.id],
+			name: "capture_qc_task_fkey"
+		}).onDelete("cascade"),
 ]);
 
 export const faculty = pgTable("faculty", {
@@ -93,22 +114,6 @@ export const notifications = pgTable("notifications", {
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 	pgPolicy("notifications_select_own", { as: "permissive", for: "select", to: ["authenticated"] }),
 	pgPolicy("rt_select_all_notifications", { as: "permissive", for: "select", to: ["anon", "authenticated"] }),
-]);
-
-export const captureQc = pgTable("capture_qc", {
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	task: bigint({ mode: "number" }).primaryKey().notNull(),
-	programVideoCamera: boolean("program_video_camera"),
-	programVideoContent1: boolean("program_video_content_1"),
-	programVideoContent2: boolean("program_video_content_2"),
-	programAudio: boolean("program_audio"),
-}, (table) => [
-	foreignKey({
-			columns: [table.task],
-			foreignColumns: [tasks.id],
-			name: "capture_qc_task_fkey"
-		}).onDelete("cascade"),
 ]);
 
 export const facultyUpdates = pgTable("faculty_updates", {
@@ -356,4 +361,26 @@ export const resourceEvents = pgTable("resource_events", {
 			name: "fk_resource"
 		}).onDelete("cascade"),
 	primaryKey({ columns: [table.resourceId, table.eventId], name: "resource_events_pkey"}),
+]);
+
+export const qcItems = pgTable("qc_items", {
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	qc: bigint({ mode: "number" }).notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	qcItemDict: bigint("qc_item_dict", { mode: "number" }).notNull(),
+	status: qcStatus(),
+	snTicket: text("sn_ticket"),
+}, (table) => [
+	foreignKey({
+			columns: [table.qc],
+			foreignColumns: [qcs.task],
+			name: "qc_item_qc_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.qcItemDict],
+			foreignColumns: [qcItemDict.id],
+			name: "qc_item_qc_item_dict_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.qc, table.qcItemDict], name: "qc_items_pk"}),
 ]);

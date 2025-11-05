@@ -3,16 +3,17 @@
  * Works with PostgreSQL date, time, and timestamp columns
  */
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
+// Use explicit locale to prevent hydration mismatches between server and client
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "full",
 });
 
-const timeFormatter = new Intl.DateTimeFormat(undefined, {
+const timeFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
 });
 
-const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
   timeStyle: "short",
 });

@@ -2,31 +2,27 @@ import { chromium, type Browser } from "playwright";
 import dayjs from "dayjs";
 import config from "../config";
 import { eq, inArray, InferInsertModel, sql } from "drizzle-orm";
-import {
-  events,
-  facultyEvents,
-  faculty,
-  tasks,
-  captureQc,
-} from "../../lib/db/schema";
+import { events, facultyEvents, faculty, tasks, qcs } from "../../lib/db/schema";
 import { pipe } from "remeda";
 import { getEvents } from "./Events/getEvents";
 import { getTasks } from "./Tasks/getTasks";
 import { type AvailabilitySubject, type RawEvent } from "./schemas";
-
+import { qcItems } from "../../lib/db/schema";
 import { getResourceEvents } from "./ResourceEvents/getResourceEvents";
 import { saveResourceEvents } from "./ResourceEvents/saveResourceEvents";
 import { saveEvents } from "./Events/saveEvents";
 import { saveTasks } from "./Tasks/saveTasks";
-import { getCaptureQc } from "./Tasks/captureQc/getCaptureQc";
-import { saveCaptureQc } from "./Tasks/captureQc/saveCaptureQc";
+import { getCaptureQcRows } from "./Tasks/captureQc/getCaptureQcRows";
+import { saveCaptureQcRows } from "./Tasks/captureQc/saveCaptureQcRows";
 import { getFacultyEvents } from "./FacultyEvents/getFacultyEvents";
 import { saveFacultyEvents } from "./FacultyEvents/SaveFacultyEvents";
 import { resourceEvents } from "../../lib/db/schema";
 import { InferSelectModel } from "drizzle-orm";
 import { fetchEventsData } from "./fetchData";
+import { getQcItemRows } from "./Tasks/captureQc/QcItems/getQcItemRows";
+import { saveQcItemRows } from "./Tasks/captureQc/QcItems/saveQcItemRows";
 
-export type CaptureQcRow = InferInsertModel<typeof captureQc>;
+export type QcRow = InferInsertModel<typeof qcs>;
 export type EventResource = {
   itemName: string;
   quantity: number | null;
@@ -44,6 +40,7 @@ config.validate();
 export type ResourceEventRow = InferInsertModel<typeof resourceEvents>;
 export type FacultyEventRow = InferSelectModel<typeof facultyEvents>;
 export type TaskRow = InferInsertModel<typeof tasks>;
+export type QcItemRow = InferInsertModel<typeof qcItems>;
 // Global browser instance for reuse across requests
 let browser: Browser | null = null;
 
@@ -71,7 +68,7 @@ async function main(): Promise<void> {
     resourcesEvents: ResourceEventRow[];
     facultyEvents: FacultyEventRow[];
     tasks: TaskRow[];
-    captureQc: CaptureQcRow[];
+    captureQc: QcRow[];
   };
   const emptyBatch: Batch = {
     events: [],
@@ -96,8 +93,11 @@ async function main(): Promise<void> {
         getTasks(b.events),
       ]);
       const batchWithJoins = { ...b, resourcesEvents, facultyEvents, tasks };
-      const captureQc = await getCaptureQc(batchWithJoins.tasks);
-      return { ...batchWithJoins, captureQc };
+      const [captureQcRows, qcItemsRows] = await Promise.all([
+        getCaptureQcRows(batchWithJoins.tasks),
+        getQcItemRows(batchWithJoins.tasks),
+      ]);
+      return { ...batchWithJoins, captureQcRows, qcItemsRows };
     }
   );
   await saveEvents([...batch.events], date);
@@ -105,7 +105,8 @@ async function main(): Promise<void> {
     saveResourceEvents([...batch.resourcesEvents], batch.events, date),
     saveFacultyEvents([...batch.facultyEvents], batch.events, date),
     saveTasks([...batch.tasks], date),
-    saveCaptureQc([...batch.captureQc]),
+    saveCaptureQcRows([...batch.captureQcRows]),
+    saveQcItemRows([...batch.qcItemsRows]),
   ]);
 }
 
