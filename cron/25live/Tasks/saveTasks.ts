@@ -19,6 +19,7 @@ export async function saveTasks(incoming: TaskRow[], date: string) {
     await db
       .delete(tasksTable)
       .where(and(eq(tasksTable.date, date), inArray(tasksTable.id, toDelete)));
+    console.log(`Deleted ${toDelete.length} tasks`);
   }
 
   if (incoming.length === 0) {
