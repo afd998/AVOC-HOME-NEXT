@@ -33,8 +33,6 @@ export async function getFacultyEvents(
   const instructorNames = Array.from(instructorNameSet);
   const facultyByName = new Map<string, number>();
 
-  console.log(`👨‍🏫 Found ${instructorNames.length} unique instructor names`);
-
   if (instructorNames.length > 0) {
     const facultyMatches = await db
       .select({
@@ -43,10 +41,6 @@ export async function getFacultyEvents(
       })
       .from(faculty)
       .where(inArray(faculty.twentyfiveliveName, instructorNames));
-
-    console.log(
-      `🔍 Matched ${facultyMatches.length} instructors in faculty database`
-    );
 
     facultyMatches.forEach(({ id, name }) => {
       if (name) {
@@ -90,10 +84,6 @@ export async function getFacultyEvents(
       });
     });
   });
-
-  console.log(
-    `🔗 Created ${facultyEventRows.length} faculty-event relationships`
-  );
 
   return facultyEventRows;
 }

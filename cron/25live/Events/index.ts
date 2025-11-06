@@ -151,7 +151,6 @@ const toTimeStrings = (start, end) => {
 };
 
 export {
-  generateDeterministicId,
   getEventType,
   getOrganization,
   getInstructorNames,

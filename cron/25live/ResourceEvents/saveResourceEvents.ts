@@ -21,11 +21,6 @@ export async function saveResourceEvents(
 
   // STEP 11: Insert the new resource-event relationships
   if (resourceEventsRows.length > 0) {
-    console.log(
-      `Inserting ${resourceEventsRows.length} resource-event relationships`
-    );
     await db.insert(resourceEventsTable).values(resourceEventsRows);
-  } else {
-    console.log("No resource-event relationships to insert");
   }
 }

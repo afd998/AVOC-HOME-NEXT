@@ -202,7 +202,7 @@ export default function CaptureQC({ task }: CaptureQCProps) {
                       <Field
                         key={fieldKey}
                         orientation="responsive"
-                        className="items-start rounded-md border border-border bg-background px-3 py-3 text-sm"
+                        className="@md/field-group:items-start items-start rounded-md border border-border bg-background px-3 py-3 text-sm"
                       >
                         <div className="flex flex-1 flex-col gap-1">
                           <FieldLabel

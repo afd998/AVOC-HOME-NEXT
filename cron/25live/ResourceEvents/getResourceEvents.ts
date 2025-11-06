@@ -96,11 +96,6 @@ const prepareResourceDictionary = async (processedEvents: ProcessedEvent[]) => {
       }
     );
 
-    console.info(
-      `Adding ${missingResourceIds.length} resources to dictionary`,
-      missingResourceIds
-    );
-
     await db
       .insert(resourcesDict)
       .values(newDictionaryEntries)

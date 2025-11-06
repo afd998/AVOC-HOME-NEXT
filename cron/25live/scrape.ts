@@ -69,6 +69,8 @@ async function main(): Promise<void> {
   // Parse command line argument for date offset (defaults to 0 = today)
   const offset = Number.parseInt(process.argv[2] ?? "0", 10);
   const date = dayjs().add(offset, "day").format("YYYY-MM-DD");
+  console.log(`\n🚀 Starting scrape for date: ${date}`);
+  
   type Batch = {
     events: ProcessedEvent[];
     resourcesEvents: ResourceEventRow[];
@@ -84,28 +86,38 @@ async function main(): Promise<void> {
     captureQc: [],
   };
   const browserInstance = await initBrowser();
+  console.log(`📥 Fetching raw events data...`);
   const raw = await fetchEventsData(browserInstance, date);
+  console.log(`✅ Fetched ${raw.length} raw events`);
 
+  console.log(`🔄 Processing events...`);
   const batch = await pipe(
     raw,
     (raw: RawEvent[]): Batch => {
       const events = getEvents(raw);
+      console.log(`📊 Processed ${events.length} events`);
       return { ...emptyBatch, events };
     },
     async (b: Batch) => {
+      console.log(`🔗 Processing resource events, faculty events, and tasks...`);
       const [resourcesEvents, facultyEvents, tasks] = await Promise.all([
         getResourceEvents(b.events),
         getFacultyEvents(b.events),
         getTasks(b.events),
       ]);
+      console.log(`📦 Found ${resourcesEvents.length} resource events, ${facultyEvents.length} faculty events, ${tasks.length} tasks`);
       const batchWithJoins = { ...b, resourcesEvents, facultyEvents, tasks };
+      console.log(`🔍 Processing capture QC rows and QC items...`);
       const [captureQcRows, qcItemsRows] = await Promise.all([
         getCaptureQcRows(batchWithJoins.tasks),
         getQcItemRows(batchWithJoins.tasks),
       ]);
+      console.log(`📋 Found ${captureQcRows.length} capture QC rows, ${qcItemsRows.length} QC item rows`);
       return { ...batchWithJoins, captureQcRows, qcItemsRows };
     }
   );
+  
+  console.log(`\n💾 Saving data to database...`);
   await saveEvents([...batch.events], date);
   await Promise.all([
     saveResourceEvents([...batch.resourcesEvents], batch.events, date),
@@ -114,6 +126,7 @@ async function main(): Promise<void> {
   ]);
   await saveCaptureQcRows(batch.captureQcRows);
   await saveQcItemRows(batch.qcItemsRows);
+  console.log(`\n✅ Scrape completed successfully for ${date}\n`);
 }
 
 void (async () => {
@@ -128,6 +141,7 @@ void (async () => {
   }
 })().catch((error) => {
   // Set exit code to indicate failure for process monitoring tools
+  console.error(`\n❌ Scrape failed with error:`, error);
   process.exitCode = 1;
   throw error;
 });

@@ -3,9 +3,6 @@ import { and, eq, inArray, sql, type InferInsertModel } from "drizzle-orm";
 import { db } from "../../../lib/db";
 type TaskRow = InferInsertModel<typeof tasksTable>;
 export async function saveTasks(incoming: TaskRow[], date: string) {
-  console.log(`\n📝 Saving tasks for date: ${date}`);
-  console.log(`📊 Incoming tasks: ${incoming.length}`);
-
   // Fetch existing tasks for the date
   const existing = await db
     .select({ id: tasksTable.id })
@@ -17,22 +14,18 @@ export async function saveTasks(incoming: TaskRow[], date: string) {
 
   // Determine which existing tasks should be removed (no longer present in input)
   const toDelete = existingIds.filter((id) => !incomingIds.has(id));
-  console.log(`🗑️  Tasks to delete: ${toDelete.length}`);
 
   if (toDelete.length > 0) {
     await db
       .delete(tasksTable)
       .where(and(eq(tasksTable.date, date), inArray(tasksTable.id, toDelete)));
-    console.log(`✅ Deleted ${toDelete.length} obsolete tasks`);
   }
 
   if (incoming.length === 0) {
-    console.log(`⚠️  No tasks to upsert for ${date}`);
     return;
   }
 
   // Upsert incoming tasks by primary key (id)
-  console.log(`💾 Upserting ${incoming.length} tasks...`);
   await db
     .insert(tasksTable)
     .values(incoming)
@@ -49,7 +42,6 @@ export async function saveTasks(incoming: TaskRow[], date: string) {
         room: sql`excluded.room`,
       },
     });
-  console.log(`✅ Upserted tasks for ${date}`);
 }
 
 //event-id, starttime, tasktype.

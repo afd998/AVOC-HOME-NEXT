@@ -54,11 +54,6 @@ export async function getTasksByDate(date: string): Promise<TaskWithDict[]> {
 
   return rows.map(
     ({ taskDict, event, profile_completedBy, qcs, ...taskData }) => {
-      const normalizedResourceId =
-        typeof taskData.resource === "string" && taskData.resource.trim().length > 0
-          ? taskData.resource.trim()
-          : null;
-
       const eventWithResources = event as EventWithResourceDetails | null;
 
       return {
@@ -68,12 +63,12 @@ export async function getTasksByDate(date: string): Promise<TaskWithDict[]> {
           ? {
               ...eventWithResources,
               resourceEvents:
-                normalizedResourceId == null
+                taskData.resource == null
                   ? []
                   : (eventWithResources.resourceEvents ?? [])
                       .filter(
                         (resourceEvent) =>
-                          resourceEvent.resourceId?.trim() === normalizedResourceId
+                          resourceEvent.resourceId === taskData.resource
                       )
                       .map((resourceEvent) => ({
                         ...resourceEvent,

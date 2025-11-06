@@ -7,16 +7,11 @@ export async function saveEvents(
   processedEvents: ProcessedEvent[],
   scrapeDate: string
 ): Promise<void> {
-  console.log(`\n📅 Saving events for date: ${scrapeDate}`);
-  console.log(`📊 Processing ${processedEvents.length} events`);
-
   // Get all existing events for the specified date
   const existingEvents = await db
     .select({ id: events.id })
     .from(events)
     .where(eq(events.date, scrapeDate));
-
-  console.log(`🗃️  Found ${existingEvents.length} existing events in database`);
 
   // Create a set of current event IDs for efficient lookup
   const currentEventIds = new Set(
@@ -30,25 +25,18 @@ export async function saveEvents(
     .map(({ id }) => id)
     .filter((id): id is number => !currentEventIds.has(id));
 
-  console.log(`🗑️  Found ${deletedEventIds.length} events to delete`);
-
   // Remove deleted events; cascading FK cleanup removes faculty assignments
   if (deletedEventIds.length > 0) {
-    console.log(`🧹 Deleting ${deletedEventIds.length} obsolete events...`);
-
     // Then delete the events themselves
     await db.delete(events).where(inArray(events.id, deletedEventIds));
-    console.log(`✅ Deleted ${deletedEventIds.length} obsolete events`);
   }
 
   // If no events to save, exit early
   if (processedEvents.length === 0) {
-    console.log(`⚠️  No events to save, exiting early`);
     return;
   }
 
   // Insert new events or update existing ones (upsert operation)
-  console.log(`💾 Upserting ${processedEvents.length} events...`);
   await db
     .insert(events)
     .values(processedEvents)
@@ -72,6 +60,4 @@ export async function saveEvents(
         instructorNames: sql`excluded.instructor_names`,
       },
     });
-  console.log(`✅ Successfully upserted events`);
-  console.log(`🎉 Save events completed for ${scrapeDate}\n`);
 }

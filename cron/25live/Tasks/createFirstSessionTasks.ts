@@ -45,10 +45,6 @@ export async function createFirstSessionTasks(events: ProcessedEvent[]) {
         }
       });
     } catch (error) {
-      console.error("[db] addFirstSessionFlags", {
-        namesToQuery,
-        error,
-      });
       throw error;
     }
   }

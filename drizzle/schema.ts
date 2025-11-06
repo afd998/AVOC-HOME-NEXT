@@ -147,6 +147,7 @@ export const tasks = pgTable("tasks", {
 	taskDict: text("task_dict"),
 	resource: text(),
 	completedTime: timestamp("completed_time", { withTimezone: true, mode: 'string' }),
+	instructions: text(),
 }, (table) => [
 	foreignKey({
 			columns: [table.assignedTo],
