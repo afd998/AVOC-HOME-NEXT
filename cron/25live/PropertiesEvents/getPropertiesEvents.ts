@@ -20,11 +20,51 @@ export function getPropertiesEvents(
           instruction: resource.instruction ?? "",
         });
       }
-      if (resource.itemName.includes("Properties")) {
+      if (resource.itemName.includes("Laptop")) {
         propertiesEvents.push({
-          propertiesDict: resource.itemName,
+          propertiesDict: "Laptop(s)",
           event: event.id,
           quantity: resource.quantity ?? 1,
+          instruction: resource.instruction ?? "",
+        });
+      }
+      if (resource.itemName.includes("KSM-KGH-AV-Surface Hub")) {
+        propertiesEvents.push({
+          propertiesDict: "All-In-One Device(s)",
+          event: event.id,
+          quantity: resource.quantity ?? 1,
+          instruction: resource.instruction ?? "",
+        });
+      }
+      if (resource.itemName.includes("Adapter")) {
+        propertiesEvents.push({
+          propertiesDict: "Display Adapter",
+          event: event.id,
+          quantity: resource.quantity ?? 1,
+          instruction: resource.instruction ?? "",
+        });
+      }
+      if (resource.itemName.includes("KSM-KGH-AV-SRS Clickers (polling)")) {
+        propertiesEvents.push({
+          propertiesDict: "Turning Point Clickers",
+          event: event.id,
+          quantity: resource.quantity ?? 1,
+          instruction: resource.instruction ?? "",
+        });
+        if (resource.itemName.includes("KSM-KGH-AV-Web Conference")) {
+          propertiesEvents.push({
+            propertiesDict: "Hybrid",
+            event: event.id,
+            quantity: 1,
+            instruction: resource.instruction ?? "",
+          });
+        }
+      }
+      if (resource.itemName.includes("KSM-KGH-AV-Presentation Clicker")) {
+        propertiesEvents.push({
+          propertiesDict: "Presentation Clicker",
+          event: event.id,
+          quantity: 1,
           instruction: resource.instruction ?? "",
         });
       }
