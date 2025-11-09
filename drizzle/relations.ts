@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, tasks, qcs, events, notifications, profiles, taskDict, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict, qcItems, qcItemDict } from "./schema";
+import { faculty, facultySetup, profiles, actions, events, taskDict, tasks, qcs, notifications, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict, propertiesEvents, propertiesDict, qcItems, qcItemDict } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -11,6 +11,65 @@ export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 export const facultyRelations = relations(faculty, ({many}) => ({
 	facultySetups: many(facultySetup),
 	facultyEvents: many(facultyEvents),
+}));
+
+export const actionsRelations = relations(actions, ({one}) => ({
+	profile_assignedTo: one(profiles, {
+		fields: [actions.assignedTo],
+		references: [profiles.id],
+		relationName: "actions_assignedTo_profiles_id"
+	}),
+	profile_completedBy: one(profiles, {
+		fields: [actions.completedBy],
+		references: [profiles.id],
+		relationName: "actions_completedBy_profiles_id"
+	}),
+	event: one(events, {
+		fields: [actions.event],
+		references: [events.id]
+	}),
+	taskDict: one(taskDict, {
+		fields: [actions.taskDict],
+		references: [taskDict.id]
+	}),
+}));
+
+export const profilesRelations = relations(profiles, ({many}) => ({
+	actions_assignedTo: many(actions, {
+		relationName: "actions_assignedTo_profiles_id"
+	}),
+	actions_completedBy: many(actions, {
+		relationName: "actions_completedBy_profiles_id"
+	}),
+	notifications: many(notifications),
+	tasks_assignedTo: many(tasks, {
+		relationName: "tasks_assignedTo_profiles_id"
+	}),
+	tasks_completedBy: many(tasks, {
+		relationName: "tasks_completedBy_profiles_id"
+	}),
+	events: many(events),
+	panoptoChecks: many(panoptoChecks),
+	shifts: many(shifts),
+}));
+
+export const eventsRelations = relations(events, ({one, many}) => ({
+	actions: many(actions),
+	notifications: many(notifications),
+	tasks: many(tasks),
+	profile: one(profiles, {
+		fields: [events.manOwner],
+		references: [profiles.id]
+	}),
+	panoptoChecks: many(panoptoChecks),
+	facultyEvents: many(facultyEvents),
+	resourceEvents: many(resourceEvents),
+	propertiesEvents: many(propertiesEvents),
+}));
+
+export const taskDictRelations = relations(taskDict, ({many}) => ({
+	actions: many(actions),
+	tasks: many(tasks),
 }));
 
 export const qcsRelations = relations(qcs, ({one, many}) => ({
@@ -52,35 +111,6 @@ export const notificationsRelations = relations(notifications, ({one}) => ({
 		fields: [notifications.userId],
 		references: [profiles.id]
 	}),
-}));
-
-export const eventsRelations = relations(events, ({one, many}) => ({
-	notifications: many(notifications),
-	tasks: many(tasks),
-	profile: one(profiles, {
-		fields: [events.manOwner],
-		references: [profiles.id]
-	}),
-	panoptoChecks: many(panoptoChecks),
-	facultyEvents: many(facultyEvents),
-	resourceEvents: many(resourceEvents),
-}));
-
-export const profilesRelations = relations(profiles, ({many}) => ({
-	notifications: many(notifications),
-	tasks_assignedTo: many(tasks, {
-		relationName: "tasks_assignedTo_profiles_id"
-	}),
-	tasks_completedBy: many(tasks, {
-		relationName: "tasks_completedBy_profiles_id"
-	}),
-	events: many(events),
-	panoptoChecks: many(panoptoChecks),
-	shifts: many(shifts),
-}));
-
-export const taskDictRelations = relations(taskDict, ({many}) => ({
-	tasks: many(tasks),
 }));
 
 export const panoptoChecksRelations = relations(panoptoChecks, ({one}) => ({
@@ -125,6 +155,21 @@ export const resourceEventsRelations = relations(resourceEvents, ({one}) => ({
 
 export const resourcesDictRelations = relations(resourcesDict, ({many}) => ({
 	resourceEvents: many(resourceEvents),
+}));
+
+export const propertiesEventsRelations = relations(propertiesEvents, ({one}) => ({
+	event: one(events, {
+		fields: [propertiesEvents.event],
+		references: [events.id]
+	}),
+	propertiesDict: one(propertiesDict, {
+		fields: [propertiesEvents.propertiesDict],
+		references: [propertiesDict.id]
+	}),
+}));
+
+export const propertiesDictRelations = relations(propertiesDict, ({many}) => ({
+	propertiesEvents: many(propertiesEvents),
 }));
 
 export const qcItemsRelations = relations(qcItems, ({one}) => ({

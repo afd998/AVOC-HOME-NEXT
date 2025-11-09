@@ -39,7 +39,7 @@ export default async function EventHeader({ event }: { event: finalEvent }) {
       className={`flex  text-foreground justify-between items-center h-5 py-0.5 transition-all duration-200 ease-in-out absolute top-0 left-1 right-0 z-100`}
     >
       <div className="flex items-center gap-1 min-w-0 flex-1">
-        <span
+        {/* <span
           className={`text-xs font-medium opacity-90 truncate transition-all duration-200 ease-in-out ${
             event.eventType === "Ad Hoc Class Meeting"
               ? "text-gray-600"
@@ -50,7 +50,7 @@ export default async function EventHeader({ event }: { event: finalEvent }) {
           title={timeDisplay}
         >
           {timeDisplay}
-        </span>
+        </span> */}
       </div>
       {/* Only show the container if there are resources or assignees */}
       {false && (

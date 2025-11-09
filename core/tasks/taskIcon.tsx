@@ -84,13 +84,16 @@ export const TaskIcon = ({ task, className }: TaskIconProps) => {
       ? withOpacity(colorValue, 0.50)
       : null) ?? DEFAULT_BG;
 
+  const borderColor =
+    shouldUseInlineColor && colorValue !== "" ? colorValue : DEFAULT_COLOR;
+
   return (
     <div
       className={cn(
-        "flex items-center justify-center w-full h-full rounded-full",
+        "flex items-center justify-center w-full h-full rounded-full border",
         className
       )}
-      style={{ backgroundColor }}
+      style={{ backgroundColor, borderColor }}
     >
       <Icon
         icon={iconName}

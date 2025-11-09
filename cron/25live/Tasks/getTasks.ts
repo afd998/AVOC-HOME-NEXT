@@ -5,8 +5,7 @@ import { createCombinedModeTasks } from "./createCombinedModeTasks";
 import { createRefreshTasks } from "./createRefreshTasks";
 import { createFirstSessionTasks } from "./createFirstSessionTasks";
 import { createStaffAssistanceTask } from "./createStaffAssistanceTask";
-import { createLaptopTasks } from "./createLaptopTasks";
-import { createPollingTasks } from "./createPollingTasks";
+import { createConfigTasks } from "./createConfigTasks";
 import { createWebConferenceTask } from "./createWebConferenceTask";
 import { createSurfaceHubTasks } from "./createSurfaceHubTasks";
 import { type ProcessedEvent } from "../scrape";
@@ -23,14 +22,12 @@ export async function getTasks(events: ProcessedEvent[]): Promise<TaskRow[]> {
       if (lowercaseItemName.includes("recording")) {
         tasks.push(...createCaptureQCTasks(event, resource));
       }
-      if (lowercaseItemName.includes("laptop")) {
-        tasks.push(...createLaptopTasks(event, resource));
-      }
-      if (lowercaseItemName.includes("surface hub")) {
-        tasks.push(...createSurfaceHubTasks(event, resource));
-      }
-      if (lowercaseItemName.includes("polling")) {
-        tasks.push(...createPollingTasks(event, resource));
+      if (
+        lowercaseItemName.includes("laptop") ||
+        lowercaseItemName.includes("polling") ||
+        lowercaseItemName.includes("surface hub")
+      ) {
+        tasks.push(...createConfigTasks(event, resource));
       }
       if (
         !staffAssistanceResource &&

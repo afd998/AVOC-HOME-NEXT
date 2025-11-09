@@ -4,18 +4,19 @@ import {
 } from "../Events/transformRawEventsToEvents";
 import { generateDeterministicId } from "../utils";
 import { composeTaskIdInput, adjustTimeByMinutes } from "./utils";
-export function createLaptopTasks(
+
+export function createSurfaceHubTasks(
   event: ProcessedEvent,
-  resource: EventResource
+  resource: EventResource,
 ) {
   return [
     {
       id: generateDeterministicId(
-        composeTaskIdInput(event.id, "LAPTOP DEPLOY", event.startTime),
+        composeTaskIdInput(event.id, "NEAT BOARD DEPLOY", event.startTime),
       ),
-      taskType: "LAPTOP DEPLOY",
+      taskType: "NEAT BOARD DEPLOY",
       date: event.date,
-      startTime: adjustTimeByMinutes(event.startTime, -7.5),
+      startTime: adjustTimeByMinutes(event.startTime, -30),
       createdAt: new Date().toISOString(),
       status: "pending",
       assignedTo: null,
@@ -23,16 +24,15 @@ export function createLaptopTasks(
       event: event.id,
       resource: resource.itemName,
       room: event.roomName,
-      taskDict: "LAPTOP DEPLOY",
+      taskDict: "NEAT BOARD DEPLOY",
     },
-
     {
       id: generateDeterministicId(
-        composeTaskIdInput(event.id, "LAPTOP RETRIEVAL", event.endTime),
+        composeTaskIdInput(event.id, "NEAT BOARD RETRIEVAL", event.endTime),
       ),
-      taskType: "LAPTOP RETRIEVAL",
+      taskType: "NEAT BOARD RETRIEVAL",
       date: event.date,
-      startTime: adjustTimeByMinutes(event.endTime, 7.5),
+      startTime: adjustTimeByMinutes(event.endTime, 30),
       createdAt: new Date().toISOString(),
       status: "pending",
       assignedTo: null,
@@ -40,7 +40,7 @@ export function createLaptopTasks(
       event: event.id,
       resource: resource.itemName,
       room: event.roomName,
-      taskDict: "LAPTOP RETRIEVAL",
+      taskDict: "NEAT BOARD RETRIEVAL",
     },
   ];
 }

@@ -1,7 +1,8 @@
 import * as utils from "./index.js";
 import { parseEventResources } from "./parse-resourses.js";
 import { mergeAdjacentRoomEvents } from "./mergeAdjacentRoomEvents.js";
-import type { ProcessedEvent } from "../scrape";
+import { computeFirstLecture } from "./computeFirstLecture.js";
+import type { ProcessedEvent } from "../../../lib/db/types";
 import type { RawEvent } from "../schemas";
 
 const {
@@ -48,7 +49,9 @@ function removeKECNoAcademicEvents(
   });
 }
 
-export function getEvents(rawData: RawEvent[]): ProcessedEvent[] {
+export async function getEvents(
+  rawData: RawEvent[]
+): Promise<ProcessedEvent[]> {
   if (!rawData || !Array.isArray(rawData)) {
     return [];
   }
@@ -71,16 +74,13 @@ export function getEvents(rawData: RawEvent[]): ProcessedEvent[] {
     const eventDate = event.subject_item_date
       ? event.subject_item_date.split("T")[0]
       : new Date().toISOString().split("T")[0];
+    const resources = parseEventResources(event);
 
     return {
       itemId: event.itemId,
       itemId2: event.itemId2,
       id: generateDeterministicId(
-        composeEventIdInput(
-          event.itemId,
-          event.itemId2,
-          event.subject_itemId
-        )
+        composeEventIdInput(event.itemId, event.itemId2, event.subject_itemId)
       ),
       date: eventDate,
       startTime: startTimeStr,
@@ -91,7 +91,7 @@ export function getEvents(rawData: RawEvent[]): ProcessedEvent[] {
       instructorNames: getInstructorNames(event),
       lectureTitle: getLectureTitle(event),
       roomName: parseRoomName(event.subject_itemName ?? "") ?? "",
-      resources: parseEventResources(event),
+      resources,
       updatedAt: new Date().toISOString(),
       raw: event,
     };
@@ -99,13 +99,14 @@ export function getEvents(rawData: RawEvent[]): ProcessedEvent[] {
 
   const mergedEvents = mergeAdjacentRoomEvents(processedEvents);
   const filteredEvents = removeKECNoAcademicEvents(mergedEvents);
+
+  // Compute which lectures are the first lecture for their event name
+  const firstLectureIds = await computeFirstLecture(filteredEvents);
+
   return filteredEvents.map((event) => ({
     ...event,
-    joins: {
-      resources: [],
-      faculty: [],
-      tasks: [],
-    },
+    firstLecture:
+      event.eventType === "Lecture" && firstLectureIds.has(event.id),
   }));
 }
 

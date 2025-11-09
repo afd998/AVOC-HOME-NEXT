@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-export type FacultyAvatarSize = "sm" | "md" | "lg";
+export type FacultyAvatarSize = "sm" | "md" | "lg" | "xl" | "large";
 
 export interface FacultyAvatarProps {
   imageUrl?: string | null;
@@ -32,22 +32,30 @@ export interface FacultyAvatarItem {
 const sizeClasses: Record<FacultyAvatarSize, string> = {
   sm: "h-8 w-8",
   md: "h-12 w-12",
-  lg: "h-16 w-16",
+  lg: "h-14 w-14",
+  xl: "h-16 w-16",
+  large: "h-20 w-20",
 };
 
 const fallbackTextClasses: Record<FacultyAvatarSize, string> = {
   sm: "text-xs",
   md: "text-sm",
   lg: "text-base",
+  xl: "text-base",
+  large: "text-lg",
 };
 
 const badgeSizeClasses: Record<FacultyAvatarSize, string> = {
   sm: "h-8 w-8 text-xs",
   md: "h-10 w-10 text-sm",
-  lg: "h-12 w-12 text-base",
+  lg: "h-11 w-11 text-sm",
+  xl: "h-12 w-12 text-base",
+  large: "h-14 w-14 text-lg",
 };
 
-function pickFirstNonEmpty(...values: Array<string | null | undefined>): string {
+function pickFirstNonEmpty(
+  ...values: Array<string | null | undefined>
+): string {
   for (const value of values) {
     if (typeof value !== "string") continue;
     const trimmed = value.trim();
@@ -85,10 +93,7 @@ function getFacultyCutoutUrl(
   faculty?: FacultyAvatarItem | null
 ): string | undefined {
   if (!faculty) return undefined;
-  const cutout = pickFirstNonEmpty(
-    faculty.cutoutImage,
-    faculty.cutout_image
-  );
+  const cutout = pickFirstNonEmpty(faculty.cutoutImage, faculty.cutout_image);
   return cutout || undefined;
 }
 
@@ -166,8 +171,7 @@ export function FacultyAvatar({
   size = "md",
   maskRadius = 63,
 }: FacultyAvatarProps) {
-  const resolvedImageUrl =
-    typeof imageUrl === "string" ? imageUrl.trim() : "";
+  const resolvedImageUrl = typeof imageUrl === "string" ? imageUrl.trim() : "";
   const resolvedCutout =
     typeof cutoutImageUrl === "string" ? cutoutImageUrl.trim() : "";
   const hasCutout = resolvedCutout.length > 0;
@@ -178,7 +182,7 @@ export function FacultyAvatar({
     return (
       <div
         className={cn(
-          "group relative transition-all duration-300 ease-in-out",
+          "group relative  transition-all duration-300 ease-in-out",
           sizeClasses[size],
           className
         )}
@@ -186,11 +190,15 @@ export function FacultyAvatar({
         title={instructorName}
       >
         <div
-          className="absolute inset-0 rounded-full z-0"
+          className="bg-gray-200 dark:bg-gray-800 dark:border-violet-900 absolute inset-0 rounded-full z-0"
           style={{
-            background:
-              "linear-gradient(135deg, #6b5b95 0%, #886ec4 50%, #9b8ce8 100%)",
-            backgroundSize: "cover",
+            // backgroundImage: `
+            //    radial-gradient(ellipse, transparent, rgba(0, 0, 0, 0.4)),
+            //     linear-gradient(0deg, rgba(153, 34, 34, 0.2), rgba(153, 34, 34, 0.2)),
+            //     url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E")
+            //    `,
+            backgroundSize: "auto, auto, auto",
+            backgroundRepeat: "repeat",
             backgroundPosition: "center",
           }}
         />
@@ -221,7 +229,7 @@ export function FacultyAvatar({
                 x="-15"
                 y="0"
                 fill="none"
-                className="transition-all duration-300 ease-in-out [transform-origin:50%_50%] [transform:translateY(-30px)_scale(1.5)] group-hover:[transform:translateY(-30px)_scale(1.7)] [filter:sepia(1)_hue-rotate(240deg)_saturate(0.8)_brightness(0.9)_contrast(1.2)] group-hover:[filter:sepia(1)_hue-rotate(240deg)_saturate(1.5)_brightness(1.2)_contrast(1.3)]"
+                className="transition-all duration-300 ease-in-out [transform-origin:50%_50%] [transform:translateY(-30px)_scale(1.5)] group-hover:[transform:translateY(-30px)_scale(1.7)] [filter:grayscale(1)]"
                 href={resolvedCutout}
               />
             </g>
@@ -241,39 +249,14 @@ export function FacultyAvatar({
         )}
         title={instructorName}
       >
-        <div
-          className="absolute inset-0 rounded-full z-0"
-          style={{
-            background:
-              "linear-gradient(135deg, #6b5b95 0%, #886ec4 50%, #9b8ce8 100%)",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-
         <div className="absolute inset-0 z-10 rounded-full overflow-hidden">
           <img
             src={resolvedImageUrl}
             alt={instructorName}
-            className="w-full h-full object-cover rounded-full transition-all duration-300 ease-in-out scale-100 group-hover:scale-110 [filter:brightness(0.9)_saturate(1.1)_contrast(1.05)] group-hover:[filter:brightness(1.1)_saturate(1.2)_contrast(1.1)] [mix-blend-mode:multiply]"
+            className="w-full h-full object-cover rounded-full transition-all duration-300 ease-in-out scale-100 group-hover:scale-110 [filter:grayscale(1)]"
           />
         </div>
 
-        <div
-          className="absolute inset-0 z-15 rounded-full transition-all duration-300 ease-in-out [mix-blend-mode:overlay]"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(139, 110, 196, 0.2) 0%, rgba(155, 140, 232, 0.3) 50%, rgba(107, 91, 149, 0.15) 100%)",
-          }}
-        >
-          <div
-            className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(139, 110, 196, 0.3) 0%, rgba(155, 140, 232, 0.4) 50%, rgba(107, 91, 149, 0.2) 100%)",
-            }}
-          />
-        </div>
       </div>
     );
   }
@@ -336,8 +319,7 @@ export function FacultyAvatarStack({
       <div className={cn("flex", overlapClassName)}>
         {visible.map((member, index) => {
           const instructorName = getFacultyDisplayName(member);
-          const key =
-            member?.id ?? `${instructorName || "faculty"}-${index}`;
+          const key = member?.id ?? `${instructorName || "faculty"}-${index}`;
 
           return (
             <FacultyAvatar

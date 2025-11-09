@@ -24,8 +24,8 @@ export default function RoomRow({
     <div
       className={` flex overflow-visible ${isLastRow ? "rounded-b-md" : ""} ${
         isEvenRow
-          ? "bg-muted/80 dark:bg-muted/100"
-          : "bg-muted/5 dark:bg-muted/85"
+          ? "bg-muted/80 dark:bg-muted/80"
+          : "bg-muted/5 dark:bg-muted/100"
       }`}
       style={{
         ...rowHeightStyle,

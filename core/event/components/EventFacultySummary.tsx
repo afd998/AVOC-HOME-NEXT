@@ -124,7 +124,7 @@ export function EventFacultySummary({
       {shouldShowNames && (
         <div
           className={cn(
-            "leading-tight font-medium opacity-90 text-center whitespace-nowrap",
+            "leading-tight font-medium opacity-90 text-center whitespace-nowrap text-foreground",
             defaultNameClass,
             namesClassName
           )}

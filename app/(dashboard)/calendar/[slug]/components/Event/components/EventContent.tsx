@@ -4,6 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { finalEvent } from "@/lib/data/calendar/calendar";
 import localFont from "next/font/local";
+import {
+  getFacultyDisplayNamesServer,
+  extractLastNames,
+} from "@/core/faculty/utils";
 const myFont = localFont({
   src: "../../../../../../../public/fonts/Kenyan Coffee Rg.otf",
 });
@@ -28,20 +32,26 @@ function LectureEvent({ event }: { event: finalEvent }) {
   const facultyCount =
     event.faculty.length > 0 ? event.faculty.length : instructorNames.length;
 
+  // Get last names for display under Sec:
+  const allNames = getFacultyDisplayNamesServer(event.faculty, {
+    fallbackNames: instructorNames,
+  });
+  const lastNames = extractLastNames(allNames);
+
   // Dynamic width based on number of faculty
   const getAvatarContainerWidth = () => {
-    // Use appropriate width based on faculty count
-    if (facultyCount <= 1) return "w-16"; // 64px for single faculty
-    if (facultyCount === 2) return "w-24"; // 96px for two faculty
-    if (facultyCount >= 3) return "w-28"; // 112px for three or more faculty
-    return "w-16"; // default
+    // Use appropriate width based on faculty count (avatars are now h-14 w-14 = 56px)
+    if (facultyCount <= 1) return "w-14"; // 56px for single faculty
+    if (facultyCount === 2) return "w-[88px]"; // 88px for two faculty (with overlap)
+    if (facultyCount >= 3) return "w-28"; // 112px for three or more faculty (with overlap)
+    return "w-14"; // default
   };
 
   // Find faculty member for first instructor (for single avatar case)
 
   return (
     <div
-      className={`flex flex-row ${containerHeight} w-full rounded absolute inset-0 p-1 transition-all duration-200 ease-in-out ${
+      className={`  flex flex-row ${containerHeight} w-full rounded absolute inset-0 p-1 transition-all duration-200 ease-in-out ${
         event.derived.isMergedRoomEvent ? "items-center" : ""
       } relative`}
     >
@@ -49,26 +59,26 @@ function LectureEvent({ event }: { event: finalEvent }) {
         faculty={event.faculty}
         instructorNames={instructorNames.length ? instructorNames : undefined}
         maxVisible={3}
-        size="md"
+        size="lg"
+        showNames={false}
         className={cn(
           "rounded z-10 transition-all duration-200 ease-in-out relative shrink-0 -mt-1",
           avatarContainerHeight,
           getAvatarContainerWidth()
         )}
         avatarsClassName="justify-center"
-        avatarClassName="!h-10 !w-10"
+        avatarClassName="h-14 w-14"
         overlapClassName="-space-x-2"
-        remainingBadgeClassName="border-2 border-white text-white font-medium text-sm !h-10 !w-10"
-        namesClassName="w-full -mt-0.5 transition-all duration-200 ease-in-out"
+        remainingBadgeClassName="border-2 border-white text-white font-medium text-sm !h-11 !w-11"
       />
 
       <div
-        className={`flex flex-col min-w-0 pl-1 -gap-2 transition-all duration-200 ease-in-out overflow-hidden mt-1 ${
+        className={`  flex flex-col min-w-0 pl-1 -gap-2 transition-all duration-200 ease-in-out overflow-hidden mt-1 ${
           event.derived.isMergedRoomEvent ? "justify-center" : ""
         }`}
       >
         <span
-          className={`${myFont.className} font-medium text-black transition-all duration-200 ease-in-out whitespace-nowrap text-2xl leading-none`}
+          className={` font-medium text-foreground transition-all duration-200 ease-in-out whitespace-nowrap text-lg leading-none`}
           style={{
             transformOrigin: "left center",
           }}
@@ -76,14 +86,21 @@ function LectureEvent({ event }: { event: finalEvent }) {
         >
           {event.eventName?.substring(0, 8) || ""}
         </span>
-        {thirdPart && (
-          <span className="text-[10px] text-gray-400 opacity-90 transition-all duration-200 ease-in-out whitespace-nowrap leading-none">
-            Sec: {thirdPart}
-          </span>
-        )}
-        {event.lectureTitle && (
+        <div className="flex flex-col gap-0">
+          {thirdPart && (
+            <span className="text-[10px] text-gray-400 opacity-90 transition-all duration-200 ease-in-out whitespace-nowrap leading-none">
+              Sec: {thirdPart}
+            </span>
+          )}
+          {lastNames && (
+            <span className="text-sm text-foreground opacity-90 transition-all duration-200 ease-in-out whitespace-nowrap leading-none font-medium">
+              {lastNames}
+            </span>
+          )}
+        </div>
+        {/* {event.lectureTitle && (
           <span
-            className="text-xs text-white opacity-80 transition-all duration-200 ease-in-out whitespace-nowrap leading-none"
+            className="text-xs text-foreground opacity-80 transition-all duration-200 ease-in-out whitespace-nowrap leading-none"
             style={{
               fontFamily:
                 "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
@@ -92,7 +109,7 @@ function LectureEvent({ event }: { event: finalEvent }) {
           >
             {event.lectureTitle}
           </span>
-        )}
+        )} */}
       </div>
 
       {/* {rowHeightPx <= 90 && (
@@ -127,7 +144,7 @@ function KECEvent({ event }: { event: finalEvent }) {
     >
       <ItemContent
         className={cn(
-          "relative z-10 flex flex-col items-start justify-center h-full px-4 gap-1  my-0 py-0",
+          "  relative z-10 flex flex-col items-start justify-center h-full px-4 gap-1  my-0 py-0",
           event.derived.isMergedRoomEvent ? "py-4" : "pt-0 pb-3"
         )}
       >

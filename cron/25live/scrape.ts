@@ -1,19 +1,9 @@
 import { chromium, type Browser } from "playwright";
 import dayjs from "dayjs";
 import config from "../config";
-import { eq, inArray, InferInsertModel, sql } from "drizzle-orm";
-import {
-  events,
-  facultyEvents,
-  faculty,
-  tasks,
-  qcs,
-} from "../../lib/db/schema";
 import { pipe } from "remeda";
 import { getEvents } from "./Events/getEvents";
-import { getTasks } from "./Tasks/getTasks";
 import { type AvailabilitySubject, type RawEvent } from "./schemas";
-import { qcItems } from "../../lib/db/schema";
 import { getResourceEvents } from "./ResourceEvents/getResourceEvents";
 import { saveResourceEvents } from "./ResourceEvents/saveResourceEvents";
 import { saveEvents } from "./Events/saveEvents";
@@ -22,31 +12,22 @@ import { getCaptureQcRows } from "./Tasks/captureQc/getCaptureQcRows";
 import { saveCaptureQcRows } from "./Tasks/captureQc/saveCaptureQcRows";
 import { getFacultyEvents } from "./FacultyEvents/getFacultyEvents";
 import { saveFacultyEvents } from "./FacultyEvents/SaveFacultyEvents";
-import { resourceEvents } from "../../lib/db/schema";
-import { InferSelectModel } from "drizzle-orm";
 import { fetchEventsData } from "./fetchData";
 import { getQcItemRows } from "./Tasks/captureQc/QcItems/getQcItemRows";
 import { saveQcItemRows } from "./Tasks/captureQc/QcItems/saveQcItemRows";
+import { getHardwareEvents } from "./PropertiesEvents/getPropertiesEvents";
+import { getActions } from "./Actions/getActions";
+import {
+  type ProcessedEvent,
+  type QcRow,
+  type ResourceEventRow,
+  type FacultyEventRow,
+  type TaskRow,
+} from "../../lib/db/types";
 
-export type QcRow = InferInsertModel<typeof qcs>;
-export type EventResource = {
-  itemName: string;
-  quantity: number | null;
-  instruction: string | null;
-};
-
-export type ProcessedEvent = Omit<
-  InferInsertModel<typeof events>,
-  "resources"
-> & {
-  resources: EventResource[];
-};
 // Validate configuration to ensure all required environment variables are present
 config.validate();
-export type ResourceEventRow = InferInsertModel<typeof resourceEvents>;
-export type FacultyEventRow = InferSelectModel<typeof facultyEvents>;
-export type TaskRow = InferInsertModel<typeof tasks>;
-export type QcItemRow = InferInsertModel<typeof qcItems>;
+
 // Global browser instance for reuse across requests
 let browser: Browser | null = null;
 
@@ -70,7 +51,7 @@ async function main(): Promise<void> {
   const offset = Number.parseInt(process.argv[2] ?? "0", 10);
   const date = dayjs().add(offset, "day").format("YYYY-MM-DD");
   console.log(`\n🚀 Starting scrape for date: ${date}`);
-  
+
   type Batch = {
     events: ProcessedEvent[];
     resourcesEvents: ResourceEventRow[];
@@ -93,30 +74,44 @@ async function main(): Promise<void> {
   console.log(`🔄 Processing events...`);
   const batch = await pipe(
     raw,
-    (raw: RawEvent[]): Batch => {
-      const events = getEvents(raw);
+    async (raw: RawEvent[]): Promise<Batch> => {
+      const events = await getEvents(raw);
       console.log(`📊 Processed ${events.length} events`);
       return { ...emptyBatch, events };
     },
     async (b: Batch) => {
-      console.log(`🔗 Processing resource events, faculty events, and tasks...`);
-      const [resourcesEvents, facultyEvents, tasks] = await Promise.all([
-        getResourceEvents(b.events),
-        getFacultyEvents(b.events),
-        getTasks(b.events),
-      ]);
-      console.log(`📦 Found ${resourcesEvents.length} resource events, ${facultyEvents.length} faculty events, ${tasks.length} tasks`);
-      const batchWithJoins = { ...b, resourcesEvents, facultyEvents, tasks };
+      console.log(
+        `🔗 Processing resource events, faculty events, and tasks...`
+      );
+      const [resourcesEvents, facultyEvents, hardwareEvents, actions] =
+        await Promise.all([
+          getResourceEvents(b.events),
+          getFacultyEvents(b.events),
+          getHardwareEvents(b.events),
+          getActions(b.events),
+        ]);
+      console.log(
+        `📦 Found ${resourcesEvents.length} resource events, ${facultyEvents.length} faculty events, ${hardwareEvents.length} hardware events, ${actions.length} actions, ${tasks.length} tasks`
+      );
+      const batchWithJoins = {
+        ...b,
+        resourcesEvents,
+        facultyEvents,
+        hardwareEvents,
+        actions,
+      };
       console.log(`🔍 Processing capture QC rows and QC items...`);
       const [captureQcRows, qcItemsRows] = await Promise.all([
         getCaptureQcRows(batchWithJoins.tasks),
         getQcItemRows(batchWithJoins.tasks),
       ]);
-      console.log(`📋 Found ${captureQcRows.length} capture QC rows, ${qcItemsRows.length} QC item rows`);
+      console.log(
+        `📋 Found ${captureQcRows.length} capture QC rows, ${qcItemsRows.length} QC item rows`
+      );
       return { ...batchWithJoins, captureQcRows, qcItemsRows };
     }
   );
-  
+
   console.log(`\n💾 Saving data to database...`);
   await saveEvents([...batch.events], date);
   await Promise.all([

@@ -1,18 +1,15 @@
-import {
-  ProcessedEvent,
-  EventResource,
-} from "../Events/transformRawEventsToEvents";
+import { ProcessedEvent, EventResource } from "../scrape";
 import { generateDeterministicId } from "../utils";
 import { composeTaskIdInput, adjustTimeByMinutes } from "./utils";
 
-export function createPollingTasks(
+export function createConfigTasks(
   event: ProcessedEvent,
-  resource: EventResource,
+  resource: EventResource
 ) {
   return [
     {
       id: generateDeterministicId(
-        composeTaskIdInput(event.id, "POLLING CLICKER DEPLOY", event.startTime),
+        composeTaskIdInput(event.id, "POLLING CLICKER DEPLOY", event.startTime)
       ),
       taskType: "POLLING CLICKER DEPLOY",
       date: event.date,
@@ -28,7 +25,7 @@ export function createPollingTasks(
     },
     {
       id: generateDeterministicId(
-        composeTaskIdInput(event.id, "POLLING CLICKER RETRIEVAL", event.endTime),
+        composeTaskIdInput(event.id, "POLLING CLICKER RETRIEVAL", event.endTime)
       ),
       taskType: "POLLING CLICKER RETRIEVAL",
       date: event.date,

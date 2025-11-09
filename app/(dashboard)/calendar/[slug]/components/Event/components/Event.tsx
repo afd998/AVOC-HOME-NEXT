@@ -50,11 +50,13 @@ export default function Event({ event, rowHeightPx = 90 }: EventProps) {
   return (
     <Link href={`/events/${event.id}`}>
       <Card
-        className={`absolute transition-all duration-200 ease-in-out cursor-pointer group rounded-md hover:scale-105 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] ${
-          event.eventType === "Lecture" ? "text-white" : "text-gray-900"
-        } text-sm ${event.derived.isShortLecture ? "px-1" : "px-2"} ${
-          event.derived.isMergedRoomEvent ? "pt-2 pb-2" : "pt-5 pb-1"
-        } ${
+        className={`  border ${
+          event.eventType === "Lecture" || event.eventType === "KEC"
+            ? "dark:border-gray-600 border-gray-400"
+            : ""
+        }  absolute transition-all duration-200 ease-in-out cursor-pointer group rounded-md hover:scale-105 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)]  text-sm ${
+          event.derived.isShortLecture ? "px-1" : "px-2"
+        }  ${event.derived.isMergedRoomEvent ? "pt-2 pb-2" : " "} ${
           event.derived.isMergedRoomEvent
             ? "hover:z-[46] z-[42]"
             : "hover:z-[44] z-[38]"
@@ -72,7 +74,7 @@ export default function Event({ event, rowHeightPx = 90 }: EventProps) {
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
           transition:
             "left 200ms ease-in-out, width 200ms ease-in-out, transform 200ms ease-in-out, box-shadow 200ms ease-in-out, z-index 200ms ease-in-out",
-          ...(event.eventType === "Lecture" && {
+          ...(event.eventType === "Lecv" && {
             background: `
               radial-gradient(ellipse 150% 100% at center, #9a8bb8 0%, #9a8bb8 5%, #8a7ba9 20%, #7a6b9a 40%, #6a5a8a 60%, #5a4a7a 100%),
               radial-gradient(ellipse 200% 200% at center, transparent 0%, transparent 50%, rgba(0, 0, 0, 0.4) 100%)
@@ -82,11 +84,11 @@ export default function Event({ event, rowHeightPx = 90 }: EventProps) {
         title={event.eventName || ""}
         data-event="true"
       >
-        <CardContent className="flex flex-col h-full p-0">
-          <Suspense >
+        <CardContent className="flex flex-col justify-center items-centers h-full p-0">
+          {/* <Suspense >
             <EventHeader event={event} />
-          </Suspense>
-          <div className="flex-1">
+          </Suspense> */}
+          <div className="">
             <EventContent event={event} />
           </div>
           {/* Red blinking vignette border for events with overdue Panopto checks */}
