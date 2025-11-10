@@ -5,7 +5,15 @@ export function getPropertiesEvents(
 ): PropertiesEventRow[] {
   let propertiesEvents: PropertiesEventRow[] = [];
   events.forEach((event) => {
+    let handheldMics = 0;
+    let lapelMics = 0;
     event.resources.forEach((resource) => {
+      if (resource.itemName.includes("Handheld")) {
+        handheldMics = handheldMics + resource.quantity;
+      }
+      if (resource.itemName.includes("Lapel")) {
+        lapelMics = lapelMics + resource.quantity;
+      }
       if (resource.itemName.includes("Recording")) {
         const type = resource.itemName.includes("PRIVATE")
           ? "Private Link"
@@ -69,6 +77,23 @@ export function getPropertiesEvents(
         });
       }
     });
+    const hasBoth = handheldMics > 0 && lapelMics > 0;
+    if (handheldMics > 0) {
+      propertiesEvents.push({
+        propertiesDict: "Handheld Mic(s)",
+        event: event.id,
+        quantity: hasBoth ? 1 : Math.min(handheldMics, 2),
+        instruction: "",
+      });
+    }
+    if (lapelMics > 0) {
+      propertiesEvents.push({
+        propertiesDict: "Lapel Mic(s)",
+        event: event.id,
+        quantity: hasBoth ? 1 : Math.min(lapelMics, 2),
+        instruction: "",
+      });
+    }
   });
   return propertiesEvents;
 }

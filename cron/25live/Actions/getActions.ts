@@ -3,20 +3,23 @@ import { createCombinedModeTasks } from "./createCombinedModeTasks";
 import { createStaffAssistanceTask } from "./createStaffAssistanceTask";
 import { createConfigActions } from "./createConfigActions";
 import { createWebConferenceTask } from "./createWebConferenceTask";
-import { createSurfaceHubTasks } from "./createSurfaceHubTasks";
 
-import { type ActionRow } from "../../../lib/db/types";
+ 
+import { PropertiesEventRow, type ActionRow } from "../../../lib/db/types";
 import { type ProcessedEvent, type EventResource } from "../../../lib/db/types";
 
 export async function getActions(
-  events: ProcessedEvent[]
+  events: ProcessedEvent[],
+  propertiesEvents: PropertiesEventRow[]
 ): Promise<ActionRow[]> {
   const actions: ActionRow[] = [];
   events.forEach((event) => {
+    const eventProperties = propertiesEvents.filter((property) => property.event === event.id);
+    actions.push(...createConfigActions(event, eventProperties));
     let staffAssistanceResource: EventResource | undefined;
     let webConferenceResource: EventResource | undefined;
     event.resources.forEach((resource) => {
-      actions.push(...createConfigActions(event, resource));
+   
       const lowercaseItemName = resource.itemName?.toLowerCase() ?? "";
       if (lowercaseItemName.includes("recording")) {
         actions.push(...createCaptureQCTasks(event, resource));

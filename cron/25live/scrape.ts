@@ -15,7 +15,6 @@ import { saveFacultyEvents } from "./FacultyEvents/SaveFacultyEvents";
 import { fetchEventsData } from "./fetchData";
 import { getQcItemRows } from "./Tasks/captureQc/QcItems/getQcItemRows";
 import { saveQcItemRows } from "./Tasks/captureQc/QcItems/saveQcItemRows";
-import { getHardwareEvents } from "./PropertiesEvents/getPropertiesEvents";
 import { getActions } from "./Actions/getActions";
 import {
   type ProcessedEvent,
@@ -23,8 +22,10 @@ import {
   type ResourceEventRow,
   type FacultyEventRow,
   type TaskRow,
+  PropertiesEventRow,
 } from "../../lib/db/types";
 
+import { getPropertiesEvents } from "./PropertiesEvents/getPropertiesEvents";
 // Validate configuration to ensure all required environment variables are present
 config.validate();
 
@@ -56,21 +57,21 @@ async function main(): Promise<void> {
     events: ProcessedEvent[];
     resourcesEvents: ResourceEventRow[];
     facultyEvents: FacultyEventRow[];
-    tasks: TaskRow[];
+    propertiesEvents: PropertiesEventRow[];
     captureQc: QcRow[];
   };
   const emptyBatch: Batch = {
     events: [],
     resourcesEvents: [],
     facultyEvents: [],
-    tasks: [],
+
+    propertiesEvents: [],
     captureQc: [],
   };
   const browserInstance = await initBrowser();
   console.log(`📥 Fetching raw events data...`);
   const raw = await fetchEventsData(browserInstance, date);
   console.log(`✅ Fetched ${raw.length} raw events`);
-
   console.log(`🔄 Processing events...`);
   const batch = await pipe(
     raw,
@@ -83,25 +84,24 @@ async function main(): Promise<void> {
       console.log(
         `🔗 Processing resource events, faculty events, and tasks...`
       );
-      const [resourcesEvents, facultyEvents, hardwareEvents, actions] =
+      const [resourcesEvents, facultyEvents, propertiesEvents] =
         await Promise.all([
           getResourceEvents(b.events),
           getFacultyEvents(b.events),
-          getHardwareEvents(b.events),
-          getActions(b.events),
+          getPropertiesEvents(b.events),
         ]);
       console.log(
-        `📦 Found ${resourcesEvents.length} resource events, ${facultyEvents.length} faculty events, ${hardwareEvents.length} hardware events, ${actions.length} actions, ${tasks.length} tasks`
+        `📦 Found ${resourcesEvents.length} resource events, ${facultyEvents.length} faculty events, ${propertiesEvents.length} properties events, ${actions.length} actions`
       );
       const batchWithJoins = {
         ...b,
         resourcesEvents,
         facultyEvents,
-        hardwareEvents,
-        actions,
+        propertiesEvents,
       };
       console.log(`🔍 Processing capture QC rows and QC items...`);
-      const [captureQcRows, qcItemsRows] = await Promise.all([
+      const [captureQcRows, qcItemsRows, actions] = await Promise.all([
+        getActions(b.events, b.propertiesEvents),
         getCaptureQcRows(batchWithJoins.tasks),
         getQcItemRows(batchWithJoins.tasks),
       ]);

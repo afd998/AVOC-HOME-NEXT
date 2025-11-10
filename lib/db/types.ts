@@ -19,7 +19,7 @@ export type ActionRow = InferInsertModel<typeof actions>;
 
 export type EventResource = {
   itemName: string;
-  quantity: number | null;
+  quantity: number;
   instruction: string | null;
 };
 
