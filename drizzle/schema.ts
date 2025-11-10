@@ -44,7 +44,7 @@ export const actions = pgTable("actions", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	event: bigint({ mode: "number" }),
-	taskType: text("task_type").notNull(),
+	type: text().notNull(),
 	startTime: time("start_time").notNull(),
 	status: text().notNull(),
 	assignedTo: uuid("assigned_to"),
@@ -52,7 +52,6 @@ export const actions = pgTable("actions", {
 	date: date().notNull(),
 	room: text().notNull(),
 	taskDict: text("task_dict"),
-	resource: text(),
 	completedTime: timestamp("completed_time", { withTimezone: true, mode: 'string' }),
 	instructions: text(),
 	subType: text("sub_type"),

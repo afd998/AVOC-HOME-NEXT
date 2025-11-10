@@ -1,8 +1,17 @@
-import { type ProcessedEvent } from "../../../lib/db/types";
-import { type PropertiesEventRow } from "../../../lib/db/types";
+import {
+  type ProcessedEvent,
+  type PropertiesEventRow,
+} from "../../../lib/db/types";
+import {
+  buildTransformPlan,
+  transformInstruction,
+  TRANSFORM_DICT,
+} from "./transformPlan";
+
 export function getPropertiesEvents(
   events: ProcessedEvent[]
 ): PropertiesEventRow[] {
+  const transformPlan = buildTransformPlan(events);
   let propertiesEvents: PropertiesEventRow[] = [];
   events.forEach((event) => {
     let handheldMics = 0;
@@ -92,6 +101,16 @@ export function getPropertiesEvents(
         event: event.id,
         quantity: hasBoth ? 1 : Math.min(lapelMics, 2),
         instruction: "",
+      });
+    }
+    const transformMode = transformPlan.get(event.id);
+    if (transformMode) {
+      propertiesEvents.push({
+        propertiesDict: TRANSFORM_DICT,
+        event: event.id,
+        quantity: 1,
+        instruction: transformInstruction(transformMode),
+        type: transformMode,
       });
     }
   });
