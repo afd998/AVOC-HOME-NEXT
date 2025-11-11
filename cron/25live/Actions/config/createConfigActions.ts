@@ -8,44 +8,43 @@ import {
   composeActionIdInput,
   adjustTimeByMinutes,
 } from "../utils";
-const formatPropertyInstruction = (property: PropertiesEventRow) => {
-  const hasQuantity =
-    typeof property.quantity === "number" && property.quantity > 0;
-  const quantityPrefix = hasQuantity ? `${property.quantity}× ` : "";
-  const baseLine = `${quantityPrefix}${property.propertiesDict}`;
-  const extra = property.instruction?.trim();
 
-  return extra ? `${baseLine}: ${extra}` : baseLine;
-};
+const excludedProperties = [
+  "Recording",
+  "Hybrid",
+  "Display Adapter",
+  "Lapel Mic(s)",
+];
 
 export function createConfigActions(
   event: ProcessedEvent,
   eventProperties: PropertiesEventRow[]
 ) {
-  const actionTriggeringProperties = eventProperties.filter(
-    (property) =>
-      property.propertiesDict !== "Recording" &&
-      property.propertiesDict !== "Hybrid" &&
-      property.propertiesDict !== "Display Adapter" &&
-      property.propertiesDict !== "Transform"
+  const transformProperty = eventProperties.find(
+    (property) => property.propertiesDict === "Transform"
   );
 
-  const shouldCreateAction = actionTriggeringProperties.length > 0;
+  // Check if there are any properties that aren't excluded
+  const hasNonExcludedProperties = eventProperties.some(
+    (property) => !excludedProperties.includes(property.propertiesDict)
+  );
+
+  // Check if there's a "Lapel Mic(s)" with quantity > 1
+  const hasLapelMicWithQuantity = eventProperties.some(
+    (property) =>
+      property.propertiesDict === "Lapel Mic(s)" &&
+      typeof property.quantity === "number" &&
+      property.quantity > 1
+  );
+
+  const shouldCreateAction =
+    hasNonExcludedProperties || hasLapelMicWithQuantity || !!transformProperty;
 
   if (!shouldCreateAction) {
     return [];
   }
 
   const actionStartTime = adjustTimeByMinutes(event.startTime, -7.5);
-  const instructionParts: string[] = [];
-
-  if (actionTriggeringProperties.length > 0) {
-    instructionParts.push(
-      actionTriggeringProperties.map(formatPropertyInstruction).join("\n")
-    );
-  }
-
-  const instructions = instructionParts.join("\n\n") || null;
 
   const configAction: ActionRow = {
     id: generateDeterministicId(
@@ -60,10 +59,8 @@ export function createConfigActions(
     completedBy: null,
     event: event.id,
     room: event.roomName,
-    taskDict: "CONFIG",
-    instructions,
-    subType: transformProperty?.type ?? null,  
-  }; 
+    subType: transformProperty?.type ?? null,
+  };
 
   return [configAction];
 }

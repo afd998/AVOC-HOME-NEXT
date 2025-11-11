@@ -51,9 +51,7 @@ export const actions = pgTable("actions", {
 	completedBy: uuid("completed_by"),
 	date: date().notNull(),
 	room: text().notNull(),
-	taskDict: text("task_dict"),
 	completedTime: timestamp("completed_time", { withTimezone: true, mode: 'string' }),
-	instructions: text(),
 	subType: text("sub_type"),
 }, (table) => [
 	foreignKey({
@@ -71,11 +69,6 @@ export const actions = pgTable("actions", {
 			foreignColumns: [events.id],
 			name: "actions_event_fkey"
 		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.taskDict],
-			foreignColumns: [taskDict.id],
-			name: "actions_task_dict_fkey"
-		}),
 ]);
 
 export const propertiesDict = pgTable("properties_dict", {

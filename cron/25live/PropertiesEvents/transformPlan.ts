@@ -10,9 +10,11 @@ const getModeForRoom = (roomName: string): CombinedModeType | null => {
   if (COMBINED_ROOMS.has(roomName)) {
     return "COMBINE";
   }
+
   if (SPLIT_ROOMS.has(roomName)) {
     return "UNCOMBINE";
   }
+
   return null;
 };
 
@@ -23,6 +25,7 @@ export const buildTransformPlan = (events: ProcessedEvent[]) => {
       if (!mode) {
         return null;
       }
+
       return {
         eventId: event.id,
         startTime: event.startTime,
@@ -48,6 +51,7 @@ export const buildTransformPlan = (events: ProcessedEvent[]) => {
 
   const plan = new Map<number, CombinedModeType>();
   plan.set(relevant[0].eventId, relevant[0].mode);
+
   for (let i = 0; i < relevant.length - 1; i += 1) {
     const current = relevant[i];
     const next = relevant[i + 1];
@@ -55,6 +59,7 @@ export const buildTransformPlan = (events: ProcessedEvent[]) => {
       plan.set(next.eventId, next.mode);
     }
   }
+
   return plan;
 };
 
