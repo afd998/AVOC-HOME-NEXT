@@ -298,7 +298,6 @@ export const events = pgTable("events", {
 	date: date().notNull(),
 	instructorNames: jsonb("instructor_names"),
 	organization: text(),
-	firstLecture: boolean("first_lecture"),
 }, (table) => [
 	index("idx_events_date_start_time").using("btree", table.date.asc().nullsLast().op("date_ops"), table.startTime.asc().nullsLast().op("date_ops")),
 	index("idx_events_event_name_start_time").using("btree", table.eventName.asc().nullsLast().op("text_ops"), table.startTime.asc().nullsLast().op("text_ops")),

@@ -1,7 +1,7 @@
 import { db } from "../../../lib/db";
 import { resourceEvents as resourceEventsTable } from "../../../lib/db/schema";
-import { type ProcessedEvent } from "../scrape";
-import { type ResourceEventRow } from "../scrape";
+import { type ProcessedEvent } from "../../../lib/db/types";
+import { type ResourceEventRow } from "../../../lib/db/types";
 import { inArray } from "drizzle-orm";
 
 export async function saveResourceEvents(

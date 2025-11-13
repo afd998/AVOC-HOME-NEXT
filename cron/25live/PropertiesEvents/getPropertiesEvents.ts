@@ -7,11 +7,13 @@ import {
   transformInstruction,
   TRANSFORM_DICT,
 } from "./transformPlan";
+import { computeFirstLecture } from "../Events/computeFirstLecture";
 
-export function getPropertiesEvents(
+export async function getPropertiesEvents(
   events: ProcessedEvent[]
-): PropertiesEventRow[] {
+): Promise<PropertiesEventRow[]> {
   const transformPlan = buildTransformPlan(events);
+  const firstLectureIds = await computeFirstLecture(events);
   let propertiesEvents: PropertiesEventRow[] = [];
   events.forEach((event) => {
     let handheldMics = 0;
@@ -111,6 +113,18 @@ export function getPropertiesEvents(
         quantity: 1,
         instruction: transformInstruction(transformMode),
         type: transformMode,
+      });
+    }
+    // Add First Session property if this is the first lecture
+    if (
+      event.eventType === "Lecture" &&
+      firstLectureIds.has(event.id)
+    ) {
+      propertiesEvents.push({
+        propertiesDict: "First Session",
+        event: event.id,
+        quantity: 1,
+        instruction: "",
       });
     }
   });

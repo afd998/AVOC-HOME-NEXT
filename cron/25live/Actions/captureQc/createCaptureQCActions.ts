@@ -1,8 +1,12 @@
 const THIRTY_MINUTES_IN_SECONDS = 30 * 60;
-import { type ProcessedEvent, type EventResource } from "../scrape";
-import { generateDeterministicId } from "../utils";
-import { composeActionIdInput } from "./utils";
-import { type ActionRow } from "../../../lib/db/types";
+import {
+  type ProcessedEvent,
+  type EventResource,
+  PropertiesEventRow,
+} from "../../../../lib/db/types";
+import { generateDeterministicId } from "../../utils";
+import { composeActionIdInput } from "../utils";
+import { type ActionRow } from "../../../../lib/db/types";
 /**
  * Convert a HH:MM[:SS] string into seconds from midnight.
  * @param {string} timeStr
@@ -47,20 +51,15 @@ const formatSecondsToTime = (totalSeconds: number) => {
  * @param {Object} resource
  * @returns {Array<Object>}
  */
-export function createCaptureQCTasks(
+export function createCaptureQCActions(
   event: ProcessedEvent,
-  resource: EventResource
+  eventProperties: PropertiesEventRow[]
 ) {
-  if (!event || !resource) {
-    return [];
-  }
+  const recordingProperty = eventProperties.find(
+    (property) => property.propertiesDict === "Recording"
+  );
 
-  const resourceName = resource.itemName || "";
-  const hasVideoRecordingResource = resourceName
-    .toUpperCase()
-    .startsWith("KSM-KGH-VIDEO-RECORDING");
-
-  if (!hasVideoRecordingResource) {
+  if (!recordingProperty) {
     return [];
   }
 
@@ -92,7 +91,7 @@ export function createCaptureQCTasks(
       id: generateDeterministicId(
         composeActionIdInput(event.id, taskType, startTime)
       ),
-      taskType: "RECORDING CHECK",
+      type: "CAPTURE QC",
       date: event.date,
       startTime,
       createdAt: new Date().toISOString(),
@@ -100,9 +99,8 @@ export function createCaptureQCTasks(
       assignedTo: null,
       completedBy: null,
       event: event.id,
-      resource: resourceName,
+      subType: recordingProperty.type,
       room: event.roomName,
-      taskDict: "RECORDING CHECK",
     });
   }
 

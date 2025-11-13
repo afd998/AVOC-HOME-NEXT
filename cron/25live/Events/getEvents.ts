@@ -1,7 +1,6 @@
 import * as utils from "./index.js";
 import { parseEventResources } from "./parse-resourses.js";
 import { mergeAdjacentRoomEvents } from "./mergeAdjacentRoomEvents.js";
-import { computeFirstLecture } from "./computeFirstLecture.js";
 import type { ProcessedEvent } from "../../../lib/db/types";
 import type { RawEvent } from "../schemas";
 
@@ -100,14 +99,7 @@ export async function getEvents(
   const mergedEvents = mergeAdjacentRoomEvents(processedEvents);
   const filteredEvents = removeKECNoAcademicEvents(mergedEvents);
 
-  // Compute which lectures are the first lecture for their event name
-  const firstLectureIds = await computeFirstLecture(filteredEvents);
-
-  return filteredEvents.map((event) => ({
-    ...event,
-    firstLecture:
-      event.eventType === "Lecture" && firstLectureIds.has(event.id),
-  }));
+  return filteredEvents;
 }
 
 export {

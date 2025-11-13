@@ -1,7 +1,7 @@
 import { db } from "../../../lib/db";
 import { facultyEvents as facultyEventsTable } from "../../../lib/db/schema";
-import { type ProcessedEvent } from "../scrape";
-import { type FacultyEventRow } from "../scrape";
+import { type ProcessedEvent } from "../../../lib/db/types";
+import { type FacultyEventRow } from "../../../lib/db/types";
 import { inArray } from "drizzle-orm";
 
 export async function saveFacultyEvents(

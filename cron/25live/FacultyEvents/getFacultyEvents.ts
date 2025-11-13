@@ -1,7 +1,7 @@
 import { inArray } from "drizzle-orm";
 import { db } from "../../../lib/db";
 import { facultyEvents, faculty } from "../../../lib/db/schema";
-import { type ProcessedEvent } from "../scrape";
+import { type ProcessedEvent } from "../../../lib/db/types";
 import { type InferInsertModel } from "drizzle-orm";
 
 type FacultyEventRow = InferInsertModel<typeof facultyEvents>;

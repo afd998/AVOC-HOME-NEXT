@@ -58,7 +58,6 @@ export async function saveEvents(
         updatedAt: sql`excluded.updated_at`,
         organization: sql`excluded.organization`,
         instructorNames: sql`excluded.instructor_names`,
-        firstLecture: sql`excluded.first_lecture`,
       },
     });
 }

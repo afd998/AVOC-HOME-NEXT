@@ -37,16 +37,17 @@ export function createConfigActions(
       property.quantity > 1
   );
 
-  const shouldCreateAction =
+  const shouldCreateSetAction =
     hasNonExcludedProperties || hasLapelMicWithQuantity || !!transformProperty;
-
-  if (!shouldCreateAction) {
+  const shouldCreateStrikeAction =
+    hasNonExcludedProperties || hasLapelMicWithQuantity;
+  if (!shouldCreateSetAction && !shouldCreateStrikeAction) {
     return [];
   }
 
   const actionStartTime = adjustTimeByMinutes(event.startTime, -7.5);
 
-  const configAction: ActionRow = {
+  const configActionSet: ActionRow = {
     id: generateDeterministicId(
       composeActionIdInput(event.id, "CONFIG", actionStartTime)
     ),
@@ -59,8 +60,26 @@ export function createConfigActions(
     completedBy: null,
     event: event.id,
     room: event.roomName,
-    subType: transformProperty?.type ?? null,
+    subType: "Set",
   };
 
-  return [configAction];
+  if (shouldCreateStrikeAction) {
+    const configActionStrike: ActionRow = {
+      id: generateDeterministicId(
+        composeActionIdInput(event.id, "CONFIG", actionStartTime)
+      ),
+      type: "CONFIG",
+      date: event.date,
+      startTime: actionStartTime,
+      createdAt: new Date().toISOString(),
+      status: "pending",
+      assignedTo: null,
+      completedBy: null,
+      event: event.id,
+      room: event.roomName,
+      subType: "Strike",
+    };
+    return [configActionSet, configActionStrike];
+  }
+  return [configActionSet];
 }
