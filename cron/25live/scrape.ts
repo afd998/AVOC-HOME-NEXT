@@ -100,15 +100,12 @@ async function main(): Promise<void> {
         propertiesEvents,
       };
       console.log(`🔍 Processing capture QC rows and QC items...`);
-      const [captureQcRows, qcItemsRows, actions] = await Promise.all([
-        getActions(b.events, b.propertiesEvents),
-        getCaptureQcRows(batchWithJoins.tasks),
-        getQcItemRows(batchWithJoins.tasks),
-      ]);
+      const actions = await getActions(b.events, b.propertiesEvents);
+      const qcItemsRows = await getQcItemRows(actions);
       console.log(
-        `📋 Found ${captureQcRows.length} capture QC rows, ${qcItemsRows.length} QC item rows`
+        `📋 Found ${actions.length} actions, ${qcItemsRows.length} QC item rows`
       );
-      return { ...batchWithJoins, captureQcRows, qcItemsRows };
+      return { ...batchWithJoins, actions, qcItemsRows };
     }
   );
 
