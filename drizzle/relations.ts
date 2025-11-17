@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, profiles, actions, events, tasks, qcs, notifications, taskDict, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict, propertiesEvents, propertiesDict, qcItems, qcItemDict } from "./schema";
+import { faculty, facultySetup, events, eventHybrid, eventAvConfig, profiles, actions, tasks, qcs, notifications, taskDict, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict, propertiesEvents, propertiesDict, qcItems, qcItemDict } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -11,6 +11,36 @@ export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 export const facultyRelations = relations(faculty, ({many}) => ({
 	facultySetups: many(facultySetup),
 	facultyEvents: many(facultyEvents),
+}));
+
+export const eventHybridRelations = relations(eventHybrid, ({one}) => ({
+	event: one(events, {
+		fields: [eventHybrid.event],
+		references: [events.id]
+	}),
+}));
+
+export const eventsRelations = relations(events, ({one, many}) => ({
+	eventHybrids: many(eventHybrid),
+	eventAvConfigs: many(eventAvConfig),
+	actions: many(actions),
+	notifications: many(notifications),
+	tasks: many(tasks),
+	profile: one(profiles, {
+		fields: [events.manOwner],
+		references: [profiles.id]
+	}),
+	panoptoChecks: many(panoptoChecks),
+	facultyEvents: many(facultyEvents),
+	resourceEvents: many(resourceEvents),
+	propertiesEvents: many(propertiesEvents),
+}));
+
+export const eventAvConfigRelations = relations(eventAvConfig, ({one}) => ({
+	event: one(events, {
+		fields: [eventAvConfig.event],
+		references: [events.id]
+	}),
 }));
 
 export const actionsRelations = relations(actions, ({one}) => ({
@@ -47,20 +77,6 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	events: many(events),
 	panoptoChecks: many(panoptoChecks),
 	shifts: many(shifts),
-}));
-
-export const eventsRelations = relations(events, ({one, many}) => ({
-	actions: many(actions),
-	notifications: many(notifications),
-	tasks: many(tasks),
-	profile: one(profiles, {
-		fields: [events.manOwner],
-		references: [profiles.id]
-	}),
-	panoptoChecks: many(panoptoChecks),
-	facultyEvents: many(facultyEvents),
-	resourceEvents: many(resourceEvents),
-	propertiesEvents: many(propertiesEvents),
 }));
 
 export const qcsRelations = relations(qcs, ({one, many}) => ({

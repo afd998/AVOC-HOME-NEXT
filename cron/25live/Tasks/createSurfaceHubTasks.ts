@@ -1,7 +1,7 @@
 import {
   ProcessedEvent,
   EventResource,
-} from "../Events/transformRawEventsToEvents";
+} from "../events/transformRawEventsToEvents";
 import { generateDeterministicId } from "../utils";
 import { composeTaskIdInput, adjustTimeByMinutes } from "./utils";
 

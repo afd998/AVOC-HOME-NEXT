@@ -3,7 +3,7 @@ import { generateDeterministicId } from "../utils";
 import {
   type ProcessedEvent,
   type EventResource,
-} from "../Events/transformRawEventsToEvents";
+} from "../events/transformRawEventsToEvents";
 
 export function createWebConferenceTask(
   event: ProcessedEvent,

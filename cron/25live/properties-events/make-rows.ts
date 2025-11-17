@@ -6,24 +6,23 @@ import {
   buildTransformPlan,
   transformInstruction,
   TRANSFORM_DICT,
-} from "./transformPlan";
-import { computeFirstLecture } from "../Events/computeFirstLecture";
+} from "./save-rows";
 
-export async function getPropertiesEvents(
+export async function makePropertiesEventsRows( 
   events: ProcessedEvent[]
 ): Promise<PropertiesEventRow[]> {
   const transformPlan = buildTransformPlan(events);
-  const firstLectureIds = await computeFirstLecture(events);
   let propertiesEvents: PropertiesEventRow[] = [];
   events.forEach((event) => {
     let handheldMics = 0;
     let lapelMics = 0;
     event.resources.forEach((resource) => {
+      const quantity = resource.quantity ?? 0;
       if (resource.itemName.includes("Handheld")) {
-        handheldMics = handheldMics + resource.quantity;
+        handheldMics = handheldMics + quantity;
       }
       if (resource.itemName.includes("Lapel")) {
-        lapelMics = lapelMics + resource.quantity;
+        lapelMics = lapelMics + quantity;
       }
       if (resource.itemName.includes("Recording")) {
         const type = resource.itemName.includes("PRIVATE")
@@ -116,10 +115,7 @@ export async function getPropertiesEvents(
       });
     }
     // Add First Session property if this is the first lecture
-    if (
-      event.eventType === "Lecture" &&
-      firstLectureIds.has(event.id)
-    ) {
+    if (event.eventType === "Lecture" && event.firstLecture) {
       propertiesEvents.push({
         propertiesDict: "First Session",
         event: event.id,

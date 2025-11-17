@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, time, date, jsonb, index, check, real, doublePrecision, bigserial, primaryKey, integer, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, integer, time, date, jsonb, index, check, real, doublePrecision, bigserial, primaryKey, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const failMode = pgEnum("fail_mode", ['Ticketed', 'Resolved Immediately'])
@@ -30,6 +30,24 @@ export const facultySetup = pgTable("faculty_setup", {
 	pgPolicy("allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
 ]);
 
+export const eventHybrid = pgTable("event_hybrid", {
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	event: bigint({ mode: "number" }).primaryKey().notNull(),
+	config: text(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	meetingId: bigint("meeting_id", { mode: "number" }),
+	meetingLink: text("meeting_link"),
+	instructions: text(),
+	source: text(),
+}, (table) => [
+	foreignKey({
+			columns: [table.event],
+			foreignColumns: [events.id],
+			name: "event_hybrid_event_fkey"
+		}).onDelete("cascade"),
+]);
+
 export const qcItemDict = pgTable("qc_item_dict", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "qc_item_def_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
@@ -37,6 +55,25 @@ export const qcItemDict = pgTable("qc_item_dict", {
 	displayName: text("display_name").notNull(),
 	instruction: text().notNull(),
 });
+
+export const eventAvConfig = pgTable("event_av_config", {
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	event: bigint({ mode: "number" }).primaryKey().notNull(),
+	leftSource: text("left_source"),
+	rightSource: text("right_source"),
+	leftDevice: text("left_device"),
+	rightDevice: text("right_device"),
+	handhelds: integer(),
+	lapels: integer(),
+	clicker: boolean(),
+}, (table) => [
+	foreignKey({
+			columns: [table.event],
+			foreignColumns: [events.id],
+			name: "event_av_config_event_fkey"
+		}).onDelete("cascade"),
+]);
 
 export const actions = pgTable("actions", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
@@ -70,6 +107,12 @@ export const actions = pgTable("actions", {
 			name: "actions_event_fkey"
 		}).onDelete("cascade"),
 ]);
+
+export const eventOtherHardware = pgTable("event_other_hardware", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "event_external_hardware_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+});
 
 export const propertiesDict = pgTable("properties_dict", {
 	id: text().primaryKey().notNull(),
@@ -298,6 +341,7 @@ export const events = pgTable("events", {
 	date: date().notNull(),
 	instructorNames: jsonb("instructor_names"),
 	organization: text(),
+	firstLecture: boolean(),
 }, (table) => [
 	index("idx_events_date_start_time").using("btree", table.date.asc().nullsLast().op("date_ops"), table.startTime.asc().nullsLast().op("date_ops")),
 	index("idx_events_event_name_start_time").using("btree", table.eventName.asc().nullsLast().op("text_ops"), table.startTime.asc().nullsLast().op("text_ops")),

@@ -1,8 +1,9 @@
-import * as utils from "./index.js";
-import { parseEventResources } from "./parse-resourses.js";
-import { mergeAdjacentRoomEvents } from "./mergeAdjacentRoomEvents.js";
+import * as utils from "../events/index"; 
+import { parseEventResources } from "./parse-resourses";  
+import { mergeAdjacentRoomEvents } from "./merge-adjacent-room-events";
 import type { ProcessedEvent } from "../../../lib/db/types";
 import type { RawEvent } from "../schemas";
+import { computeFirstLecture } from "./compute-first-lecture";
 
 const {
   composeEventIdInput,
@@ -93,13 +94,21 @@ export async function getEvents(
       resources,
       updatedAt: new Date().toISOString(),
       raw: event,
+      firstLecture: false,
     };
   });
 
   const mergedEvents = mergeAdjacentRoomEvents(processedEvents);
   const filteredEvents = removeKECNoAcademicEvents(mergedEvents);
 
-  return filteredEvents;
+  const firstLectureIds = await computeFirstLecture(filteredEvents);
+
+  const eventsWithFirstLectureFlag = filteredEvents.map((event) => ({
+    ...event,
+    firstLecture: event.eventType === "Lecture" && firstLectureIds.has(event.id),
+  }));
+
+  return eventsWithFirstLectureFlag;
 }
 
 export {
@@ -113,4 +122,4 @@ export {
   removeKECNoAcademicEvents,
 };
 
-export { mergeAdjacentRoomEvents } from "./mergeAdjacentRoomEvents.js";
+export { mergeAdjacentRoomEvents } from "./merge-adjacent-room-events";

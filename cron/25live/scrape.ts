@@ -2,20 +2,20 @@ import { chromium, type Browser } from "playwright";
 import dayjs from "dayjs";
 import config from "../config";
 import { pipe } from "remeda";
-import { getEvents } from "./Events/getEvents";
+import { getEvents } from "./events/make-rows";
 import { type AvailabilitySubject, type RawEvent } from "./schemas";
-import { getResourceEvents } from "./ResourceEvents/getResourceEvents";
-import { saveResourceEvents } from "./ResourceEvents/saveResourceEvents";
-import { saveEvents } from "./Events/saveEvents";
-import { saveTasks } from "./Tasks/saveTasks";
-import { getCaptureQcRows } from "./Tasks/captureQc/getCaptureQcRows";
-import { saveCaptureQcRows } from "./Tasks/captureQc/saveCaptureQcRows";
-import { getFacultyEvents } from "./FacultyEvents/getFacultyEvents";
-import { saveFacultyEvents } from "./FacultyEvents/SaveFacultyEvents";
+import { makeResourceEventsRows } from "./resourse-events/make-rows";   
+import { saveResourceEvents } from "./resourse-events/save-rows"; 
+import { saveEvents } from "./events/save-rows";
+import { saveTasks } from "./tasks/saveTasks";
+import { getCaptureQcRows } from "./tasks/captureQc/getCaptureQcRows";
+import { saveCaptureQcRows } from "./tasks/captureQc/saveCaptureQcRows";
+import { makeFacultyEventsRows } from "./faculty-events/make-rows";  
+import { saveFacultyEvents } from "./faculty-events/save-rows";
 import { fetchEventsData } from "./fetchData";
-import { getQcItemRows } from "./Tasks/captureQc/QcItems/getQcItemRows";
-import { saveQcItemRows } from "./Tasks/captureQc/QcItems/saveQcItemRows";
-import { getActions } from "./Actions/getActions";
+import { getQcItemRows } from "./tasks/captureQc/QcItems/getQcItemRows";
+import { saveQcItemRows } from "./tasks/captureQc/QcItems/saveQcItemRows";
+import { getActions } from "./actions/getActions";
 import {
   type ProcessedEvent,
   type QcRow,
@@ -24,8 +24,9 @@ import {
   type TaskRow,
   PropertiesEventRow,
 } from "../../lib/db/types";
-
-import { getPropertiesEvents } from "./PropertiesEvents/getPropertiesEvents";
+import { makeEventHybridRows } from "./event-hybrid/make-rows"; 
+import { makePropertiesEventsRows } from "./properties-events/make-rows";
+import { makeEventAVConfigRows } from "./event-av-config/make-rows";
 // Validate configuration to ensure all required environment variables are present
 config.validate();
 
@@ -84,17 +85,21 @@ async function main(): Promise<void> {
       console.log(
         `🔗 Processing resource events, faculty events, and tasks...`
       );
-      const [resourcesEvents, facultyEvents, propertiesEvents] =
+      const [eventHybridRows, eventAVConfigRows, resourcesEvents, facultyEvents, propertiesEvents] =
         await Promise.all([
-          getResourceEvents(b.events),
-          getFacultyEvents(b.events),
-          getPropertiesEvents(b.events),
+          makeEventHybridRows(b.events),
+          makeEventAVConfigRows(b.events),
+          makeResourceEventsRows(b.events),
+          makeFacultyEventsRows(b.events),
+          makePropertiesEventsRows(b.events),
         ]);
       console.log(
-        `📦 Found ${resourcesEvents.length} resource events, ${facultyEvents.length} faculty events, ${propertiesEvents.length} properties events, ${actions.length} actions`
+        `📦 Found ${eventHybridRows.length} event hybrid rows, ${eventAVConfigRows.length} event AV config rows, ${resourcesEvents.length} resource events, ${facultyEvents.length} faculty events, ${propertiesEvents.length} properties events`
       );
       const batchWithJoins = {
         ...b,
+        eventHybridRows,
+        eventAVConfigRows,
         resourcesEvents,
         facultyEvents,
         propertiesEvents,

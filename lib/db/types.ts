@@ -10,6 +10,8 @@ import {
   roomFilters,
   shiftBlocks,
   tasks,
+  eventHybrid,
+  eventAvConfig,
 } from "@/drizzle/schema";
 
 export type RoomFilter = InferSelectModel<typeof roomFilters>;
@@ -19,7 +21,7 @@ export type ActionRow = InferInsertModel<typeof actions>;
 
 export type EventResource = {
   itemName: string;
-  quantity: number;
+  quantity: number | null;
   instruction: string | null;
 };
 
@@ -37,3 +39,5 @@ export type ResourceEventRow = InferInsertModel<typeof resourceEvents>;
 export type FacultyEventRow = InferSelectModel<typeof facultyEvents>;
 export type TaskRow = InferInsertModel<typeof tasks>;
 export type QcItemRow = InferInsertModel<typeof qcItems>;
+export type EventHybridRow = InferInsertModel<typeof eventHybrid>;
+export type EventAVConfigRow = InferInsertModel<typeof eventAvConfig>;
