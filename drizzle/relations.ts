@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, events, eventHybrid, eventAvConfig, profiles, actions, tasks, qcs, notifications, taskDict, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict, propertiesEvents, propertiesDict, qcItems, qcItemDict } from "./schema";
+import { faculty, facultySetup, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, tasks, taskDict, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -23,6 +23,7 @@ export const eventHybridRelations = relations(eventHybrid, ({one}) => ({
 export const eventsRelations = relations(events, ({one, many}) => ({
 	eventHybrids: many(eventHybrid),
 	eventAvConfigs: many(eventAvConfig),
+	eventRecordings: many(eventRecording),
 	actions: many(actions),
 	notifications: many(notifications),
 	tasks: many(tasks),
@@ -33,7 +34,7 @@ export const eventsRelations = relations(events, ({one, many}) => ({
 	panoptoChecks: many(panoptoChecks),
 	facultyEvents: many(facultyEvents),
 	resourceEvents: many(resourceEvents),
-	propertiesEvents: many(propertiesEvents),
+	eventOtherHardwares: many(eventOtherHardware),
 }));
 
 export const eventAvConfigRelations = relations(eventAvConfig, ({one}) => ({
@@ -43,7 +44,14 @@ export const eventAvConfigRelations = relations(eventAvConfig, ({one}) => ({
 	}),
 }));
 
-export const actionsRelations = relations(actions, ({one}) => ({
+export const eventRecordingRelations = relations(eventRecording, ({one}) => ({
+	event: one(events, {
+		fields: [eventRecording.event],
+		references: [events.id]
+	}),
+}));
+
+export const actionsRelations = relations(actions, ({one, many}) => ({
 	profile_assignedTo: one(profiles, {
 		fields: [actions.assignedTo],
 		references: [profiles.id],
@@ -58,6 +66,7 @@ export const actionsRelations = relations(actions, ({one}) => ({
 		fields: [actions.event],
 		references: [events.id]
 	}),
+	qcItems: many(qcItems),
 }));
 
 export const profilesRelations = relations(profiles, ({many}) => ({
@@ -79,16 +88,18 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	shifts: many(shifts),
 }));
 
-export const qcsRelations = relations(qcs, ({one, many}) => ({
-	task: one(tasks, {
-		fields: [qcs.task],
-		references: [tasks.id]
+export const notificationsRelations = relations(notifications, ({one}) => ({
+	event: one(events, {
+		fields: [notifications.eventId],
+		references: [events.id]
 	}),
-	qcItems: many(qcItems),
+	profile: one(profiles, {
+		fields: [notifications.userId],
+		references: [profiles.id]
+	}),
 }));
 
-export const tasksRelations = relations(tasks, ({one, many}) => ({
-	qcs: many(qcs),
+export const tasksRelations = relations(tasks, ({one}) => ({
 	profile_assignedTo: one(profiles, {
 		fields: [tasks.assignedTo],
 		references: [profiles.id],
@@ -106,17 +117,6 @@ export const tasksRelations = relations(tasks, ({one, many}) => ({
 	taskDict: one(taskDict, {
 		fields: [tasks.taskDict],
 		references: [taskDict.id]
-	}),
-}));
-
-export const notificationsRelations = relations(notifications, ({one}) => ({
-	event: one(events, {
-		fields: [notifications.eventId],
-		references: [events.id]
-	}),
-	profile: one(profiles, {
-		fields: [notifications.userId],
-		references: [profiles.id]
 	}),
 }));
 
@@ -168,29 +168,29 @@ export const resourcesDictRelations = relations(resourcesDict, ({many}) => ({
 	resourceEvents: many(resourceEvents),
 }));
 
-export const propertiesEventsRelations = relations(propertiesEvents, ({one}) => ({
+export const eventOtherHardwareRelations = relations(eventOtherHardware, ({one}) => ({
 	event: one(events, {
-		fields: [propertiesEvents.event],
+		fields: [eventOtherHardware.event],
 		references: [events.id]
 	}),
-	propertiesDict: one(propertiesDict, {
-		fields: [propertiesEvents.propertiesDict],
-		references: [propertiesDict.id]
+	otherHardwareDict: one(otherHardwareDict, {
+		fields: [eventOtherHardware.otherHardwareDict],
+		references: [otherHardwareDict.id]
 	}),
 }));
 
-export const propertiesDictRelations = relations(propertiesDict, ({many}) => ({
-	propertiesEvents: many(propertiesEvents),
+export const otherHardwareDictRelations = relations(otherHardwareDict, ({many}) => ({
+	eventOtherHardwares: many(eventOtherHardware),
 }));
 
 export const qcItemsRelations = relations(qcItems, ({one}) => ({
-	qc: one(qcs, {
-		fields: [qcItems.qc],
-		references: [qcs.task]
-	}),
 	qcItemDict: one(qcItemDict, {
 		fields: [qcItems.qcItemDict],
 		references: [qcItemDict.id]
+	}),
+	action: one(actions, {
+		fields: [qcItems.action],
+		references: [actions.id]
 	}),
 }));
 

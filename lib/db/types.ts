@@ -12,6 +12,8 @@ import {
   tasks,
   eventHybrid,
   eventAvConfig,
+  eventOtherHardware,
+  eventRecording,
 } from "@/drizzle/schema";
 
 export type RoomFilter = InferSelectModel<typeof roomFilters>;
@@ -41,3 +43,5 @@ export type TaskRow = InferInsertModel<typeof tasks>;
 export type QcItemRow = InferInsertModel<typeof qcItems>;
 export type EventHybridRow = InferInsertModel<typeof eventHybrid>;
 export type EventAVConfigRow = InferInsertModel<typeof eventAvConfig>;
+export type EventOtherHardwareRow = InferInsertModel<typeof eventOtherHardware>;
+export type EventRecordingRow = InferInsertModel<typeof eventRecording>;

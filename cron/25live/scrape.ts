@@ -4,29 +4,20 @@ import config from "../config";
 import { pipe } from "remeda";
 import { getEvents } from "./events/make-rows";
 import { type AvailabilitySubject, type RawEvent } from "./schemas";
-import { makeResourceEventsRows } from "./resourse-events/make-rows";   
-import { saveResourceEvents } from "./resourse-events/save-rows"; 
+import { makeResourceEventsRows } from "./resourse-events/make-rows";
+import { saveResourceEvents } from "./resourse-events/save-rows";
 import { saveEvents } from "./events/save-rows";
-import { saveTasks } from "./tasks/saveTasks";
-import { getCaptureQcRows } from "./tasks/captureQc/getCaptureQcRows";
-import { saveCaptureQcRows } from "./tasks/captureQc/saveCaptureQcRows";
-import { makeFacultyEventsRows } from "./faculty-events/make-rows";  
+import { makeFacultyEventsRows } from "./faculty-events/make-rows";
 import { saveFacultyEvents } from "./faculty-events/save-rows";
 import { fetchEventsData } from "./fetchData";
-import { getQcItemRows } from "./tasks/captureQc/QcItems/getQcItemRows";
 import { saveQcItemRows } from "./tasks/captureQc/QcItems/saveQcItemRows";
-import { getActions } from "./actions/getActions";
-import {
-  type ProcessedEvent,
-  type QcRow,
-  type ResourceEventRow,
-  type FacultyEventRow,
-  type TaskRow,
-  PropertiesEventRow,
-} from "../../lib/db/types";
-import { makeEventHybridRows } from "./event-hybrid/make-rows"; 
-import { makePropertiesEventsRows } from "./properties-events/make-rows";
+import { getActions } from "./actions/make-rows";
+import { type ProcessedEvent } from "../../lib/db/types";
+import { makeEventHybridRows } from "./event-hybrid/make-rows";
 import { makeEventAVConfigRows } from "./event-av-config/make-rows";
+import { makeEventOtherHardwareRows } from "./event-other-hardware/make-rows";
+import { makeEventRecordingRows } from "./event-recording/make-rows";
+import { makeQcItemRows } from "./qc-items/make-rows";
 // Validate configuration to ensure all required environment variables are present
 config.validate();
 
@@ -56,19 +47,8 @@ async function main(): Promise<void> {
 
   type Batch = {
     events: ProcessedEvent[];
-    resourcesEvents: ResourceEventRow[];
-    facultyEvents: FacultyEventRow[];
-    propertiesEvents: PropertiesEventRow[];
-    captureQc: QcRow[];
   };
-  const emptyBatch: Batch = {
-    events: [],
-    resourcesEvents: [],
-    facultyEvents: [],
 
-    propertiesEvents: [],
-    captureQc: [],
-  };
   const browserInstance = await initBrowser();
   console.log(`📥 Fetching raw events data...`);
   const raw = await fetchEventsData(browserInstance, date);
@@ -79,38 +59,64 @@ async function main(): Promise<void> {
     async (raw: RawEvent[]): Promise<Batch> => {
       const events = await getEvents(raw);
       console.log(`📊 Processed ${events.length} events`);
-      return { ...emptyBatch, events };
+      return { events };
     },
     async (b: Batch) => {
       console.log(
         `🔗 Processing resource events, faculty events, and tasks...`
       );
-      const [eventHybridRows, eventAVConfigRows, resourcesEvents, facultyEvents, propertiesEvents] =
-        await Promise.all([
-          makeEventHybridRows(b.events),
-          makeEventAVConfigRows(b.events),
-          makeResourceEventsRows(b.events),
-          makeFacultyEventsRows(b.events),
-          makePropertiesEventsRows(b.events),
-        ]);
-      console.log(
-        `📦 Found ${eventHybridRows.length} event hybrid rows, ${eventAVConfigRows.length} event AV config rows, ${resourcesEvents.length} resource events, ${facultyEvents.length} faculty events, ${propertiesEvents.length} properties events`
-      );
-      const batchWithJoins = {
-        ...b,
+      const [
         eventHybridRows,
         eventAVConfigRows,
         resourcesEvents,
         facultyEvents,
-        propertiesEvents,
-      };
+        eventOtherHardwareRows,
+        eventRecordingRows,
+      ] = await Promise.all([
+        makeEventHybridRows(b.events),
+        makeEventAVConfigRows(b.events),
+        makeResourceEventsRows(b.events),
+        makeFacultyEventsRows(b.events),
+        makeEventOtherHardwareRows(b.events),
+        makeEventRecordingRows(b.events),
+      ]);
+      console.log(
+        `📦 Found ${eventHybridRows.length} event hybrid rows,
+         ${eventAVConfigRows.length} event AV config rows,
+          ${resourcesEvents.length} resource events,
+           ${facultyEvents.length} faculty events,
+           ${eventOtherHardwareRows.length} event other hardware rows,
+           ${eventRecordingRows.length} event recording rows`
+      );
+
       console.log(`🔍 Processing capture QC rows and QC items...`);
-      const actions = await getActions(b.events, b.propertiesEvents);
-      const qcItemsRows = await getQcItemRows(actions);
+      const actions = await getActions(
+        b.events,
+        eventHybridRows,
+        eventAVConfigRows,
+        eventOtherHardwareRows,
+        eventRecordingRows
+      );
+      const qcItemsRows = await makeQcItemRows(
+        b.events,
+        actions,
+        eventHybridRows,
+        eventAVConfigRows,
+        eventOtherHardwareRows,
+        eventRecordingRows
+      );
       console.log(
         `📋 Found ${actions.length} actions, ${qcItemsRows.length} QC item rows`
       );
-      return { ...batchWithJoins, actions, qcItemsRows };
+      return {
+        ...b,
+        eventHybridRows,
+        eventAVConfigRows,
+        eventOtherHardwareRows,
+        eventRecordingRows,
+        actions,
+        qcItemsRows,
+      };
     }
   );
 
@@ -119,9 +125,7 @@ async function main(): Promise<void> {
   await Promise.all([
     saveResourceEvents([...batch.resourcesEvents], batch.events, date),
     saveFacultyEvents([...batch.facultyEvents], batch.events, date),
-    saveTasks([...batch.tasks], date),
   ]);
-  await saveCaptureQcRows(batch.captureQcRows);
   await saveQcItemRows(batch.qcItemsRows);
   console.log(`\n✅ Scrape completed successfully for ${date}\n`);
 }

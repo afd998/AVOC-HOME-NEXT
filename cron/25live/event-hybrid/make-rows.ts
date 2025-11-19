@@ -9,13 +9,12 @@ export function makeEventHybridRows(
 ): EventHybridRow[] {
   const eventHybridRows: EventHybridRow[] = [];
   events.forEach((event) => {
-    const webConferenceResources = event.resources.filter((resource) =>
+    const webConferenceResource = event.resources.find((resource) =>
       resource.itemName.includes("Web Conference")
     );
-    if (webConferenceResources.length < 0) {
+    if (!webConferenceResource) {
       return;
     }
-    const webConferenceResource = webConferenceResources[0];
 
     const { meetingId, meetingLink } = computeMeetingIdAndLink(
       webConferenceResource.instruction ?? ""

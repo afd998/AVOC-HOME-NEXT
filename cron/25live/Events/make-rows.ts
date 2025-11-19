@@ -4,6 +4,7 @@ import { mergeAdjacentRoomEvents } from "./merge-adjacent-room-events";
 import type { ProcessedEvent } from "../../../lib/db/types";
 import type { RawEvent } from "../schemas";
 import { computeFirstLecture } from "./compute-first-lecture";
+import { computeTransforms } from "./compute-transform";
 
 const {
   composeEventIdInput,
@@ -102,10 +103,12 @@ export async function getEvents(
   const filteredEvents = removeKECNoAcademicEvents(mergedEvents);
 
   const firstLectureIds = await computeFirstLecture(filteredEvents);
+  const transformMap = computeTransforms(filteredEvents);
 
   const eventsWithFirstLectureFlag = filteredEvents.map((event) => ({
     ...event,
     firstLecture: event.eventType === "Lecture" && firstLectureIds.has(event.id),
+    transform: transformMap.get(event.id) ?? null,
   }));
 
   return eventsWithFirstLectureFlag;

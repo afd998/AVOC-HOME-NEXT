@@ -64,14 +64,29 @@ export const eventAvConfig = pgTable("event_av_config", {
 	rightSource: text("right_source"),
 	leftDevice: text("left_device"),
 	rightDevice: text("right_device"),
-	handhelds: integer(),
-	lapels: integer(),
+	handhelds: integer().default(0).notNull(),
+	lapels: integer().default(0).notNull(),
 	clicker: boolean(),
+	centerSource: text("center_source"),
+	centerDevice: text("center_device"),
 }, (table) => [
 	foreignKey({
 			columns: [table.event],
 			foreignColumns: [events.id],
 			name: "event_av_config_event_fkey"
+		}).onDelete("cascade"),
+]);
+
+export const eventRecording = pgTable("event_recording", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	event: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "event_recording_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	instructions: text(),
+	type: text(),
+}, (table) => [
+	foreignKey({
+			columns: [table.event],
+			foreignColumns: [events.id],
+			name: "event_recording_event_fkey"
 		}).onDelete("cascade"),
 ]);
 
@@ -108,12 +123,6 @@ export const actions = pgTable("actions", {
 		}).onDelete("cascade"),
 ]);
 
-export const eventOtherHardware = pgTable("event_other_hardware", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "event_external_hardware_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-});
-
 export const propertiesDict = pgTable("properties_dict", {
 	id: text().primaryKey().notNull(),
 	icon: jsonb(),
@@ -142,18 +151,6 @@ export const organizations = pgTable("organizations", {
 	url: text(),
 }, (table) => [
 	pgPolicy("Policy with security definer functions", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
-]);
-
-export const qcs = pgTable("qcs", {
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	task: bigint({ mode: "number" }).primaryKey().notNull(),
-}, (table) => [
-	foreignKey({
-			columns: [table.task],
-			foreignColumns: [tasks.id],
-			name: "capture_qc_task_fkey"
-		}).onDelete("cascade"),
 ]);
 
 export const faculty = pgTable("faculty", {
@@ -342,6 +339,7 @@ export const events = pgTable("events", {
 	instructorNames: jsonb("instructor_names"),
 	organization: text(),
 	firstLecture: boolean(),
+	transform: text(),
 }, (table) => [
 	index("idx_events_date_start_time").using("btree", table.date.asc().nullsLast().op("date_ops"), table.startTime.asc().nullsLast().op("date_ops")),
 	index("idx_events_event_name_start_time").using("btree", table.eventName.asc().nullsLast().op("text_ops"), table.startTime.asc().nullsLast().op("text_ops")),
@@ -411,6 +409,13 @@ export const shifts = pgTable("shifts", {
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
 
+export const otherHardwareDict = pgTable("other_hardware_dict", {
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	id: text().primaryKey().notNull(),
+}, (table) => [
+	unique("other_hardware_dict_id_key").on(table.id),
+]);
+
 export const facultyEvents = pgTable("faculty_events", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	faculty: bigint({ mode: "number" }).notNull(),
@@ -451,32 +456,31 @@ export const resourceEvents = pgTable("resource_events", {
 	primaryKey({ columns: [table.resourceId, table.eventId], name: "resource_events_pkey"}),
 ]);
 
-export const propertiesEvents = pgTable("properties_events", {
+export const eventOtherHardware = pgTable("event_other_hardware", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	event: bigint({ mode: "number" }).generatedByDefaultAsIdentity({ name: "hardware_events_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	event: bigint({ mode: "number" }).generatedByDefaultAsIdentity({ name: "event_external_hardware_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	quantity: integer(),
-	instruction: text(),
-	propertiesDict: text("properties_dict").notNull(),
-	type: text(),
+	instructions: text(),
+	otherHardwareDict: text("other_hardware_dict").notNull(),
 }, (table) => [
 	foreignKey({
 			columns: [table.event],
 			foreignColumns: [events.id],
-			name: "hardware_events_event_fkey"
+			name: "event_other_hardware_event_fkey"
 		}).onDelete("cascade"),
 	foreignKey({
-			columns: [table.propertiesDict],
-			foreignColumns: [propertiesDict.id],
-			name: "properties_events_properties_dict_fkey"
+			columns: [table.otherHardwareDict],
+			foreignColumns: [otherHardwareDict.id],
+			name: "event_other_hardware_other_hardware_dict_fkey"
 		}).onDelete("cascade"),
-	primaryKey({ columns: [table.event, table.propertiesDict], name: "event_hardware_pk"}),
+	primaryKey({ columns: [table.event, table.otherHardwareDict], name: "event_other_hardware_pkey"}),
 ]);
 
 export const qcItems = pgTable("qc_items", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	qc: bigint({ mode: "number" }).notNull(),
+	action: bigint({ mode: "number" }).notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	qcItemDict: bigint("qc_item_dict", { mode: "number" }).notNull(),
 	snTicket: text("sn_ticket"),
@@ -486,14 +490,14 @@ export const qcItems = pgTable("qc_items", {
 	status: qcStatus(),
 }, (table) => [
 	foreignKey({
-			columns: [table.qc],
-			foreignColumns: [qcs.task],
-			name: "qc_item_qc_fkey"
-		}).onDelete("cascade"),
-	foreignKey({
 			columns: [table.qcItemDict],
 			foreignColumns: [qcItemDict.id],
 			name: "qc_item_qc_item_dict_fkey"
 		}).onDelete("cascade"),
-	primaryKey({ columns: [table.qc, table.qcItemDict], name: "qc_items_pk"}),
+	foreignKey({
+			columns: [table.action],
+			foreignColumns: [actions.id],
+			name: "qc_items_action_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.action, table.qcItemDict], name: "qc_items_pk"}),
 ]);

@@ -7,13 +7,15 @@ export function makeEventAVConfigRows(
   return events.map((event) => {
     return {
       event: event.id,
-
       leftSource: null,
       rightSource: null,
+      centerSource: null,
       leftDevice: null,
       rightDevice: null,
-      handhelds: null,
-      lapels: null,
+      centerDevice: null,
+      handhelds: 0,
+      lapels: 0,
+      clicker: true,
     };
   });
 }

@@ -1,55 +1,40 @@
 import {
   type ProcessedEvent,
-  type PropertiesEventRow,
   type ActionRow,
-} from "../../../../lib/db/types";
+  type EventAVConfigRow,
+  type EventOtherHardwareRow,
+} from "../../../lib/db/types";
 import {
   generateDeterministicId,
   composeActionIdInput,
   adjustTimeByMinutes,
-} from "../utils";
+} from "./utils";
 
-const excludedProperties = [
-  "Recording",
-  "Hybrid",
-  "Display Adapter",
-  "Lapel Mic(s)",
-];
-
-export function createConfigActions(
+export function makeConfigActions(
   event: ProcessedEvent,
-  eventProperties: PropertiesEventRow[]
+  eventAVConfigRow: EventAVConfigRow,
+  eventOtherHardwareRows: EventOtherHardwareRow[]
 ) {
-  const transformProperty = eventProperties.find(
-    (property) => property.propertiesDict === "Transform"
-  );
-
-  // Check if there are any properties that aren't excluded
-  const hasNonExcludedProperties = eventProperties.some(
-    (property) => !excludedProperties.includes(property.propertiesDict)
-  );
-
+  const hasTransformProperty = event.transform;
+  const hasOtherHardware = eventOtherHardwareRows.length > 0;
   // Check if there's a "Lapel Mic(s)" with quantity > 1
-  const hasLapelMicWithQuantity = eventProperties.some(
-    (property) =>
-      property.propertiesDict === "Lapel Mic(s)" &&
-      typeof property.quantity === "number" &&
-      property.quantity > 1
-  );
-
+  const hasTwoLapelMics = (eventAVConfigRow.lapels ?? 0) > 1;
+  const hasHandheldMics = (eventAVConfigRow.handhelds ?? 0) >= 1;
   const shouldCreateSetAction =
-    hasNonExcludedProperties || hasLapelMicWithQuantity || !!transformProperty;
+    hasTwoLapelMics ||
+    hasHandheldMics ||
+    hasOtherHardware ||
+    hasTransformProperty;
   const shouldCreateStrikeAction =
-    hasNonExcludedProperties || hasLapelMicWithQuantity;
+    hasTwoLapelMics || hasHandheldMics || hasOtherHardware;
   if (!shouldCreateSetAction && !shouldCreateStrikeAction) {
     return [];
   }
-
   const actionStartTime = adjustTimeByMinutes(event.startTime, -7.5);
 
   const configActionSet: ActionRow = {
     id: generateDeterministicId(
-      composeActionIdInput(event.id, "CONFIG", actionStartTime)
+      composeActionIdInput(event.id, "CONFIG", "Set")
     ),
     type: "CONFIG",
     date: event.date,
@@ -66,7 +51,7 @@ export function createConfigActions(
   if (shouldCreateStrikeAction) {
     const configActionStrike: ActionRow = {
       id: generateDeterministicId(
-        composeActionIdInput(event.id, "CONFIG", actionStartTime)
+        composeActionIdInput(event.id, "CONFIG", "Strike")
       ),
       type: "CONFIG",
       date: event.date,

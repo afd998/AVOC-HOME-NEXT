@@ -2,11 +2,11 @@ const THIRTY_MINUTES_IN_SECONDS = 30 * 60;
 import {
   type ProcessedEvent,
   type EventResource,
-  PropertiesEventRow,
-} from "../../../../lib/db/types";
-import { generateDeterministicId } from "../../utils";
-import { composeActionIdInput } from "../utils";
-import { type ActionRow } from "../../../../lib/db/types";
+  type EventRecordingRow,
+} from "../../../lib/db/types";
+import { generateDeterministicId } from "../utils";
+import { composeActionIdInput } from "./utils";
+import { type ActionRow } from "../../../lib/db/types";
 /**
  * Convert a HH:MM[:SS] string into seconds from midnight.
  * @param {string} timeStr
@@ -51,15 +51,12 @@ const formatSecondsToTime = (totalSeconds: number) => {
  * @param {Object} resource
  * @returns {Array<Object>}
  */
-export function createCaptureQCActions(
+export function makeCaptureQCActions(   
   event: ProcessedEvent,
-  eventProperties: PropertiesEventRow[]
+  eventRecordingRow: EventRecordingRow
 ) {
-  const recordingProperty = eventProperties.find(
-    (property) => property.propertiesDict === "Recording"
-  );
-
-  if (!recordingProperty) {
+ 
+  if (!eventRecordingRow) {
     return [];
   }
 
@@ -99,7 +96,7 @@ export function createCaptureQCActions(
       assignedTo: null,
       completedBy: null,
       event: event.id,
-      subType: recordingProperty.type,
+      subType: null,
       room: event.roomName,
     });
   }

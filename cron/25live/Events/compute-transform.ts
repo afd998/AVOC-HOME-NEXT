@@ -1,12 +1,11 @@
 import { type ProcessedEvent } from "../../../lib/db/types";
 
-export type CombinedModeType = "COMBINE" | "UNCOMBINE";
-export const TRANSFORM_DICT = "Transform";
+export type TransformType = "COMBINE" | "UNCOMBINE";
 
 const COMBINED_ROOMS = new Set(["GH 1420&30"]);
 const SPLIT_ROOMS = new Set(["GH 1420", "GH 1430"]);
 
-const getModeForRoom = (roomName: string): CombinedModeType | null => {
+const getModeForRoom = (roomName: string): TransformType | null => {
   if (COMBINED_ROOMS.has(roomName)) {
     return "COMBINE";
   }
@@ -18,7 +17,7 @@ const getModeForRoom = (roomName: string): CombinedModeType | null => {
   return null;
 };
 
-export const buildTransformPlan = (events: ProcessedEvent[]) => {
+export function computeTransforms(events: ProcessedEvent[]): Map<number, TransformType> {
   const relevant = events
     .map((event) => {
       const mode = getModeForRoom(event.roomName);
@@ -33,12 +32,12 @@ export const buildTransformPlan = (events: ProcessedEvent[]) => {
       };
     })
     .filter(
-      (entry): entry is { eventId: number; startTime: string; mode: CombinedModeType } =>
+      (entry): entry is { eventId: number; startTime: string; mode: TransformType } =>
         entry !== null
     );
 
   if (relevant.length === 0) {
-    return new Map<number, CombinedModeType>();
+    return new Map<number, TransformType>();
   }
 
   relevant.sort((a, b) => {
@@ -49,7 +48,7 @@ export const buildTransformPlan = (events: ProcessedEvent[]) => {
     return Number(a.eventId) - Number(b.eventId);
   });
 
-  const plan = new Map<number, CombinedModeType>();
+  const plan = new Map<number, TransformType>();
   plan.set(relevant[0].eventId, relevant[0].mode);
 
   for (let i = 0; i < relevant.length - 1; i += 1) {
@@ -61,9 +60,5 @@ export const buildTransformPlan = (events: ProcessedEvent[]) => {
   }
 
   return plan;
-};
+}
 
-export const transformInstruction = (mode: CombinedModeType) =>
-  mode === "COMBINE"
-    ? "Combine GH 1420 & GH 1430 (1420&30 configuration)."
-    : "Set GH 1420 and GH 1430 for independent operation.";
