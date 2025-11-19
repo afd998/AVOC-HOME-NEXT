@@ -54,14 +54,53 @@ export async function makeQcItemRows(
         });
       });
     }
-    if (action.type === "CONFIG") {
+    if (action.type === "CONFIG" && action.subType === "Set") {
       let dicts = [];
-      event.trasform === "COMBINE" && dicts.push(8);
-      event.trasform === "UNCOMBINE" && dicts.push(9);
-      eventAVConfigRow?.lapels > 1 && dicts.push(10);
-      eventAVConfigRow?.handhelds > 0 && dicts.push(11);
-      eventAVConfigRow?.handhelds > 1 && dicts.push(12);
-      
+      event.transform === "COMBINE" && dicts.push(8);
+      event.transform === "UNCOMBINE" && dicts.push(9);
+      eventAVConfigRow.lapels > 1 && dicts.push(10);
+      eventAVConfigRow.handhelds > 0 && dicts.push(11);
+      eventAVConfigRow.handhelds > 1 && dicts.push(12);
+
+      dicts.forEach((qcItemDictId) => {
+        qcItemRows.push({
+          action: action.id,
+          qcItemDict: qcItemDictId,
+          status: null,
+          snTicket: null,
+          waived: null,
+          waivedReason: null,
+          failMode: null,
+          createdAt: new Date().toISOString(),
+        });
+      });
+    }
+
+    if (action.type === "CONFIG" && action.subType === "Strike") {
+      let dicts = [];
+      eventAVConfigRow.lapels > 1 && dicts.push(10);
+      eventAVConfigRow.handhelds > 0 && dicts.push(11);
+      eventAVConfigRow.handhelds > 1 && dicts.push(12);
+
+      dicts.forEach((qcItemDictId) => {
+        qcItemRows.push({
+          action: action.id,
+          qcItemDict: qcItemDictId,
+          status: null,
+          snTicket: null,
+          waived: null,
+          waivedReason: null,
+          failMode: null,
+          createdAt: new Date().toISOString(),
+        });
+      });
+    }
+
+    if (action.type === "Staff Assistance" && action.subType === "Session Setup") {
+      let dicts = [];
+      eventHybridRow?.hybrid && dicts.push(13);
+      eventOtherHardwareRow?.otherHardware && dicts.push(14);
+
       dicts.forEach((qcItemDictId) => {
         qcItemRows.push({
           action: action.id,
