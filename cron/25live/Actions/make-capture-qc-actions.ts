@@ -53,7 +53,7 @@ const formatSecondsToTime = (totalSeconds: number) => {
  */
 export function makeCaptureQCActions(   
   event: ProcessedEvent,
-  eventRecordingRow: EventRecordingRow
+  eventRecordingRow: EventRecordingRow | undefined
 ) {
  
   if (!eventRecordingRow) {
@@ -80,24 +80,21 @@ export function makeCaptureQCActions(
   const actions: ActionRow[] = [];
   for (let index = 0; index < totalChecks; index += 1) {
     const checkSeconds = startSeconds + index * THIRTY_MINUTES_IN_SECONDS;
-
-    const taskType = "RECORDING CHECK" as const;
     const startTime = formatSecondsToTime(checkSeconds);
 
     actions.push({
       id: generateDeterministicId(
-        composeActionIdInput(event.id, taskType, startTime)
+        composeActionIdInput(event.id, "CAPTURE QC", startTime)
       ),
       type: "CAPTURE QC",
-      date: event.date,
       startTime,
       createdAt: new Date().toISOString(),
       status: "pending",
       assignedTo: null,
       completedBy: null,
       event: event.id,
-      subType: null,
-      room: event.roomName,
+      subType: null, 
+      source: "25Live",
     });
   }
 

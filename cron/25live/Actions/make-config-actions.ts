@@ -37,15 +37,16 @@ export function makeConfigActions(
       composeActionIdInput(event.id, "CONFIG", "Set")
     ),
     type: "CONFIG",
-    date: event.date,
+   
     startTime: actionStartTime,
     createdAt: new Date().toISOString(),
     status: "pending",
     assignedTo: null,
     completedBy: null,
     event: event.id,
-    room: event.roomName,
+
     subType: "Set",
+    source: "25Live",
   };
 
   if (shouldCreateStrikeAction) {
@@ -54,15 +55,16 @@ export function makeConfigActions(
         composeActionIdInput(event.id, "CONFIG", "Strike")
       ),
       type: "CONFIG",
-      date: event.date,
+      
       startTime: actionStartTime,
       createdAt: new Date().toISOString(),
       status: "pending",
       assignedTo: null,
       completedBy: null,
       event: event.id,
-      room: event.roomName,
+ 
       subType: "Strike",
+      source: "25Live",
     };
     return [configActionSet, configActionStrike];
   }

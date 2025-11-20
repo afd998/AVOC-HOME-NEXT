@@ -3,8 +3,6 @@ import {
   actions,
   events,
   qcItems,
-  qcs,
-  propertiesEvents,
   resourceEvents,
   facultyEvents,
   roomFilters,
@@ -34,9 +32,6 @@ export type ProcessedEvent = Omit<
   resources: EventResource[];
 };
 
-export type QcRow = InferInsertModel<typeof qcs>;
-
-export type PropertiesEventRow = InferInsertModel<typeof propertiesEvents>;
 export type ResourceEventRow = InferInsertModel<typeof resourceEvents>;
 export type FacultyEventRow = InferSelectModel<typeof facultyEvents>;
 export type TaskRow = InferInsertModel<typeof tasks>;
@@ -45,3 +40,10 @@ export type EventHybridRow = InferInsertModel<typeof eventHybrid>;
 export type EventAVConfigRow = InferInsertModel<typeof eventAvConfig>;
 export type EventOtherHardwareRow = InferInsertModel<typeof eventOtherHardware>;
 export type EventRecordingRow = InferInsertModel<typeof eventRecording>;
+
+export type EnrichedEvent = ProcessedEvent & {
+  hybrid?: EventHybridRow;
+  avConfig: EventAVConfigRow;
+  otherHardware: EventOtherHardwareRow[];
+  recording?: EventRecordingRow;
+};

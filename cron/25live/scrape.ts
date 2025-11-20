@@ -1,7 +1,6 @@
 import { chromium, type Browser } from "playwright";
 import dayjs from "dayjs";
 import config from "../config";
-import { pipe } from "remeda";
 import { getEvents } from "./events/make-rows";
 import { type AvailabilitySubject, type RawEvent } from "./schemas";
 import { makeResourceEventsRows } from "./resourse-events/make-rows";
@@ -13,11 +12,15 @@ import { fetchEventsData } from "./fetchData";
 import { saveQcItemRows } from "./tasks/captureQc/QcItems/saveQcItemRows";
 import { getActions } from "./actions/make-rows";
 import { type ProcessedEvent } from "../../lib/db/types";
-import { makeEventHybridRows } from "./event-hybrid/make-rows";
-import { makeEventAVConfigRows } from "./event-av-config/make-rows";
-import { makeEventOtherHardwareRows } from "./event-other-hardware/make-rows";
-import { makeEventRecordingRows } from "./event-recording/make-rows";
+import { enrichEvents } from "./events/enrich-events";
+import { flattenEnrichedEvents } from "./events/flatten-enriched-events";
 import { makeQcItemRows } from "./qc-items/make-rows";
+import { saveEventHybridRows } from "./event-hybrid/save-rows";
+import { saveEventAVConfigRows } from "./event-av-config/save-rows";
+import { saveEventOtherHardwareRows } from "./event-other-hardware/save-rows";
+import { saveEventRecordingRows } from "./event-recording/save-rows";
+import { saveActions } from "./actions/save-rows";
+import { pgPool } from "../../lib/db";
 // Validate configuration to ensure all required environment variables are present
 config.validate();
 
@@ -45,87 +48,71 @@ async function main(): Promise<void> {
   const date = dayjs().add(offset, "day").format("YYYY-MM-DD");
   console.log(`\n🚀 Starting scrape for date: ${date}`);
 
-  type Batch = {
-    events: ProcessedEvent[];
-  };
-
   const browserInstance = await initBrowser();
   console.log(`📥 Fetching raw events data...`);
   const raw = await fetchEventsData(browserInstance, date);
   console.log(`✅ Fetched ${raw.length} raw events`);
-  console.log(`🔄 Processing events...`);
-  const batch = await pipe(
-    raw,
-    async (raw: RawEvent[]): Promise<Batch> => {
-      const events = await getEvents(raw);
-      console.log(`📊 Processed ${events.length} events`);
-      return { events };
-    },
-    async (b: Batch) => {
-      console.log(
-        `🔗 Processing resource events, faculty events, and tasks...`
-      );
-      const [
-        eventHybridRows,
-        eventAVConfigRows,
-        resourcesEvents,
-        facultyEvents,
-        eventOtherHardwareRows,
-        eventRecordingRows,
-      ] = await Promise.all([
-        makeEventHybridRows(b.events),
-        makeEventAVConfigRows(b.events),
-        makeResourceEventsRows(b.events),
-        makeFacultyEventsRows(b.events),
-        makeEventOtherHardwareRows(b.events),
-        makeEventRecordingRows(b.events),
-      ]);
-      console.log(
-        `📦 Found ${eventHybridRows.length} event hybrid rows,
-         ${eventAVConfigRows.length} event AV config rows,
-          ${resourcesEvents.length} resource events,
-           ${facultyEvents.length} faculty events,
-           ${eventOtherHardwareRows.length} event other hardware rows,
-           ${eventRecordingRows.length} event recording rows`
-      );
 
-      console.log(`🔍 Processing capture QC rows and QC items...`);
-      const actions = await getActions(
-        b.events,
-        eventHybridRows,
-        eventAVConfigRows,
-        eventOtherHardwareRows,
-        eventRecordingRows
-      );
-      const qcItemsRows = await makeQcItemRows(
-        b.events,
-        actions,
-        eventHybridRows,
-        eventAVConfigRows,
-        eventOtherHardwareRows,
-        eventRecordingRows
-      );
-      console.log(
-        `📋 Found ${actions.length} actions, ${qcItemsRows.length} QC item rows`
-      );
-      return {
-        ...b,
-        eventHybridRows,
-        eventAVConfigRows,
-        eventOtherHardwareRows,
-        eventRecordingRows,
-        actions,
-        qcItemsRows,
-      };
-    }
+  console.log(`🔄 Processing events...`);
+  const events = await getEvents(raw);
+  console.log(`📊 Processed ${events.length} events`);
+
+  console.log(
+    `🔗 Processing resource events, faculty events, and enriching events...`
   );
 
+  // Enrich events with extension data
+  const enrichedEvents = enrichEvents(events);
+
+  // Process resource and faculty events in parallel (these don't need enriched events)
+  const [resourcesEvents, facultyEvents] = await Promise.all([
+    makeResourceEventsRows(events),
+    makeFacultyEventsRows(events),
+  ]);
+
+  console.log(`🔍 Processing actions and QC items...`);
+  const actions = await getActions(enrichedEvents);
+  const qcItemsRows = await makeQcItemRows(enrichedEvents, actions);
+  console.log(
+    `📋 Found ${actions.length} actions, ${qcItemsRows.length} QC item rows`
+  );
+
+  const batch = {
+    events,
+    enrichedEvents,
+    resourcesEvents,
+    facultyEvents,
+    actions,
+    qcItemsRows,
+  };
+
   console.log(`\n💾 Saving data to database...`);
+
+  // Flatten enriched events for saving
+  const {
+    eventHybridRows,
+    eventAVConfigRows,
+    eventOtherHardwareRows,
+    eventRecordingRows,
+  } = flattenEnrichedEvents(batch.enrichedEvents);
+
+  // Save events first
   await saveEvents([...batch.events], date);
+
+  // Save extension tables and related data in parallel
   await Promise.all([
+    saveEventHybridRows(eventHybridRows, batch.enrichedEvents),
+    saveEventAVConfigRows(eventAVConfigRows),
+    saveEventOtherHardwareRows(eventOtherHardwareRows, batch.enrichedEvents),
+    saveEventRecordingRows(eventRecordingRows, batch.enrichedEvents),
     saveResourceEvents([...batch.resourcesEvents], batch.events, date),
     saveFacultyEvents([...batch.facultyEvents], batch.events, date),
   ]);
+
+  // Save actions (QC items depend on these)
+  await saveActions(batch.actions, date);
+
+  // Save QC items last (depends on actions being saved)
   await saveQcItemRows(batch.qcItemsRows);
   console.log(`\n✅ Scrape completed successfully for ${date}\n`);
 }
@@ -139,6 +126,8 @@ void (async () => {
       await (browser as Browser).close();
       browser = null;
     }
+    // Close database connection pool to prevent connection termination errors
+    await pgPool.end();
   }
 })().catch((error) => {
   // Set exit code to indicate failure for process monitoring tools

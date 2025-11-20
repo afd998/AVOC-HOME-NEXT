@@ -4,30 +4,26 @@ import { type EventHybridRow } from "../../../lib/db/types";
 //Meeting ID: 919 1192 8529
 //Meeting LINK: https://northwestern.zoom.us/s/91911928529
 
-export function makeEventHybridRows(
-  events: ProcessedEvent[]
-): EventHybridRow[] {
-  const eventHybridRows: EventHybridRow[] = [];
-  events.forEach((event) => {
-    const webConferenceResource = event.resources.find((resource) =>
-      resource.itemName.includes("Web Conference")
-    );
-    if (!webConferenceResource) {
-      return;
-    }
+export function computeEventHybrid(
+  event: ProcessedEvent
+): EventHybridRow | undefined {
+  const webConferenceResource = event.resources.find((resource) =>
+    resource.itemName.includes("Web Conference")
+  );
+  if (!webConferenceResource) {
+    return undefined;
+  }
 
-    const { meetingId, meetingLink } = computeMeetingIdAndLink(
-      webConferenceResource.instruction ?? ""
-    );
-    eventHybridRows.push({
-      event: event.id,
-      config: null,
-      meetingId: meetingId,
-      meetingLink: meetingLink,
-      instructions: webConferenceResource.instruction ?? null,
-    });
-  });
-  return eventHybridRows;
+  const { meetingId, meetingLink } = computeMeetingIdAndLink(
+    webConferenceResource.instruction ?? ""
+  );
+  return {
+    event: event.id,
+    config: null,
+    meetingId: meetingId,
+    meetingLink: meetingLink,
+    instructions: webConferenceResource.instruction ?? null,
+  };
 }
 
 function computeMeetingIdAndLink(instruction: string): {

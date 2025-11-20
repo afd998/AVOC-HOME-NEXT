@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, integer, time, date, jsonb, index, check, real, doublePrecision, bigserial, primaryKey, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, integer, time, jsonb, date, index, check, real, doublePrecision, bigserial, primaryKey, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const failMode = pgEnum("fail_mode", ['Ticketed', 'Resolved Immediately'])
@@ -101,10 +101,9 @@ export const actions = pgTable("actions", {
 	status: text().notNull(),
 	assignedTo: uuid("assigned_to"),
 	completedBy: uuid("completed_by"),
-	date: date().notNull(),
-	room: text().notNull(),
 	completedTime: timestamp("completed_time", { withTimezone: true, mode: 'string' }),
 	subType: text("sub_type"),
+	source: text(),
 }, (table) => [
 	foreignKey({
 			columns: [table.assignedTo],
@@ -121,13 +120,6 @@ export const actions = pgTable("actions", {
 			foreignColumns: [events.id],
 			name: "actions_event_fkey"
 		}).onDelete("cascade"),
-]);
-
-export const propertiesDict = pgTable("properties_dict", {
-	id: text().primaryKey().notNull(),
-	icon: jsonb(),
-}, (table) => [
-	unique("hardware_dict_id_key").on(table.id),
 ]);
 
 export const academicCalendar = pgTable("academic_calendar", {
