@@ -8,8 +8,10 @@ import {
   resourcesDict as resourcesDictTable,
   qcItems as qcItemsTable,
   qcItemDict as qcItemDictTable,
+  eventAvConfig as eventAvConfigTable,
 } from "@/drizzle/schema";
 import { db } from "@/lib/db";
+import type { EventAVConfigRow } from "@/lib/db/types";
 
 export type ActionRow = InferSelectModel<typeof actionsTable>;
 export type EventRow = InferSelectModel<typeof eventsTable>;
@@ -23,6 +25,7 @@ export type EventWithResourceDetails = EventRow & {
   resourceEvents: (ResourceEventRow & {
     resourcesDict: ResourceDictRow | null;
   })[];
+  eventAvConfigs?: EventAVConfigRow[];
 };
 
 export type ActionWithDict = Omit<ActionRow, "event"> & {
@@ -71,6 +74,7 @@ export async function getActionsByDate(date: string): Promise<ActionWithDict[]> 
                 resourcesDict: true,
               },
             },
+            eventAvConfigs: true,
           },
         },
         profile_assignedTo: true,

@@ -9,7 +9,7 @@ import { saveEvents } from "./events/save-rows";
 import { makeFacultyEventsRows } from "./faculty-events/make-rows";
 import { saveFacultyEvents } from "./faculty-events/save-rows";
 import { fetchEventsData } from "./fetchData";
-import { saveQcItemRows } from "./tasks/captureQc/QcItems/saveQcItemRows";
+import { saveQcItemRows } from "./qc-items/save-rows";
 import { getActions } from "./actions/make-rows";
 import { type ProcessedEvent } from "../../lib/db/types";
 import { enrichEvents } from "./events/enrich-events";

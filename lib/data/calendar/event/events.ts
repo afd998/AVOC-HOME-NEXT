@@ -5,7 +5,8 @@ import type { finalEvent } from "../calendar";
 import { addDisplayColumns } from "./utils/hydrate-display-columns";
 import type { CalendarEventResource } from "./utils/hydrate-event-resources";
 import type { FacultyMember } from "./utils/hyrdate-faculty";
-import type { Event as EventType } from "@/lib/db/types";
+import type { Event as EventType, EventHybridRow, EventAVConfigRow, EventRecordingRow, EventOtherHardwareRow } from "@/lib/db/types";
+import type { ActionWithDict } from "@/lib/data/actions/actions";
 
 export type EventWithRelations = EventType & {
   facultyEvents?: { faculty: FacultyMember | null }[];
@@ -14,12 +15,24 @@ export type EventWithRelations = EventType & {
     quantity: number | null;
     instructions: string | null;
   }[];
+  eventHybrids?: EventHybridRow[];
+  eventAvConfigs?: EventAVConfigRow[];
+  eventRecordings?: EventRecordingRow[];
+  eventOtherHardwares?: (EventOtherHardwareRow & {
+    otherHardwareDict?: { id: string } | null;
+  })[];
+  actions?: any[]; // Will be properly typed from Drizzle query result
 };
 
 type HydratedEvent = EventType & {
   faculty: FacultyMember[];
   resources: CalendarEventResource[];
   isFirstSession: boolean;
+  hybrid?: EventHybridRow;
+  avConfig?: EventAVConfigRow;
+  recording?: EventRecordingRow;
+  otherHardware?: EventOtherHardwareRow[];
+  actions?: ActionWithDict[];
 };
 
 export async function getEventsByDate(
@@ -50,7 +63,7 @@ export async function getEventsByDate(
 }
 
 function toFinalEvent(eventWithRelations: EventWithRelations): finalEvent {
-  const { facultyEvents, resourceEvents, ...event } = eventWithRelations;
+  const { facultyEvents, resourceEvents, eventHybrids, eventAvConfigs, eventRecordings, eventOtherHardwares, actions, ...event } = eventWithRelations;
 
   const facultyMembers = (facultyEvents ?? [])
     .map((relation) => relation.faculty)
@@ -77,11 +90,47 @@ function toFinalEvent(eventWithRelations: EventWithRelations): finalEvent {
       (resource): resource is CalendarEventResource => resource !== null
     );
 
+  // Extract first item from each relation array (one-to-one relationships)
+  const hybrid = eventHybrids && eventHybrids.length > 0 ? eventHybrids[0] : undefined;
+  const avConfig = eventAvConfigs && eventAvConfigs.length > 0 ? eventAvConfigs[0] : undefined;
+  const recording = eventRecordings && eventRecordings.length > 0 ? eventRecordings[0] : undefined;
+  
+  // Process other hardware (one-to-many relationship)
+  const otherHardware = (eventOtherHardwares ?? []).map((hw) => ({
+    event: hw.event,
+    createdAt: hw.createdAt,
+    quantity: hw.quantity,
+    instructions: hw.instructions,
+    otherHardwareDict: typeof hw.otherHardwareDict === 'object' && hw.otherHardwareDict !== null 
+      ? (hw.otherHardwareDict as { id: string }).id 
+      : (hw.otherHardwareDict as string),
+  })) as EventOtherHardwareRow[];
+
+  // Map actions to ActionWithDict format
+  const mappedActions: ActionWithDict[] = (actions ?? []).map((action: any) => {
+    const { profile_assignedTo, profile_completedBy, qcItems, ...actionData } = action;
+    return {
+      ...actionData,
+      eventDetails: null, // Event details not needed in this context
+      assignedToProfile: profile_assignedTo ?? null,
+      completedByProfile: profile_completedBy ?? null,
+      qcItems: (qcItems ?? []).map((item: any) => ({
+        ...item,
+        qcItemDict: item.qcItemDict ?? null,
+      })),
+    } as ActionWithDict;
+  });
+
   const hydratedEvent: HydratedEvent = {
     ...event,
     faculty: facultyMembers,
     resources,
     isFirstSession: false,
+    hybrid,
+    avConfig,
+    recording,
+    otherHardware,
+    actions: mappedActions,
   };
 
   return addDisplayColumns([hydratedEvent])[0] as finalEvent;
@@ -106,6 +155,25 @@ export const getEventById = async (
       resourceEvents: {
         with: {
           resourcesDict: true,
+        },
+      },
+      eventHybrids: true,
+      eventAvConfigs: true,
+      eventRecordings: true,
+      eventOtherHardwares: {
+        with: {
+          otherHardwareDict: true,
+        },
+      },
+      actions: {
+        with: {
+          profile_assignedTo: true,
+          profile_completedBy: true,
+          qcItems: {
+            with: {
+              qcItemDict: true,
+            },
+          },
         },
       },
     },

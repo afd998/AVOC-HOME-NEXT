@@ -1,6 +1,5 @@
 ﻿import { truncateEventName } from "@/core/event/eventUtils";
 import type { finalEvent } from "@/lib/data/calendar/calendar";
-import OwnerDisplay from "./OwnerDisplay";
 import { MapPin } from "lucide-react";
 import {
   Card,
@@ -9,20 +8,17 @@ import {
   CardContent,
 } from "../../../components/ui/card";
 import {
-  ItemGroup,
   Item,
   ItemMedia,
   ItemContent,
-  ItemActions,
   ItemTitle,
   ItemDescription,
 } from "../../../components/ui/item";
-import { Badge } from "../../../components/ui/badge";
 import { OccurrencesDialogContent } from "./OccurrencesDialogContent";
 import { OccurrencesModalShell } from "./OccurrencesModalShell";
-import EventDetailHeaderFaculty from "./EventDetailHeaderFaculty";
 import { EventFacultyList } from "./EventFacultyList";
-import TwentyFiveLiveResources from "./25LiveResources";
+import EventPageContent from "./EventPageContent";
+import EventConfiguration from "./EventConfiguration";
 
 interface EventDetailHeaderProps {
   event: finalEvent;
@@ -30,7 +26,8 @@ interface EventDetailHeaderProps {
 
 export default function EventDetailHeader({ event }: EventDetailHeaderProps) {
   return (
-    <div className="bg-background rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between">
+    <EventPageContent>
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between">
       {/* Left Side - Event Info */}
       <div className="flex-1 lg:w-1/2 space-y-4">
         <Card>
@@ -87,47 +84,9 @@ export default function EventDetailHeader({ event }: EventDetailHeaderProps) {
 
       {/* Right Side - Event Type/Room and Instructor Info */}
       <div className="flex-1 lg:w-1/2 lg:pl-8">
-        <Card className="mb-3">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Event Details</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <ItemGroup>
-              <Item size="sm">
-                <ItemContent>
-                  <ItemTitle>Event</ItemTitle>
-                </ItemContent>
-              </Item>
-              <Item size="sm">
-                <ItemContent>
-                  <ItemTitle>Type</ItemTitle>
-                </ItemContent>
-                <ItemActions>
-                  <Badge>{event.eventType || "Unknown"}</Badge>
-                </ItemActions>
-              </Item>
-            </ItemGroup>
-          </CardContent>
-        </Card>
-
-        {event.resources.length > 0 && (
-          <Card className="mb-3">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">
-                  25Live{"\u00ae"} Resources
-                </CardTitle>
-                <Badge variant="default" className="text-xs px-2 py-0.5">
-                  {event.resources.length} total
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <TwentyFiveLiveResources resources={event.resources} />
-            </CardContent>
-          </Card>
-        )}
+        <EventConfiguration event={event} roomName={event.roomName} />
       </div>
-    </div>
+      </div>
+    </EventPageContent>
   );
 }

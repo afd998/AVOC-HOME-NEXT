@@ -92,7 +92,7 @@ function ResourceSection({
                 </Badge>
               )}
             </div>
-            <div className="whitespace-pre-wrap text-muted-foreground">
+            <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere text-muted-foreground">
               {item.instruction ?? "No additional instructions provided."}
             </div>
           </PopoverContent>

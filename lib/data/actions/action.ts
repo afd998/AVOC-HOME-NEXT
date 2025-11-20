@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { actions as actionsTable } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import type { ActionWithDict, EventWithResourceDetails } from "./actions";
+import type { EventAVConfigRow } from "@/lib/db/types";
 
 export async function getActionById(
   actionId: string
@@ -23,6 +24,7 @@ export async function getActionById(
               resourcesDict: true,
             },
           },
+          eventAvConfigs: true,
         },
       },
       profile_assignedTo: true,

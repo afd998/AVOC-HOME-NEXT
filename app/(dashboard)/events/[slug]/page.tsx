@@ -1,4 +1,5 @@
 import EventDetailHeader from "@/core/event/EventDetails/EventDetailHeader";
+import EventActionsSection from "@/core/event/EventDetails/EventActionsSection";
 import { getEventById } from "@/lib/data/calendar/event/events";
 type EventsPageProps = {
   params: { slug: string };
@@ -15,6 +16,7 @@ export default async function EventsPage(props: EventsPageProps) {
   return (
     <div>
       <EventDetailHeader event={event} />
+      <EventActionsSection event={event} />
     </div>
   );
 }

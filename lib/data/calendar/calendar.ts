@@ -1,5 +1,5 @@
 import { getFilters } from "../filters";
-import { RoomFilter } from "@/lib/db/types";
+import { RoomFilter, EventHybridRow, EventAVConfigRow, EventRecordingRow, EventOtherHardwareRow } from "@/lib/db/types";
 import { Event as EventType } from "@/lib/db/types";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { FacultyMember } from "./event/utils/hyrdate-faculty";
@@ -9,11 +9,17 @@ import {
   type EventWithDisplay,
 } from "./event/utils/hydrate-display-columns";
 import { getEventsByDate } from "./event/events";
+import type { ActionWithDict } from "@/lib/data/actions/actions";
 
 type HydratedEvent = EventType & {
   faculty: FacultyMember[];
   resources: CalendarEventResource[];
   isFirstSession: boolean;
+  hybrid?: EventHybridRow;
+  avConfig?: EventAVConfigRow;
+  recording?: EventRecordingRow;
+  otherHardware?: EventOtherHardwareRow[];
+  actions?: ActionWithDict[];
 };
 export type finalEvent = EventWithDisplay<HydratedEvent>;
 export type RoomRowData = { roomName: string; events: finalEvent[] };

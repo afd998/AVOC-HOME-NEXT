@@ -15,10 +15,10 @@ export default function ActionDialogShell({ children }: ActionDialogShellProps) 
   
   // Only open if we're actually on an action route
   const isActionRoute = pathname?.includes("/actions/");
-  const isEventRoute = pathname?.includes("/events/");
+  const isEventModalRoute = pathname?.includes("/events/") && !pathname?.includes("/actions/");
   
-  // Close action modal when event modal is active
-  const shouldBeOpen = isActionRoute && !isEventRoute;
+  // Close action modal when event modal is active (but allow actions nested under events)
+  const shouldBeOpen = isActionRoute && !isEventModalRoute;
 
   const handleOpenChange = useCallback(
     (open: boolean) => {

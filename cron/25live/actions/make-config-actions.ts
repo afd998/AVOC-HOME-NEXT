@@ -30,15 +30,15 @@ export function makeConfigActions(
   if (!shouldCreateSetAction && !shouldCreateStrikeAction) {
     return [];
   }
-  const actionStartTime = adjustTimeByMinutes(event.startTime, -7.5);
+  const actionStartTimeSet = adjustTimeByMinutes(event.startTime, -7.5);
 
   const configActionSet: ActionRow = {
     id: generateDeterministicId(
-      composeActionIdInput(event.id, "CONFIG", "Set")
+      composeActionIdInput(event.id, "CONFIG", actionStartTimeSet)
     ),
     type: "CONFIG",
-   
-    startTime: actionStartTime,
+
+    startTime: actionStartTimeSet,
     createdAt: new Date().toISOString(),
     status: "pending",
     assignedTo: null,
@@ -50,19 +50,20 @@ export function makeConfigActions(
   };
 
   if (shouldCreateStrikeAction) {
+    const actionStartTimeStrike = adjustTimeByMinutes(event.endTime, 7.5);
     const configActionStrike: ActionRow = {
       id: generateDeterministicId(
-        composeActionIdInput(event.id, "CONFIG", "Strike")
+        composeActionIdInput(event.id, "CONFIG", actionStartTimeStrike)
       ),
       type: "CONFIG",
-      
-      startTime: actionStartTime,
+
+      startTime: actionStartTimeStrike,
       createdAt: new Date().toISOString(),
       status: "pending",
       assignedTo: null,
       completedBy: null,
       event: event.id,
- 
+
       subType: "Strike",
       source: "25Live",
     };
