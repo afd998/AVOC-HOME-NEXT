@@ -65,7 +65,7 @@ export default function RoomRow({
         {roomEvents?.map((event: finalEvent) => (
           <Event key={event.id} event={event} rowHeightPx={rowHeightPx} />
         ))}
-        <Tasks roomName={room} rowHeightPx={rowHeightPx} />
+        {/* <Tasks roomName={room} rowHeightPx={rowHeightPx} /> */}
       </div>
     </div>
   );

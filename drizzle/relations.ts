@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, tasks, taskDict, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
+import { faculty, facultySetup, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -26,7 +26,6 @@ export const eventsRelations = relations(events, ({one, many}) => ({
 	eventRecordings: many(eventRecording),
 	actions: many(actions),
 	notifications: many(notifications),
-	tasks: many(tasks),
 	profile: one(profiles, {
 		fields: [events.manOwner],
 		references: [profiles.id]
@@ -77,12 +76,6 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 		relationName: "actions_completedBy_profiles_id"
 	}),
 	notifications: many(notifications),
-	tasks_assignedTo: many(tasks, {
-		relationName: "tasks_assignedTo_profiles_id"
-	}),
-	tasks_completedBy: many(tasks, {
-		relationName: "tasks_completedBy_profiles_id"
-	}),
 	events: many(events),
 	panoptoChecks: many(panoptoChecks),
 	shifts: many(shifts),
@@ -97,31 +90,6 @@ export const notificationsRelations = relations(notifications, ({one}) => ({
 		fields: [notifications.userId],
 		references: [profiles.id]
 	}),
-}));
-
-export const tasksRelations = relations(tasks, ({one}) => ({
-	profile_assignedTo: one(profiles, {
-		fields: [tasks.assignedTo],
-		references: [profiles.id],
-		relationName: "tasks_assignedTo_profiles_id"
-	}),
-	profile_completedBy: one(profiles, {
-		fields: [tasks.completedBy],
-		references: [profiles.id],
-		relationName: "tasks_completedBy_profiles_id"
-	}),
-	event: one(events, {
-		fields: [tasks.event],
-		references: [events.id]
-	}),
-	taskDict: one(taskDict, {
-		fields: [tasks.taskDict],
-		references: [taskDict.id]
-	}),
-}));
-
-export const taskDictRelations = relations(taskDict, ({many}) => ({
-	tasks: many(tasks),
 }));
 
 export const panoptoChecksRelations = relations(panoptoChecks, ({one}) => ({

@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, integer, time, jsonb, date, index, check, real, doublePrecision, bigserial, primaryKey, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, unique, pgPolicy, bigint, timestamp, boolean, text, uuid, integer, time, jsonb, index, check, real, doublePrecision, date, bigserial, primaryKey, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const failMode = pgEnum("fail_mode", ['Ticketed', 'Resolved Immediately'])
@@ -215,48 +215,6 @@ export const rooms = pgTable("rooms", {
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
 
-export const tasks = pgTable("tasks", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	event: bigint({ mode: "number" }),
-	taskType: text("task_type").notNull(),
-	startTime: time("start_time").notNull(),
-	status: text().notNull(),
-	assignedTo: uuid("assigned_to"),
-	completedBy: uuid("completed_by"),
-	date: date().notNull(),
-	room: text().notNull(),
-	taskDict: text("task_dict"),
-	resource: text(),
-	completedTime: timestamp("completed_time", { withTimezone: true, mode: 'string' }),
-	instructions: text(),
-	subType: text("sub_type"),
-}, (table) => [
-	foreignKey({
-			columns: [table.assignedTo],
-			foreignColumns: [profiles.id],
-			name: "tasks_assigned_to_fkey"
-		}),
-	foreignKey({
-			columns: [table.completedBy],
-			foreignColumns: [profiles.id],
-			name: "tasks_completed_by_fkey"
-		}),
-	foreignKey({
-			columns: [table.event],
-			foreignColumns: [events.id],
-			name: "tasks_event_fkey"
-		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.taskDict],
-			foreignColumns: [taskDict.id],
-			name: "tasks_task_dict_fkey"
-		}),
-	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
-]);
-
 export const profiles = pgTable("profiles", {
 	id: uuid().primaryKey().notNull(),
 	name: text(),
@@ -289,15 +247,6 @@ export const roomFilters = pgTable("room_filters", {
 	display: jsonb(),
 }, (table) => [
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
-]);
-
-export const taskDict = pgTable("task_dict", {
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	id: text().primaryKey().notNull(),
-	icon: jsonb(),
-	displayName: text("display_name"),
-}, (table) => [
-	unique("task_dict_id_key").on(table.id),
 ]);
 
 export const resourcesDict = pgTable("resources_dict", {

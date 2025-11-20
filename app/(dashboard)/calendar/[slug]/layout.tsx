@@ -3,14 +3,14 @@ import type { ReactNode } from "react";
 type CalendarPageLayoutProps = Readonly<{
   children: ReactNode;
   eventModal: ReactNode;
-  taskModal: ReactNode;
+  actionModal: ReactNode;
   facultyModal: ReactNode;
 }>;
 
 export default function CalendarPageLayout({
   children,
   eventModal,
-  taskModal,
+  actionModal,
   facultyModal,
 }: CalendarPageLayoutProps) {
 
@@ -18,7 +18,7 @@ export default function CalendarPageLayout({
     <>
       {children}
       {eventModal}
-      {taskModal}
+      {actionModal}
       {facultyModal}
     </>
   );

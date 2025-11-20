@@ -1,10 +1,10 @@
 import HomePage2 from "./components/HomePage2";
 import CalendarTaskSplit from "./components/CalendarTaskSplit";
-import TaskPanel from "./components/TaskPanel";
+import ActionsPanel from "./components/ActionsPanel";
 import { CalendarShellProvider } from "./components/CalendarShellProvider";
 import { getCalendar } from "@/lib/data/calendar/calendar";
-import { getTasksCalendar } from "@/lib/data/calendar/taskscalendar";
-import CalendarTasksHydrator from "./components/CalendarTasksHydrator";
+import { getActionsCalendar } from "@/lib/data/calendar/actionsCalendar";
+import CalendarActionsHydrator from "./components/CalendarActionsHydrator";
 
 type CalendarPageProps = {
   params: Promise<{ slug: string }>;
@@ -26,21 +26,21 @@ export default async function CalendarPage({
     "[calendar slug] fetching data",
     JSON.stringify({ slug, filter, autoHide })
   );
-  const [calendar, taskGroups] = await Promise.all([
+  const [calendar, actionGroups] = await Promise.all([
     getCalendar(slug, filter, autoHide),
-    getTasksCalendar(slug, filter, autoHide),
+    getActionsCalendar(slug, filter, autoHide),
   ]);
   console.log("[calendar slug] calendar fetched", {
     hasCalendar: Boolean(calendar),
   });
-  console.log("[calendar slug] taskGroups fetched", {
-    type: Array.isArray(taskGroups) ? "array" : typeof taskGroups,
-    count: Array.isArray(taskGroups) ? taskGroups.length : undefined,
+  console.log("[calendar slug] actionGroups fetched", {
+    type: Array.isArray(actionGroups) ? "array" : typeof actionGroups,
+    count: Array.isArray(actionGroups) ? actionGroups.length : undefined,
   });
   return (
     <>
-      <CalendarTasksHydrator
-        taskGroups={taskGroups}
+      <CalendarActionsHydrator
+        actionGroups={actionGroups}
         date={slug}
         filter={filter}
         autoHide={autoHide}
@@ -57,7 +57,7 @@ export default async function CalendarPage({
               />
             </CalendarShellProvider>
           </div>
-     <TaskPanel />
+     <ActionsPanel />
         </CalendarTaskSplit>
       </div>
     </>
