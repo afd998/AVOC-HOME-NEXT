@@ -49,8 +49,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -106,8 +104,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -164,8 +160,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -222,8 +216,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -279,8 +271,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3 # or the version you use locally
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
