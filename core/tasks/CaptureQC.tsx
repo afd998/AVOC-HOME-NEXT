@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { ExternalLink } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useRef } from "react";
 import { Controller, useForm, type UseFormReturn } from "react-hook-form";
+import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -11,8 +10,6 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
-  FieldSeparator,
   FieldSet,
 } from "@/components/ui/field";
 import { Item, ItemContent } from "@/components/ui/item";
@@ -151,37 +148,12 @@ export default function CaptureQC({ task }: CaptureQCProps) {
     <CaptureQCFormContext.Provider value={form}>
       <section className="space-y-2">
       <h3 className="text-sm font-semibold uppercase text-muted-foreground">
-        Capture QC
+        QC Items
       </h3>
       <Item className="flex flex-col gap-2" variant="outline" size="sm">
         <ItemContent className="flex flex-col w-full gap-1">
           <form className="mt-3" onSubmit={form.handleSubmit(() => {})}>
             <FieldSet className="gap-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <FieldLegend
-                  variant="label"
-                  className="mb-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Quality Checklist
-                </FieldLegend>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  asChild
-                  className="flex items-center gap-2 self-start uppercase tracking-wide sm:self-auto"
-                >
-                  <Link
-                    href="https://kellogg-northwestern.hosted.panopto.com/Panopto/Pages/Sessions/List.aspx#status=%5B2%2C5%5D"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Panopto
-                    <ExternalLink className="size-4" aria-hidden="true" />
-                  </Link>
-                </Button>
-              </div>
-             
-              <FieldSeparator />
               {qcItems.length === 0 ? (
                 <div className="py-4 text-sm text-muted-foreground">
                   No QC items found for this task.
@@ -194,7 +166,7 @@ export default function CaptureQC({ task }: CaptureQCProps) {
                     // Use composite key: qc-qcItemDictId for form field name
                     // Note: qcItemDict.id is the same as the foreign key, but we use the relation object
                     const fieldKey = `${qcItem.qc}-${qcItemDict.id}`;
-                    const fieldId = `capture-qc-${fieldKey}`;
+                    const fieldId = `qc-item-${fieldKey}`;
                     const label = qcItemDict.displayName;
                     const description = qcItemDict.instruction;
 
@@ -207,8 +179,16 @@ export default function CaptureQC({ task }: CaptureQCProps) {
                         <div className="flex flex-1 flex-col gap-1">
                           <FieldLabel
                             id={`${fieldId}-label`}
-                            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2"
                           >
+                            {qcItemDict.icon && (
+                              <Icon
+                                icon={qcItemDict.icon}
+                                width={16}
+                                height={16}
+                                className="text-muted-foreground"
+                              />
+                            )}
                             {label}
                           </FieldLabel>
                           <FieldDescription

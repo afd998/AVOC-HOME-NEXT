@@ -54,6 +54,7 @@ export const qcItemDict = pgTable("qc_item_dict", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	displayName: text("display_name").notNull(),
 	instruction: text().notNull(),
+	icon: text(),
 });
 
 export const eventAvConfig = pgTable("event_av_config", {

@@ -11,7 +11,8 @@ import {
   eventAvConfig as eventAvConfigTable,
 } from "@/drizzle/schema";
 import { db } from "@/lib/db";
-import type { EventAVConfigRow } from "@/lib/db/types";
+import type { EventAVConfigRow, EventHybridRow, EventRecordingRow, EventOtherHardwareRow } from "@/lib/db/types";
+import type { CalendarEventResource } from "@/lib/data/calendar/event/utils/hydrate-event-resources";
 
 export type ActionRow = InferSelectModel<typeof actionsTable>;
 export type EventRow = InferSelectModel<typeof eventsTable>;
@@ -26,6 +27,11 @@ export type EventWithResourceDetails = EventRow & {
     resourcesDict: ResourceDictRow | null;
   })[];
   eventAvConfigs?: EventAVConfigRow[];
+  eventHybrids?: EventHybridRow[];
+  eventRecordings?: EventRecordingRow[];
+  eventOtherHardwares?: (EventOtherHardwareRow & {
+    otherHardwareDict?: { id: string } | null;
+  })[];
 };
 
 export type ActionWithDict = Omit<ActionRow, "event"> & {
@@ -75,6 +81,13 @@ export async function getActionsByDate(date: string): Promise<ActionWithDict[]> 
               },
             },
             eventAvConfigs: true,
+            eventHybrids: true,
+            eventRecordings: true,
+            eventOtherHardwares: {
+              with: {
+                otherHardwareDict: true,
+              },
+            },
           },
         },
         profile_assignedTo: true,

@@ -17,12 +17,13 @@ export function computeEventHybrid(
   const { meetingId, meetingLink } = computeMeetingIdAndLink(
     webConferenceResource.instruction ?? ""
   );
+  const instructions = stripMeetingDetails(webConferenceResource.instruction);
   return {
     event: event.id,
     config: null,
     meetingId: meetingId,
     meetingLink: meetingLink,
-    instructions: webConferenceResource.instruction ?? null,
+    instructions,
   };
 }
 
@@ -30,12 +31,31 @@ function computeMeetingIdAndLink(instruction: string): {
   meetingId: number | null;
   meetingLink: string | null;
 } {
-  const meetingId = instruction.match(/Meeting ID: (\d+)/)?.[1];
-  const meetingLink = instruction.match(
-    /Meeting LINK: (https:\/\/northwestern\.zoom\.us\/s\/\d+)/
+  const meetingIdRaw =
+    instruction.match(/Meeting ID:\s*([\d\s]+)/i)?.[1]?.replace(/\s+/g, "") ??
+    "";
+  const meetingId = meetingIdRaw ? parseInt(meetingIdRaw, 10) : null;
+  const meetingLinkMatch = instruction.match(
+    /Meeting LINK:\s*(https:\/\/northwestern\.zoom\.us\/(?:j|s)\/\d+)/i
   )?.[1];
+  const meetingLink =
+    meetingLinkMatch ?? (meetingIdRaw ? `https://northwestern.zoom.us/j/${meetingIdRaw}` : null);
   return {
-    meetingId: meetingId ? parseInt(meetingId) : null,
-    meetingLink: meetingLink ?? null,
+    meetingId,
+    meetingLink,
   };
+}
+
+function stripMeetingDetails(instruction?: string | null): string | null {
+  if (!instruction) return null;
+
+  const cleaned = instruction
+    .replace(/^\s*Meeting\s+ID:\s*[\d\s]+\s*$/gim, "")
+    .replace(
+      /^\s*Meeting\s+LINK:\s*https:\/\/northwestern\.zoom\.us\/(?:j|s)\/\d+\s*$/gim,
+      ""
+    )
+    .trim();
+
+  return cleaned.length > 0 ? cleaned : null;
 }

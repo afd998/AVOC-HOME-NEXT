@@ -29,10 +29,12 @@ export default function EventDialogShell({ children }: EventDialogShellProps) {
   return (
     <Dialog defaultOpen open={shouldBeOpen} modal={shouldBeOpen} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="max-w-5xl w-[min(95vw,72rem)]"
+        className="max-w-5xl w-[min(95vw,72rem)] max-h-[90vh] flex flex-col p-0 gap-0"
         showCloseButton
       >
-        {children}
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col h-full">
+          {children}
+        </div>
       </DialogContent>
     </Dialog>
   );

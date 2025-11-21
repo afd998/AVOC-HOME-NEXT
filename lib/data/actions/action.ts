@@ -25,6 +25,13 @@ export async function getActionById(
             },
           },
           eventAvConfigs: true,
+          eventHybrids: true,
+          eventRecordings: true,
+          eventOtherHardwares: {
+            with: {
+              otherHardwareDict: true,
+            },
+          },
         },
       },
       profile_assignedTo: true,
