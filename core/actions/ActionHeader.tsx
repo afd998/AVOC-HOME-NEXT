@@ -12,6 +12,7 @@ import {
   formatDate as formatActionDate,
   formatTime as formatActionTime,
 } from "@/app/utils/dateTime";
+import { cn } from "@/lib/utils";
 
 interface ActionHeaderProps {
   action: HydratedAction;
@@ -28,6 +29,14 @@ export default function ActionHeader({ action, errorMessage }: ActionHeaderProps
   const hasStatus = action.status.trim().length > 0;
   const statusVariant = getStatusVariant(action.status);
 
+  // Check if this is a staff assistance action for green color
+  const type = action.type?.toUpperCase() || "";
+  const subType = action.subType?.toUpperCase() || "";
+  const isStaffAssistance =
+    type.includes("STAFF") ||
+    subType.includes("STAFF") ||
+    type.includes("ASSISTANCE");
+
   return (
     <CardHeader className="gap-4 shrink-0">
       <div className="flex items-start justify-between gap-4">
@@ -37,7 +46,10 @@ export default function ActionHeader({ action, errorMessage }: ActionHeaderProps
               icon={iconName}
               width={48}
               height={48}
-              className="h-12 w-12 p-3 text-muted-foreground"
+              className={cn(
+                "h-12 w-12 p-3",
+                isStaffAssistance ? "text-green-600" : "text-muted-foreground"
+              )}
             />
           </span>
           <div className="flex flex-col gap-1 text-left">

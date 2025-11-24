@@ -161,18 +161,12 @@ export default function ActionContent({
     if (!eventForConfiguration?.date || !eventForConfiguration?.startTime) return false;
 
     const now = new Date();
-    const today = [
-      now.getFullYear(),
-      String(now.getMonth() + 1).padStart(2, "0"),
-      String(now.getDate()).padStart(2, "0"),
-    ].join("-");
-
-    if (eventForConfiguration.date !== today) return false;
-
     const eventStart = new Date(
       `${eventForConfiguration.date}T${eventForConfiguration.startTime}`
     );
 
+    // Allow editing if event has started (current time >= event start time)
+    // This works for today's events and past events
     return now >= eventStart;
   }, [eventForConfiguration?.date, eventForConfiguration?.startTime]);
 

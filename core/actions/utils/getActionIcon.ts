@@ -19,7 +19,7 @@ export function getActionIcon(action: HydratedAction): string {
     subType.includes("STAFF") ||
     type.includes("ASSISTANCE")
   ) {
-    return "mdi:account-group";
+    return "mdi:walk";
   }
 
   return "mdi:check-circle";

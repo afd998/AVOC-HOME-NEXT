@@ -15,28 +15,11 @@ import { Icon } from "@iconify/react";
 import { convertTimeToMinutes, getActionDisplayName } from "./utils";
 import { actionOverdueClassName } from "./actionOverdueStyles";
 import type { EnhancedAction } from "./types";
+import { getActionIcon } from "@/core/actions/utils/getActionIcon";
 
 type ActionRowProps = {
   entry: EnhancedAction;
 };
-
-// Simple icon mapping for action types
-function getActionIcon(action: EnhancedAction["action"]) {
-  const type = action.type?.toUpperCase() || "";
-  const subType = action.subType?.toUpperCase() || "";
-  
-  if (type.includes("CONFIG") || subType.includes("CONFIG")) {
-    return "mdi:cog";
-  }
-  if (type.includes("CAPTURE") || subType.includes("CAPTURE") || type.includes("RECORDING")) {
-    return "mdi:video";
-  }
-  if (type.includes("STAFF") || subType.includes("STAFF") || type.includes("ASSISTANCE")) {
-    return "mdi:account-group";
-  }
-  
-  return "mdi:check-circle";
-}
 
 export default function ActionRow({ entry }: ActionRowProps) {
   const { action, roomName } = entry;
@@ -69,6 +52,14 @@ export default function ActionRow({ entry }: ActionRowProps) {
   const subtitle = subtitleParts.join(" | ");
 
   const iconName = getActionIcon(action);
+
+  // Check if this is a staff assistance action for green color
+  const type = action.type?.toUpperCase() || "";
+  const subType = action.subType?.toUpperCase() || "";
+  const isStaffAssistance =
+    type.includes("STAFF") ||
+    subType.includes("STAFF") ||
+    type.includes("ASSISTANCE");
 
   return (
     <Item
@@ -104,7 +95,9 @@ export default function ActionRow({ entry }: ActionRowProps) {
               ? "text-emerald-600"
               : isOverdue
                 ? "text-rose-600"
-                : "text-muted-foreground"
+                : isStaffAssistance
+                  ? "text-green-600"
+                  : "text-muted-foreground"
           )}
         >
           <div className="flex items-center justify-center w-full h-full rounded-full border bg-muted/50">
@@ -112,7 +105,16 @@ export default function ActionRow({ entry }: ActionRowProps) {
               icon={iconName}
               width={16}
               height={16}
-              className="w-4 h-4 text-muted-foreground"
+              className={cn(
+                "w-4 h-4",
+                isCompleted
+                  ? "text-emerald-600"
+                  : isOverdue
+                    ? "text-rose-600"
+                    : isStaffAssistance
+                      ? "text-green-600"
+                      : "text-muted-foreground"
+              )}
             />
           </div>
         </ItemMedia>
