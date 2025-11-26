@@ -42,5 +42,5 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run scraper
-        run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
+        run: pnpm --filter cron scrape -- ${{ matrix.offset }}
 

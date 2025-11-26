@@ -61,7 +61,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run scraper
-        run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
+        run: pnpm --filter cron scrape -- ${{ matrix.offset }}
 
   scrape-window-6:
     runs-on: ubuntu-latest
@@ -117,7 +117,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run scraper
-        run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
+        run: pnpm --filter cron scrape -- ${{ matrix.offset }}
 
   scrape-window-7:
     runs-on: ubuntu-latest
@@ -173,7 +173,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run scraper
-        run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
+        run: pnpm --filter cron scrape -- ${{ matrix.offset }}
   scrape-window-8:
     runs-on: ubuntu-latest
     strategy:
@@ -228,4 +228,4 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run scraper
-        run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
+        run: pnpm --filter cron scrape -- ${{ matrix.offset }}
