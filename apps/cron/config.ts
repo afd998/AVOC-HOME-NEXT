@@ -75,7 +75,7 @@ const config: Config = {
 
   // Browser configuration
   browser: {
-    headless: false,
+    headless: true,
     timeout: 30000,
   },
 
