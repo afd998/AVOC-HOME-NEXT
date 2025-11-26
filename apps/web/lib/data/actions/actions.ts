@@ -1,5 +1,7 @@
-import { eq, inArray, InferSelectModel } from "drizzle-orm";
 import {
+  eq,
+  inArray,
+  type InferSelectModel,
   db,
   actions as actionsTable,
   events as eventsTable,

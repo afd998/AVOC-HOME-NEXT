@@ -16,7 +16,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
-import { type RoomFilter } from "shared";
+import { type RoomFilter } from "shared/db/types";
 import { useModal } from "@/app/(dashboard)/components/sidebar/filter-dialog-client";
 
 type FilterRoomsModalContentProps = {

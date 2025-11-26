@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import type { EventAVConfigRow } from "shared";
+import type { EventAVConfigRow } from "shared/db/types";
 import { Item, ItemContent, ItemTitle, ItemDescription } from "../../components/ui/item";
 import {
   Tooltip,

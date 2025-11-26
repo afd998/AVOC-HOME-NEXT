@@ -1,8 +1,7 @@
 // app/api/crumb/route.ts
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
-import { eq } from "drizzle-orm";
-import { db, faculty, events } from "shared";
+import { eq, db, faculty, events } from "shared";
 import { unstable_cacheTag as cacheTag } from "next/cache"; 
 import { revalidateTag } from "next/cache";
 

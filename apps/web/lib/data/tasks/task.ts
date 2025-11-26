@@ -1,5 +1,4 @@
-import { db, tasks as tasksTable } from "shared";
-import { eq } from "drizzle-orm";
+import { db, tasks as tasksTable, eq } from "shared";
 import type { TaskWithDict, EventWithResourceDetails } from "./tasks";
 
 export async function getTaskById(

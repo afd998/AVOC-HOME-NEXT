@@ -1,7 +1,6 @@
 // lib/data/controls.ts
 import { unstable_cache, revalidateTag } from "next/cache";
-import { eq } from "drizzle-orm";
-import { db, profiles } from "shared";
+import { eq, db, profiles } from "shared";
 import { requireUserId } from "../auth/requireUser";
 
 const fallbackControls = {

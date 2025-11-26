@@ -17,15 +17,14 @@ interface ResourceItem {
   quantity?: number;
   [key: string]: any;
 }
-import { InferSelectModel, InferInsertModel } from "drizzle-orm";
-import { faculty } from "shared";
+import type { Faculty } from "shared/db/types";
 import { getFacultySetups } from "@/lib/data/faculty";
 import { Suspense } from "react";
 import SessionSetupsServer from "./SessionSetupsServer";
 export default async function FacultyProfile({
   facultyMember,
 }: {
-  facultyMember: InferSelectModel<typeof faculty>;
+  facultyMember: Faculty;
 }) {
   // State for faculty photo hover effects
 

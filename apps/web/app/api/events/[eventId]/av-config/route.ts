@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import { eq, inArray, and, or } from "drizzle-orm";
 import {
+  eq,
+  inArray,
+  and,
+  or,
   db,
   eventAvConfig,
   events,

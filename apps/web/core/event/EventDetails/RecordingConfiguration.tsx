@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ExternalLink, Circle } from "lucide-react";
-import type { EventRecordingRow } from "shared";
+import type { EventRecordingRow } from "shared/db/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 

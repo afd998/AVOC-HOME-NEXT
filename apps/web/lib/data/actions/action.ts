@@ -1,5 +1,4 @@
-import { eq } from "drizzle-orm";
-import { db, actions as actionsTable, type EventAVConfigRow } from "shared";
+import { eq, db, actions as actionsTable, type EventAVConfigRow } from "shared";
 import type { ActionWithDict, EventWithResourceDetails } from "./actions";
 
 export async function getActionById(

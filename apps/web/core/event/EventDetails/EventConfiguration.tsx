@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { finalEvent } from "@/lib/data/calendar/calendar";
-import type { EventAVConfigRow } from "shared";
+import type { EventAVConfigRow } from "shared/db/types";
 import {
   Card,
   CardContent,

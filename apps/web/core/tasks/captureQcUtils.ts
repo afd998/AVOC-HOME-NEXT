@@ -1,6 +1,5 @@
 import type { QcItemFormValues } from "@/core/actions/QcItem";
-import type { InferInsertModel } from "drizzle-orm";
-import { qcItems } from "shared";
+import { qcItems, type InferInsertModel } from "shared";
 
 type QCItemInsert = InferInsertModel<typeof qcItems>;
 

@@ -1,5 +1,4 @@
-import { inArray } from "drizzle-orm";
-import { db, resourcesDict } from "shared";
+import { inArray, db, resourcesDict } from "shared";
 import { EventWithDisplay } from "./hydrate-display-columns";
 
 export type CalendarEventResource = {

@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
 import {
+  eq,
   db,
   events,
   resourcesDict,

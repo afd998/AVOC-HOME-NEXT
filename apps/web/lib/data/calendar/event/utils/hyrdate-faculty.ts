@@ -1,5 +1,4 @@
-import { eq, inArray, InferSelectModel } from "drizzle-orm";
-import { db, faculty, facultyEvents } from "shared";
+import { eq, inArray, db, faculty, facultyEvents, type InferSelectModel } from "shared";
 import { EventWithFirstSession } from "./hydrate-first-session";
 export type FacultyMember = InferSelectModel<typeof faculty>;
 

@@ -1,5 +1,4 @@
-import { eq } from "drizzle-orm";
-import { db, events, type Event as EventRecord } from "shared";
+import { eq, db, events, type Event as EventRecord } from "shared";
 import type { finalEvent } from "@/lib/data/calendar/calendar";
 
 import { addFirstSessionFlags } from "./utils/hydrate-first-session";

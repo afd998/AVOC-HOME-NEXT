@@ -1,5 +1,6 @@
-import { eq, InferSelectModel } from "drizzle-orm";
 import {
+  eq,
+  type InferSelectModel,
   db,
   qcs as captureQcTable,
   events as eventsTable,

@@ -1,6 +1,6 @@
 "use client";
 
-import type { EventHybridRow } from "shared";
+import type { EventHybridRow } from "shared/db/types";
 import {
   Select,
   SelectContent,

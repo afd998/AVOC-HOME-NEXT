@@ -1,6 +1,5 @@
 "use server";
-import { eq } from "drizzle-orm";
-import { db, profiles } from "shared";
+import { eq, db, profiles } from "shared";
 import { requireUserId } from "@/lib/auth/requireUser";
 import { revalidateTag } from "next/cache";
 import { unstable_cacheTag as cacheTag } from "next/cache";

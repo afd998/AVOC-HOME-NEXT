@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import AvConfiguration from "@/core/av-config/AvConfiguration";
-import type { EventAVConfigRow } from "shared";
+import type { EventAVConfigRow } from "shared/db/types";
 
 interface ActionAVConfigurationProps {
   avConfig: EventAVConfigRow;

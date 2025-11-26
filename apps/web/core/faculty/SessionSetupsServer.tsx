@@ -1,13 +1,11 @@
-import { InferSelectModel } from "drizzle-orm";
-import { faculty, facultySetup } from "shared";
+import type { Faculty } from "shared/db/types";
 import SessionSetups from "./SessionSetups";
 import { getFacultySetups } from "@/lib/data/faculty";
 
 export default async function SessionSetupsServer({
   facultyMember,
 }: {
-  facultyMember: InferSelectModel<typeof faculty>;
-
+  facultyMember: Faculty;
 }) {
   // Add delay to test Suspense fallback
  

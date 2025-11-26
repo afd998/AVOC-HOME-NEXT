@@ -60,8 +60,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
-import { InferSelectModel, InferInsertModel } from "drizzle-orm";
-import { faculty, facultySetup } from "shared";
+import type { Faculty, FacultySetup } from "shared/db/types";
 import {
   createFacultySetup,
   updateFacultySetup,
@@ -75,8 +74,8 @@ export default function SessionSetups({
   facultyMember,
   setups,
 }: {
-  facultyMember: InferSelectModel<typeof faculty>;
-  setups: InferSelectModel<typeof facultySetup>[];
+  facultyMember: Faculty;
+  setups: FacultySetup[];
 }) {
   // Get all setups for this faculty
 
@@ -102,7 +101,7 @@ export default function SessionSetups({
 
   // Create new faculty setup
   const handleCreateSetup = async (
-    data: Partial<InferSelectModel<typeof facultySetup>>
+    data: Partial<FacultySetup>
   ) => {
     if (!facultyMember?.id) return;
 
@@ -124,7 +123,7 @@ export default function SessionSetups({
 
   // Update existing faculty setup
   const handleUpdateSetup = async (
-    updates: Partial<InferSelectModel<typeof facultySetup>>,
+    updates: Partial<FacultySetup>,
     setupId?: string
   ) => {
     const targetSetupId = setupId || setup?.id;

@@ -23,18 +23,23 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import type { HydratedTask } from "@/lib/data/calendar/taskscalendar";
-import { InferSelectModel } from "drizzle-orm";
-import { qcItems, qcItemDict, qcs, qcStatus, failMode, waitedReason } from "shared";
+import type {
+  QcItemRow,
+  QcItemDictRow,
+  QCStatus as QCStatusType,
+  FailMode as FailModeType,
+  WaivedReason as WaivedReasonType,
+} from "shared/db/types";
 import { cn } from "@/lib/utils";
 
 type QcItemProps = {
   task: HydratedTask;
 };
 
-// Extract type from schema enum
-type QCStatus = (typeof qcStatus.enumValues)[number] | null;
-type FailMode = (typeof failMode.enumValues)[number] | "waived" | null;
-type WaivedReason = (typeof waitedReason.enumValues)[number] | null;
+// Status types with null for form state
+type QCStatus = QCStatusType | null;
+type FailMode = FailModeType | "waived" | null;
+type WaivedReason = WaivedReasonType | null;
 
 // Dynamic form values based on qcItem IDs
 // Status fields: `${qc}-${qcItemDictId}` -> QCStatus
@@ -53,14 +58,15 @@ const statusFromDbValue = (
   return null;
 };
 
-// Get types from schema
-type QcItemRow = InferSelectModel<typeof qcItems>;
-type QcItemDictRow = InferSelectModel<typeof qcItemDict>;
-type QcRow = InferSelectModel<typeof qcs>;
-
 // When using Drizzle relations with 'with', the relation object is nested
 type QcItemWithDict = QcItemRow & {
-  qcItemDict: QcItemDictRow;
+  qcItemDict: QcItemDictRow | null;
+};
+
+// QcRow type - this is for the legacy qcs table, define inline since it may not exist
+type QcRow = {
+  id: number;
+  qcItems?: QcItemWithDict[];
 };
 
 type QcWithItems = QcRow & {

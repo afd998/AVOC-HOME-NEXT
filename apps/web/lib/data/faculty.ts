@@ -1,9 +1,7 @@
 "use server";
 import { unstable_cache } from "next/cache";
 import { createServerClient } from "@supabase/ssr";
-import type { InferSelectModel } from "drizzle-orm";
-import { eq } from "drizzle-orm";
-import { db, faculty, facultySetup } from "shared";
+import { eq, db, faculty, facultySetup, type InferSelectModel } from "shared";
 
 const PAGE_SIZE = 50;
 import { revalidateTag, updateTag } from "next/cache";

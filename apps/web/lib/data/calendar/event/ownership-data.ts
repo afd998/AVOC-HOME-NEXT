@@ -1,5 +1,4 @@
-import { eq } from "drizzle-orm";
-import { db, shiftBlocks, type ShiftBlock } from "shared";
+import { eq, db, shiftBlocks, type ShiftBlock } from "shared";
 import { finalEvent } from "../calendar";
 
 interface IntersectingBlock {

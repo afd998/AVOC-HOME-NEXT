@@ -1,5 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
-import { db, events as eventsTable, type Event as EventType } from "shared";
+import { and, asc, eq, inArray, db, events as eventsTable, type Event as EventType } from "shared";
 
 export type EventWithFirstSession<T extends EventType = EventType> = T & {
   isFirstSession: boolean;
