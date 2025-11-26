@@ -39,7 +39,7 @@ export const BYOD_OPTIONS = [
   "iPad",
   "Android Tablet",
   "Surface",
-  "Linux Laptop",
+  "Linux",
   "KIS Provided Laptop",
 ];
 

@@ -1,7 +1,7 @@
 // import FacultyStatusBars from './FacultyStatusBars';
 import { FacultyAvatar } from "./FacultyAvatar";
 
-import { Plus, ExternalLink } from "lucide-react";
+import { ExternalLink, Calendar } from "lucide-react";
 import {
   Item,
   ItemActions,
@@ -11,16 +11,17 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 interface ResourceItem {
   itemName: string;
   quantity?: number;
   [key: string]: any;
 }
-import type { Faculty } from "shared/db/types";
-import { getFacultySetups } from "@/lib/data/faculty";
-import { Suspense } from "react";
-import SessionSetupsServer from "./SessionSetupsServer";
+import type { Faculty, Event } from "shared/db/types";
+import { getFacultyEvents } from "@/lib/data/faculty";
+// import SessionSetupsServer from "./SessionSetupsServer";
 export default async function FacultyProfile({
   facultyMember,
 }: {
@@ -33,6 +34,23 @@ export default async function FacultyProfile({
   if (!facultyMember) {
     return <div>Faculty member not found</div>;
   }
+
+  const events = await getFacultyEvents(facultyMember.id);
+
+  // Group events by series (itemId) and get one representative event per series
+  const seriesMap = new Map<number, Event>();
+  for (const event of events) {
+    if (event.itemId && !seriesMap.has(event.itemId)) {
+      seriesMap.set(event.itemId, event);
+    }
+  }
+  const series = Array.from(seriesMap.values());
+
+  // Sort series by event name
+  const sortedSeries = [...series].sort((a, b) => 
+    (a.eventName || "").localeCompare(b.eventName || "")
+  );
+
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-6 overflow-hidden bg-background text-foreground border border-white/20 dark:border-white/10 p-3 sm:p-6 md:flex-row">
       <div className="w-full flex-shrink-0 md:basis-[30%] md:max-w-[30%]">
@@ -95,11 +113,51 @@ export default async function FacultyProfile({
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto sm:space-y-6 pr-1 min-h-0 md:basis-[70%] md:max-w-[70%]">
-        <Suspense
+        {/* Session Setups - commented out for now */}
+        {/* <Suspense
           fallback={<Skeleton className="bg-gray-200 dark:bg-gray-800 h-full w-full min-h-[120px]" />}
         >
           <SessionSetupsServer facultyMember={facultyMember} />
-        </Suspense>
+        </Suspense> */}
+
+        {/* Faculty Series List */}
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Series ({sortedSeries.length})
+          </h2>
+          
+          {sortedSeries.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                No series found for this faculty member.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {sortedSeries.map((event) => (
+                <Link 
+                  key={event.itemId} 
+                  href={`/series/${event.itemId}`}
+                  className="block"
+                >
+                  <Card className="transition-all hover:bg-muted/50 cursor-pointer">
+                    <CardHeader className="py-3 px-4">
+                      <CardTitle className="text-sm font-medium">
+                        {event.eventName}
+                      </CardTitle>
+                      {event.eventType && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {event.eventType}
+                        </div>
+                      )}
+                    </CardHeader>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

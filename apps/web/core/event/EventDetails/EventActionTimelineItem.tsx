@@ -7,27 +7,12 @@ import { formatTime } from "@/app/utils/dateTime";
 import { Icon } from "@iconify/react";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { getActionIcon } from "@/core/actions/utils/getActionIcon";
+import { isStaffAssistance } from "@/core/actions/utils/isStaffAssistance";
+import { cn } from "@/lib/utils";
 
 interface EventActionTimelineItemProps {
   action: ActionWithDict;
-}
-
-// Simple icon mapping for action types
-function getActionIcon(type: string | null, subType: string | null) {
-  const typeUpper = type?.toUpperCase() || "";
-  const subTypeUpper = subType?.toUpperCase() || "";
-  
-  if (typeUpper.includes("CONFIG") || subTypeUpper.includes("CONFIG")) {
-    return "mdi:cog";
-  }
-  if (typeUpper.includes("CAPTURE") || subTypeUpper.includes("CAPTURE") || typeUpper.includes("RECORDING")) {
-    return "mdi:video";
-  }
-  if (typeUpper.includes("STAFF") || subTypeUpper.includes("STAFF") || typeUpper.includes("ASSISTANCE")) {
-    return "mdi:account-group";
-  }
-  
-  return "mdi:check-circle";
 }
 
 function getStatusVariant(status: string) {
@@ -51,13 +36,14 @@ function getActionDisplayName(type: string | null, subType: string | null): stri
 }
 
 export default function EventActionTimelineItem({ action }: EventActionTimelineItemProps) {
-  const iconName = getActionIcon(action.type, action.subType);
+  const iconName = getActionIcon(action);
   const statusVariant = getStatusVariant(action.status);
   const displayName = getActionDisplayName(action.type, action.subType);
   const assignedToName = getProfileDisplayName(action.assignedToProfile);
   const completedByName = getProfileDisplayName(action.completedByProfile);
   const formattedTime = action.startTime ? formatTime(action.startTime) : "";
   const actionLink = `/actions/${action.id}`;
+  const staffAssistance = isStaffAssistance(action);
 
   return (
     <Link href={actionLink} className="relative flex items-start gap-4 hover:opacity-80 transition-opacity cursor-pointer">
@@ -75,8 +61,17 @@ export default function EventActionTimelineItem({ action }: EventActionTimelineI
       
       {/* Timeline dot with connecting line */}
       <div className="relative flex flex-col items-center">
-        <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-background bg-primary">
-          <Icon icon={iconName} className="h-4 w-4 text-primary-foreground" />
+        <div className={cn(
+          "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-background",
+          staffAssistance ? "bg-green-600" : "bg-primary"
+        )}>
+          <Icon 
+            icon={iconName} 
+            className={cn(
+              "h-4 w-4",
+              staffAssistance ? "text-white" : "text-primary-foreground"
+            )} 
+          />
         </div>
         {/* Vertical line extending down */}
         <div className="absolute top-8 left-1/2 -translate-x-1/2 w-0.5 bg-border h-6" />

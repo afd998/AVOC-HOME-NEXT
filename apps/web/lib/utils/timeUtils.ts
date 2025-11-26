@@ -15,7 +15,19 @@ export function formatDate(input: string | Date | null | undefined): string {
     return "";
   }
 
-  const date = typeof input === "string" ? new Date(input) : input;
+  let date: Date;
+  if (typeof input === "string") {
+    // Parse YYYY-MM-DD as local date to avoid UTC interpretation issues
+    const dateMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (dateMatch) {
+      const [, year, month, day] = dateMatch.map(Number);
+      date = new Date(year, month - 1, day);
+    } else {
+      date = new Date(input);
+    }
+  } else {
+    date = input;
+  }
 
   if (Number.isNaN(date.getTime())) {
     return "";

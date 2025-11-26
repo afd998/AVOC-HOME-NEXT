@@ -22,6 +22,11 @@ export default function ActionContent({
 }: ActionContentProps) {
   const updateAction = useCalendarActionsStore((state) => state.updateAction);
   const action = actionProp;
+  
+  if (!action) {
+    return null;
+  }
+  
   const numericActionId = action.id;
 
   // All actions can have QC items, so always show the QC form if there are qcItems
@@ -170,30 +175,7 @@ export default function ActionContent({
         )}
 
         {/* Always show QC items section for all actions */}
-        <QcItem
-          task={
-            {
-              ...action,
-              // Adapt action structure to match what QcItem expects
-              // QcItem expects task.captureQcDetails.qcItems where each item has a 'qc' field
-              captureQcDetails: hasQcItems
-                ? {
-                    qcItems: action.qcItems.map((item) => ({
-                      ...item,
-                      qc: action.id, // Use action ID as qc reference (QcItem expects item.qc)
-                      qcItemDict: item.qcItemDict ?? {
-                        id: 0,
-                        displayName: "",
-                        instruction: "",
-                        createdAt: "",
-                        icon: null,
-                      },
-                    })),
-                  }
-                : null,
-            } as any
-          }
-        />
+        <QcItem action={action} />
       </CardContent>
 
       <ActionFooter

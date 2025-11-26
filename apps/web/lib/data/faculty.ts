@@ -1,7 +1,7 @@
 "use server";
 import { unstable_cache } from "next/cache";
 import { createServerClient } from "@supabase/ssr";
-import { eq, db, faculty, facultySetup, type InferSelectModel } from "shared";
+import { eq, db, faculty, facultySetup, facultyEvents, type InferSelectModel } from "shared";
 
 const PAGE_SIZE = 50;
 import { revalidateTag, updateTag } from "next/cache";
@@ -125,3 +125,22 @@ export async function deleteFacultySetup(setupId: string) {
 
   updateTag("facultysetup");
 }
+
+export const getFacultyEvents = unstable_cache(
+  async (facultyId: number) => {
+    try {
+      const data = await db.query.facultyEvents.findMany({
+        where: eq(facultyEvents.faculty, facultyId),
+        with: {
+          event: true,
+        },
+      });
+      return data.map((fe) => fe.event);
+    } catch (error) {
+      console.error("[db] faculty.getFacultyEvents", { facultyId, error });
+      throw error;
+    }
+  },
+  ["facultyEvents"],
+  { tags: ["facultyEvents"] }
+);

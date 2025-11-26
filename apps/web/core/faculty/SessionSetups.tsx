@@ -175,7 +175,7 @@ export default function SessionSetups({
     setByodTarget(null);
   };
 
-  const selectPanelImage = (imageId: string) => {
+  const selectPanelImage = (imageId: string | null) => {
     if (!editingPanel) return;
     const current =
       setups.find((s) => s.id === (activeSetupId ?? "")) ?? setups[0];
@@ -184,9 +184,9 @@ export default function SessionSetups({
     handleUpdateSetup(
       {
         leftSource:
-          editingPanel === "left" ? imageId : current.leftSource ?? "",
+          editingPanel === "left" ? imageId : current.leftSource ?? null,
         rightSource:
-          editingPanel === "right" ? imageId : current.rightSource ?? "",
+          editingPanel === "right" ? imageId : current.rightSource ?? null,
       },
       current.id
     );
@@ -472,7 +472,9 @@ export default function SessionSetups({
                             title="Click to change panel setup"
                             variant="outline"
                           >
-                            {setup?.leftSource ? (
+                            {setup?.leftSource === "No Source" ? (
+                              <span className="">No Source</span>
+                            ) : setup?.leftSource ? (
                               <Image
                                 src={leftPanelSrc}
                                 alt={`Left panel setup for ${facultyMember?.kelloggdirectoryName}`}
@@ -481,11 +483,12 @@ export default function SessionSetups({
                                 sizes="(max-width: 640px) 100vw, 33vw"
                               />
                             ) : (
-                              <span className="">No source</span>
+                              <span className="">Not Set</span>
                             )}
                           </Button>
                           {setup?.leftSource &&
-                          setup.leftSource !== "DOC_CAM" ? (
+                          setup.leftSource !== "DOC_CAM" &&
+                          setup.leftSource !== "No Source" ? (
                             <>
                               <p className="text-xs  text-center mt-2 font-medium">
                                 {setup.leftSource.replace(/_/g, " ")}
@@ -547,9 +550,11 @@ export default function SessionSetups({
                             </>
                           ) : (
                             <p className="text-xs  text-center mt-2 font-medium">
-                              {setup?.leftSource
+                              {setup?.leftSource === "No Source"
+                                ? "No Source"
+                                : setup?.leftSource
                                 ? setup.leftSource.replace(/_/g, " ")
-                                : "No source"}
+                                : "Not Set"}
                             </p>
                           )}
                         </div>
@@ -564,7 +569,9 @@ export default function SessionSetups({
                             title="Click to change panel setup"
                             variant="outline"
                           >
-                            {setup?.rightSource ? (
+                            {setup?.rightSource === "No Source" ? (
+                              <span className="">No Source</span>
+                            ) : setup?.rightSource ? (
                               <Image
                                 src={rightPanelSrc}
                                 alt={`Right panel setup for ${facultyMember?.kelloggdirectoryName}`}
@@ -573,11 +580,12 @@ export default function SessionSetups({
                                 sizes="(max-width: 640px) 100vw, 33vw"
                               />
                             ) : (
-                              <span className="">No source</span>
+                              <span className="">Not Set</span>
                             )}
                           </Button>
                           {setup?.rightSource &&
-                          setup.rightSource !== "DOC_CAM" ? (
+                          setup.rightSource !== "DOC_CAM" &&
+                          setup.rightSource !== "No Source" ? (
                             <>
                               <p className="text-xs  text-center mt-2 font-medium">
                                 {setup.rightSource.replace(/_/g, " ")}
@@ -641,9 +649,11 @@ export default function SessionSetups({
                             </>
                           ) : (
                             <p className="text-xs  text-center mt-2 font-medium">
-                              {setup?.rightSource
+                              {setup?.rightSource === "No Source"
+                                ? "No Source"
+                                : setup?.rightSource
                                 ? setup.rightSource.replace(/_/g, " ")
-                                : "No source"}
+                                : "Not Set"}
                             </p>
                           )}
                         </div>

@@ -1,6 +1,14 @@
 import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
 
-export function getActionIcon(action: HydratedAction): string {
+/**
+ * Gets the icon name for an action based on its type and subType
+ * @param action - An object with type and subType properties
+ * @returns The iconify icon name
+ */
+export function getActionIcon(action: {
+  type?: string | null;
+  subType?: string | null;
+}): string {
   const type = action.type?.toUpperCase() || "";
   const subType = action.subType?.toUpperCase() || "";
 

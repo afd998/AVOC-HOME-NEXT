@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { HydratedTask } from "@/lib/data/calendar/taskscalendar";
+import type { HydratedAction } from "@/lib/data/calendar/actionsCalendar";
 import type {
   QcItemRow,
   QcItemDictRow,
@@ -33,7 +33,7 @@ import type {
 import { cn } from "@/lib/utils";
 
 type QcItemProps = {
-  task: HydratedTask;
+  action: HydratedAction;
 };
 
 // Status types with null for form state
@@ -63,16 +63,6 @@ type QcItemWithDict = QcItemRow & {
   qcItemDict: QcItemDictRow | null;
 };
 
-// QcRow type - this is for the legacy qcs table, define inline since it may not exist
-type QcRow = {
-  id: number;
-  qcItems?: QcItemWithDict[];
-};
-
-type QcWithItems = QcRow & {
-  qcItems?: QcItemWithDict[];
-};
-
 // Context to expose form instance
 type QcItemFormContextValue = UseFormReturn<QcItemFormValues> | null;
 const QcItemFormContext = createContext<QcItemFormContextValue>(null);
@@ -82,11 +72,14 @@ export const useQcItemForm = () => {
   return context;
 };
 
-export default function QcItem({ task }: QcItemProps) {
-  const referenceNumber = task.id;
-  const scheduledTime = task.startTime;
-  const captureQc = (task.captureQcDetails as QcWithItems | null) ?? null;
-  const qcItems = captureQc?.qcItems ?? [];
+export default function QcItem({ action }: QcItemProps) {
+  if (!action) {
+    return null;
+  }
+  
+  const referenceNumber = action.id;
+  const scheduledTime = action.startTime;
+  const qcItems = action.qcItems ?? [];
 
   // Create a stable serialized key from qcItems for comparison
   const qcItemsKey = useMemo(() => {
@@ -95,7 +88,7 @@ export default function QcItem({ task }: QcItemProps) {
       .map((item) => {
         // qcItemDict is the foreign key column name in the schema
         const qcItemDictId = item.qcItemDict?.id ?? item.qcItemDict;
-        return `${item.qc}-${qcItemDictId}-${item.status ?? null}`;
+        return `${item.action}-${qcItemDictId}-${item.status ?? null}`;
       })
       .sort()
       .join("|");
@@ -108,7 +101,7 @@ export default function QcItem({ task }: QcItemProps) {
       // qcItemDict is the foreign key column name in the schema
       // When relation is loaded, use qcItemDict.id, otherwise use qcItemDict (the FK value)
       const qcItemDictId = qcItem.qcItemDict?.id ?? qcItem.qcItemDict;
-      const fieldKey = `${qcItem.qc}-${qcItemDictId}`;
+      const fieldKey = `${qcItem.action}-${qcItemDictId}`;
       const failModeKey = `${fieldKey}-failMode`;
       const waivedReasonKey = `${fieldKey}-waivedReason`;
       const ticketKey = `${fieldKey}-ticket`;
@@ -162,7 +155,7 @@ export default function QcItem({ task }: QcItemProps) {
             <FieldSet className="gap-4">
               {qcItems.length === 0 ? (
                 <div className="py-4 text-sm text-muted-foreground">
-                  No QC items found for this task.
+                  No QC items found for this action.
                 </div>
               ) : (
                 <FieldGroup className="gap-3">
@@ -171,7 +164,7 @@ export default function QcItem({ task }: QcItemProps) {
 
                     // Use composite key: qc-qcItemDictId for form field name
                     // Note: qcItemDict.id is the same as the foreign key, but we use the relation object
-                    const fieldKey = `${qcItem.qc}-${qcItemDict.id}`;
+                    const fieldKey = `${qcItem.action}-${qcItemDict.id}`;
                     const fieldId = `qc-item-${fieldKey}`;
                     const label = qcItemDict.displayName;
                     const description = qcItemDict.instruction;

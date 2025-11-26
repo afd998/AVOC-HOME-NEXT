@@ -7,6 +7,7 @@ import {
 import { Icon } from "@iconify/react";
 import { getActionIcon } from "./utils/getActionIcon";
 import { getStatusVariant } from "./utils/getStatusVariant";
+import { isStaffAssistance } from "./utils/isStaffAssistance";
 import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
 import {
   formatDate as formatActionDate,
@@ -28,14 +29,7 @@ export default function ActionHeader({ action, errorMessage }: ActionHeaderProps
   const formattedStatus = action.status.trim() || "No status set";
   const hasStatus = action.status.trim().length > 0;
   const statusVariant = getStatusVariant(action.status);
-
-  // Check if this is a staff assistance action for green color
-  const type = action.type?.toUpperCase() || "";
-  const subType = action.subType?.toUpperCase() || "";
-  const isStaffAssistance =
-    type.includes("STAFF") ||
-    subType.includes("STAFF") ||
-    type.includes("ASSISTANCE");
+  const staffAssistance = isStaffAssistance(action);
 
   return (
     <CardHeader className="gap-4 shrink-0">
@@ -48,7 +42,7 @@ export default function ActionHeader({ action, errorMessage }: ActionHeaderProps
               height={48}
               className={cn(
                 "h-12 w-12 p-3",
-                isStaffAssistance ? "text-green-600" : "text-muted-foreground"
+                staffAssistance ? "text-green-600" : "text-muted-foreground"
               )}
             />
           </span>

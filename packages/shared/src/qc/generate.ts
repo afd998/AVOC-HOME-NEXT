@@ -94,7 +94,8 @@ export function generateQcItemsForAction(
     dicts.forEach((id) => qcItemRows.push(createQcItem(id)));
   }
 
-  if (action.type === "Staff Assistance" && action.subType === "Session Setup") {
+  if (action.type?.toUpperCase() === "STAFF ASSISTANCE" && action.subType === "Session Setup") {
+
     const dicts: number[] = [];
     if (eventAVConfigRow.leftSource) dicts.push(22);
     if (eventAVConfigRow.rightSource) dicts.push(23);

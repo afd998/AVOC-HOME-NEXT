@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getEventOccurrences } from "@/lib/data/calendar/event/occurrences";
@@ -6,7 +7,7 @@ import {
   formatDate,
   formatTimeFromHHMMSS,
 } from "@/lib/utils/timeUtils";
-import TwentyFiveLiveResources from "./25LiveResources";
+import EventConfiguration from "./EventConfiguration";
 
 interface OccurrencesDialogContentProps {
   currentEvent: finalEvent;
@@ -90,37 +91,46 @@ function OccurrenceCard({
   );
 
   return (
-    <Card className="group relative transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg">
-      <CardHeader className="px-5 py-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <CardTitle className="text-base font-semibold">
-              {dateLabel}
-              {startLabel ? ` | ${startLabel}` : ""}
-              {endLabel ? ` - ${endLabel}` : ""}
-            </CardTitle>
-            <CardMeta
-              label="Room"
-              value={occurrence.roomName || "Unknown room"}
-            />
-            <CardMeta label="Instructors" value={instructorSummary} />
-            {occurrence.section && (
-              <CardMeta label="Section" value={occurrence.section}
+    <Link href={`/events/${occurrence.id}`}>
+      <Card className="group relative cursor-pointer transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg">
+        <CardHeader className="px-5 py-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <CardTitle className="text-base font-semibold">
+                {dateLabel}
+                {startLabel ? ` | ${startLabel}` : ""}
+                {endLabel ? ` - ${endLabel}` : ""}
+              </CardTitle>
+              <CardMeta
+                label="Room"
+                value={occurrence.roomName || "Unknown room"}
               />
-            )}
+              <CardMeta label="Instructors" value={instructorSummary} />
+              {occurrence.section && (
+                <CardMeta label="Section" value={occurrence.section}
+                />
+              )}
+            </div>
+            <div className="flex flex-col items-end gap-2 text-sm text-muted-foreground">
+              {isCurrent && <Badge variant="default">Current</Badge>}
+              <span>
+                {index + 1} of {total}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col items-end gap-2 text-sm text-muted-foreground">
-            {isCurrent && <Badge variant="default">Current</Badge>}
-            <span>
-              {index + 1} of {total}
-            </span>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="px-5 pb-5 pt-0">
-        <OccurrenceResources resources={occurrence.resources} />
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="px-5 pb-5 pt-0">
+          <EventConfiguration
+            event={occurrence}
+            roomName={occurrence.roomName || "Unknown room"}
+            showHybrid={true}
+            showRecording={true}
+            showAvConfig={true}
+            showOtherHardware={true}
+          />
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
@@ -136,29 +146,6 @@ function CardMeta({ label, value }: { label: string; value: string }) {
   );
 }
 
-function OccurrenceResources({
-  resources,
-}: {
-  resources: finalEvent["resources"];
-}) {
-  if (!resources || resources.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="space-y-2">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        Resources
-      </p>
-      <TwentyFiveLiveResources
-        resources={resources}
-        className="mt-2"
-        emptyAvMessage="No AV resources for this occurrence."
-        emptyGeneralMessage="No general resources for this occurrence."
-      />
-    </div>
-  );
-}
 
 function formatInstructorSummary(
   instructorNames: finalEvent["instructorNames"]

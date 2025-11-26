@@ -1,7 +1,6 @@
 // app/api/faculty/search/route.ts
 import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { sql } from 'drizzle-orm'
+import { db, sql } from 'shared'
 
 
 export async function GET(req: Request) {

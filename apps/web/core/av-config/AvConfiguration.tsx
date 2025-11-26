@@ -15,20 +15,18 @@ import { X, Plus, Laptop, Tablet } from "lucide-react";
 import PanelModal from "./PanelModal";
 import DeviceSelectPopover from "./DeviceSelectPopover";
 import { PANEL_OPTIONS, getPanelImageSrc, BYOD_OPTIONS } from "./constants";
+import { useEventConfiguration } from "../event/EventDetails/EventConfigurationContext";
 
 interface AvConfigurationProps {
   avConfig: EventAVConfigRow;
   roomName: string;
-  editable?: boolean;
-  onUpdate?: (updates: Partial<EventAVConfigRow>) => Promise<void>;
 }
 
 export default function AvConfiguration({ 
   avConfig, 
   roomName, 
-  editable = false,
-  onUpdate 
 }: AvConfigurationProps) {
+  const { isEditable, onUpdate } = useEventConfiguration();
   const isGH4OrGH5 = roomName.startsWith("GH 4") || roomName.startsWith("GH 5");
   const isGH5101 = roomName === "GH 5101";
   const shouldShowLeftRightSources = !isGH4OrGH5 || isGH5101;
@@ -38,39 +36,35 @@ export default function AvConfiguration({
   const [isPanelModalOpen, setIsPanelModalOpen] = useState(false);
   const [editingSource, setEditingSource] = useState<"left" | "right" | "center" | null>(null);
 
-  const handleSelectSource = async (sourceId: string) => {
-    if (!editingSource || !onUpdate) return;
+  const handleSelectSource = async (sourceId: string | null) => {
+    if (!editingSource) return;
     
-    const updates: Partial<EventAVConfigRow> = {};
-    if (editingSource === "left") updates.leftSource = sourceId;
-    if (editingSource === "right") updates.rightSource = sourceId;
-    if (editingSource === "center") updates.centerSource = sourceId;
+    const avConfig: { leftSource?: string | null; rightSource?: string | null; centerSource?: string | null } = {};
+    if (editingSource === "left") avConfig.leftSource = sourceId;
+    if (editingSource === "right") avConfig.rightSource = sourceId;
+    if (editingSource === "center") avConfig.centerSource = sourceId;
     
-    await onUpdate(updates);
+    await onUpdate({ avConfig });
     setIsPanelModalOpen(false);
     setEditingSource(null);
   };
 
   const handleSelectDevice = async (deviceType: "left" | "right" | "center", deviceName: string) => {
-    if (!onUpdate) return;
+    const avConfig: { leftDevice?: string; rightDevice?: string; centerDevice?: string } = {};
+    if (deviceType === "left") avConfig.leftDevice = deviceName;
+    if (deviceType === "right") avConfig.rightDevice = deviceName;
+    if (deviceType === "center") avConfig.centerDevice = deviceName;
     
-    const updates: Partial<EventAVConfigRow> = {};
-    if (deviceType === "left") updates.leftDevice = deviceName;
-    if (deviceType === "right") updates.rightDevice = deviceName;
-    if (deviceType === "center") updates.centerDevice = deviceName;
-    
-    await onUpdate(updates);
+    await onUpdate({ avConfig });
   };
 
   const handleRemoveDevice = async (deviceType: "left" | "right" | "center") => {
-    if (!onUpdate) return;
+    const avConfig: { leftDevice?: string | null; rightDevice?: string | null; centerDevice?: string | null } = {};
+    if (deviceType === "left") avConfig.leftDevice = null;
+    if (deviceType === "right") avConfig.rightDevice = null;
+    if (deviceType === "center") avConfig.centerDevice = null;
     
-    const updates: Partial<EventAVConfigRow> = {};
-    if (deviceType === "left") updates.leftDevice = null;
-    if (deviceType === "right") updates.rightDevice = null;
-    if (deviceType === "center") updates.centerDevice = null;
-    
-    await onUpdate(updates);
+    await onUpdate({ avConfig });
   };
 
   const openPanelModal = (source: "left" | "right" | "center") => {
@@ -100,14 +94,16 @@ export default function AvConfiguration({
             <div className="flex gap-3">
               <div className="flex-1">
                 <ItemTitle className="mb-2">Left Source</ItemTitle>
-                {editable ? (
+                {isEditable ? (
                   <Button
                     onClick={() => openPanelModal("left")}
-                    className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden"
+                    className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden hover:bg-accent hover:border-accent-foreground/20"
                     variant="outline"
                     title="Click to change source"
                   >
-                    {avConfig.leftSource ? (
+                    {avConfig.leftSource === "No Source" ? (
+                      <span className="text-muted-foreground">No Source</span>
+                    ) : avConfig.leftSource ? (
                       <Image
                         src={getPanelImageSrc(avConfig.leftSource)}
                         alt="Left source"
@@ -116,19 +112,21 @@ export default function AvConfiguration({
                         sizes="(max-width: 640px) 100vw, 33vw"
                       />
                     ) : (
-                      <span className="text-muted-foreground">No source</span>
+                      <span className="text-muted-foreground">Not Set</span>
                     )}
                   </Button>
                 ) : (
                   <div className="w-full rounded-lg border border-border flex items-center justify-center min-h-[60px] p-2">
-                    {avConfig.leftSource ? (
+                    {avConfig.leftSource === "No Source" ? (
+                      <span className="text-muted-foreground">No Source</span>
+                    ) : avConfig.leftSource ? (
                       <span>{avConfig.leftSource.replace(/_/g, " ")}</span>
                     ) : (
-                      <span className="text-muted-foreground">No source</span>
+                      <span className="text-muted-foreground">Not Set</span>
                     )}
                   </div>
                 )}
-                {editable && avConfig.leftSource && avConfig.leftSource !== "DOC_CAM" && (
+                {isEditable && avConfig.leftSource && avConfig.leftSource !== "DOC_CAM" && avConfig.leftSource !== "No Source" && (
                   <div className="mt-2 flex justify-center">
                     {avConfig.leftDevice ? (
                       <Badge
@@ -138,6 +136,9 @@ export default function AvConfiguration({
                       >
                         {renderByodIcon(avConfig.leftDevice)}
                         <span>{avConfig.leftDevice}</span>
+                        {(avConfig.leftSource === "ROOM_PC" || avConfig.leftSource === "PC_EXT") && (
+                          <span className="text-muted-foreground text-xs ml-1">Mirror 360</span>
+                        )}
                         <Button
                           type="button"
                           variant="ghost"
@@ -171,14 +172,16 @@ export default function AvConfiguration({
               </div>
               <div className="flex-1">
                 <ItemTitle className="mb-2">Right Source</ItemTitle>
-                {editable ? (
+                {isEditable ? (
                   <Button
                     onClick={() => openPanelModal("right")}
-                    className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden"
+                    className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden hover:bg-accent hover:border-accent-foreground/20"
                     variant="outline"
                     title="Click to change source"
                   >
-                    {avConfig.rightSource ? (
+                    {avConfig.rightSource === "No Source" ? (
+                      <span className="text-muted-foreground">No Source</span>
+                    ) : avConfig.rightSource ? (
                       <Image
                         src={getPanelImageSrc(avConfig.rightSource)}
                         alt="Right source"
@@ -187,19 +190,21 @@ export default function AvConfiguration({
                         sizes="(max-width: 640px) 100vw, 33vw"
                       />
                     ) : (
-                      <span className="text-muted-foreground">No source</span>
+                      <span className="text-muted-foreground">Not Set</span>
                     )}
                   </Button>
                 ) : (
                   <div className="w-full rounded-lg border border-border flex items-center justify-center min-h-[60px] p-2">
-                    {avConfig.rightSource ? (
+                    {avConfig.rightSource === "No Source" ? (
+                      <span className="text-muted-foreground">No Source</span>
+                    ) : avConfig.rightSource ? (
                       <span>{avConfig.rightSource.replace(/_/g, " ")}</span>
                     ) : (
-                      <span className="text-muted-foreground">No source</span>
+                      <span className="text-muted-foreground">Not Set</span>
                     )}
                   </div>
                 )}
-                {editable && avConfig.rightSource && avConfig.rightSource !== "DOC_CAM" && (
+                {isEditable && avConfig.rightSource && avConfig.rightSource !== "DOC_CAM" && avConfig.rightSource !== "No Source" && (
                   <div className="mt-2 flex justify-center">
                     {avConfig.rightDevice ? (
                       <Badge
@@ -209,6 +214,9 @@ export default function AvConfiguration({
                       >
                         {renderByodIcon(avConfig.rightDevice)}
                         <span>{avConfig.rightDevice}</span>
+                        {(avConfig.rightSource === "ROOM_PC" || avConfig.rightSource === "PC_EXT") && (
+                          <span className="text-muted-foreground text-xs ml-1">Mirror 360</span>
+                        )}
                         <Button
                           type="button"
                           variant="ghost"
@@ -249,15 +257,17 @@ export default function AvConfiguration({
           <ItemContent>
             <ItemTitle>Center Source</ItemTitle>
             <ItemDescription>
-              {editable ? (
+              {isEditable ? (
                 <>
                   <Button
                     onClick={() => openPanelModal("center")}
-                    className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden"
+                    className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden hover:bg-accent hover:border-accent-foreground/20"
                     variant="outline"
                     title="Click to change source"
                   >
-                    {avConfig.centerSource ? (
+                    {avConfig.centerSource === "No Source" ? (
+                      <span className="text-muted-foreground">No Source</span>
+                    ) : avConfig.centerSource ? (
                       <Image
                         src={getPanelImageSrc(avConfig.centerSource)}
                         alt="Center source"
@@ -266,10 +276,10 @@ export default function AvConfiguration({
                         sizes="(max-width: 640px) 100vw, 33vw"
                       />
                     ) : (
-                      <span className="text-muted-foreground">No source</span>
+                      <span className="text-muted-foreground">Not Set</span>
                     )}
                   </Button>
-                  {avConfig.centerSource && avConfig.centerSource !== "DOC_CAM" && (
+                  {avConfig.centerSource && avConfig.centerSource !== "DOC_CAM" && avConfig.centerSource !== "No Source" && (
                     <div className="mt-2 flex justify-center">
                       {avConfig.centerDevice ? (
                         <Badge
@@ -279,6 +289,9 @@ export default function AvConfiguration({
                         >
                           {renderByodIcon(avConfig.centerDevice)}
                           <span>{avConfig.centerDevice}</span>
+                          {(avConfig.centerSource === "ROOM_PC" || avConfig.centerSource === "PC_EXT") && (
+                            <span className="text-muted-foreground text-xs ml-1">Mirror 360</span>
+                          )}
                           <Button
                             type="button"
                             variant="ghost"
@@ -312,10 +325,12 @@ export default function AvConfiguration({
                 </>
               ) : (
                 <div className="w-full rounded-lg border border-border flex items-center justify-center min-h-[60px] p-2">
-                  {avConfig.centerSource ? (
+                  {avConfig.centerSource === "No Source" ? (
+                    <span className="text-muted-foreground">No Source</span>
+                  ) : avConfig.centerSource ? (
                     <span>{avConfig.centerSource.replace(/_/g, " ")}</span>
                   ) : (
-                    <span className="text-muted-foreground">No source</span>
+                    <span className="text-muted-foreground">Not Set</span>
                   )}
                 </div>
               )}
@@ -323,13 +338,18 @@ export default function AvConfiguration({
           </ItemContent>
         </Item>
       )}
-      {!editable && (
+      {!isEditable && (
         <>
           {avConfig.leftDevice && (
             <Item size="sm">
               <ItemContent>
                 <ItemTitle>Left Device</ItemTitle>
-                <ItemDescription>{avConfig.leftDevice}</ItemDescription>
+                <ItemDescription>
+                  {avConfig.leftDevice}
+                  {(avConfig.leftSource === "ROOM_PC" || avConfig.leftSource === "PC_EXT") && (
+                    <span className="text-muted-foreground text-xs ml-2">Mirror 360</span>
+                  )}
+                </ItemDescription>
               </ItemContent>
             </Item>
           )}
@@ -337,7 +357,12 @@ export default function AvConfiguration({
             <Item size="sm">
               <ItemContent>
                 <ItemTitle>Right Device</ItemTitle>
-                <ItemDescription>{avConfig.rightDevice}</ItemDescription>
+                <ItemDescription>
+                  {avConfig.rightDevice}
+                  {(avConfig.rightSource === "ROOM_PC" || avConfig.rightSource === "PC_EXT") && (
+                    <span className="text-muted-foreground text-xs ml-2">Mirror 360</span>
+                  )}
+                </ItemDescription>
               </ItemContent>
             </Item>
           )}
@@ -345,7 +370,12 @@ export default function AvConfiguration({
             <Item size="sm">
               <ItemContent>
                 <ItemTitle>Center Device</ItemTitle>
-                <ItemDescription>{avConfig.centerDevice}</ItemDescription>
+                <ItemDescription>
+                  {avConfig.centerDevice}
+                  {(avConfig.centerSource === "ROOM_PC" || avConfig.centerSource === "PC_EXT") && (
+                    <span className="text-muted-foreground text-xs ml-2">Mirror 360</span>
+                  )}
+                </ItemDescription>
               </ItemContent>
             </Item>
           )}

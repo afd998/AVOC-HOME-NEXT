@@ -192,3 +192,55 @@ export const getEventById = async (
 
   return toFinalEvent(eventWithRelations as EventWithRelations);
 };
+
+export const getEventsBySeries = async (
+  seriesId: string
+): Promise<finalEvent[]> => {
+  const itemId = Number.parseInt(seriesId, 10);
+  if (Number.isNaN(itemId)) {
+    return [];
+  }
+
+  const eventsWithRelations = await db.query.events.findMany({
+    where: eq(events.itemId, itemId),
+    orderBy: (eventTable, { asc }) => [
+      asc(eventTable.date),
+      asc(eventTable.startTime),
+    ],
+    with: {
+      facultyEvents: {
+        with: {
+          faculty: true,
+        },
+      },
+      resourceEvents: {
+        with: {
+          resourcesDict: true,
+        },
+      },
+      eventHybrids: true,
+      eventAvConfigs: true,
+      eventRecordings: true,
+      eventOtherHardwares: {
+        with: {
+          otherHardwareDict: true,
+        },
+      },
+      actions: {
+        with: {
+          profile_assignedTo: true,
+          profile_completedBy: true,
+          qcItems: {
+            with: {
+              qcItemDict: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return eventsWithRelations.map((event) =>
+    toFinalEvent(event as EventWithRelations)
+  );
+};

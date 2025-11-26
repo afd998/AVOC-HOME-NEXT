@@ -1,6 +1,7 @@
-﻿import { truncateEventName } from "@/core/event/eventUtils";
+﻿import Link from "next/link";
+import { truncateEventName } from "@/core/event/eventUtils";
 import type { finalEvent } from "@/lib/data/calendar/calendar";
-import { MapPin } from "lucide-react";
+import { MapPin, ChevronUp, ChevronDown } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -14,8 +15,9 @@ import {
   ItemTitle,
   ItemDescription,
 } from "../../../components/ui/item";
-import { OccurrencesDialogContent } from "./OccurrencesDialogContent";
-import { OccurrencesModalShell } from "./OccurrencesModalShell";
+// Keeping occurrences imports for potential future use
+// import { OccurrencesDialogContent } from "./OccurrencesDialogContent";
+// import { OccurrencesModalShell } from "./OccurrencesModalShell";
 import { EventFacultyList } from "./EventFacultyList";
 import EventPageContent from "./EventPageContent";
 import EventConfiguration from "./EventConfiguration";
@@ -26,6 +28,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../../../components/ui/popover";
+import {
+  formatDate,
+  formatTimeFromHHMMSS,
+} from "@/lib/utils/timeUtils";
 
 interface EventDetailHeaderProps {
   event: finalEvent;
@@ -81,9 +87,27 @@ export default function EventDetailHeader({ event }: EventDetailHeaderProps) {
             </ItemContent>
           </Item>
 
-          <OccurrencesModalShell event={event} className="cursor-pointer">
-            <OccurrencesDialogContent currentEvent={event} />
-          </OccurrencesModalShell>
+          {event.itemId && (
+            <Link href={`/series/${event.itemId}`}>
+              <Item variant="outline" className="cursor-pointer">
+                <ItemMedia variant="icon">
+                  <div className="flex flex-col items-center justify-center">
+                    <ChevronUp className="h-4 w-4" />
+                    <ChevronDown className="h-4 w-4" />
+                  </div>
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>Series</ItemTitle>
+                  <ItemDescription>
+                    {formatDate(event.date)}
+                    {formatTimeFromHHMMSS(event.startTime) ? ` | ${formatTimeFromHHMMSS(event.startTime)}` : ""}
+                    {formatTimeFromHHMMSS(event.endTime) ? ` - ${formatTimeFromHHMMSS(event.endTime)}` : ""}
+                    <span className="ml-1 text-xs text-muted-foreground">CST</span>
+                  </ItemDescription>
+                </ItemContent>
+              </Item>
+            </Link>
+          )}
         </div>
 
         {/* <OwnerDisplay event={event} /> */}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { EventHybridRow } from "shared/db/types";
 import {
   Select,
@@ -9,6 +10,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Toggle } from "@/components/ui/toggle";
+import { cn } from "@/lib/utils";
+import { useEventConfiguration } from "./EventConfigurationContext";
 
 interface HybridConfigurationProps {
   hybrid?: EventHybridRow | null;
@@ -17,6 +21,9 @@ interface HybridConfigurationProps {
 export default function HybridConfiguration({
   hybrid,
 }: HybridConfigurationProps) {
+  const { isEditable, onUpdate } = useEventConfiguration();
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const normalizeConfig = (config?: string | null) => {
     if (!config) return undefined;
     const value = config.toLowerCase();
@@ -28,17 +35,52 @@ export default function HybridConfiguration({
 
   const configValue = normalizeConfig(hybrid?.config);
 
+  const handleToggleHybrid = async (pressed: boolean) => {
+    if (!isEditable || isUpdating) return;
+    
+    setIsUpdating(true);
+    try {
+      if (pressed) {
+        // Turn on: create with default "both" config
+        await onUpdate({ hybrid: { config: "both" } });
+      } else {
+        // Turn off: set config to null
+        await onUpdate({ hybrid: { config: null } });
+      }
+    } catch (error) {
+      console.error("[HybridConfiguration] Failed to toggle hybrid", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const isHybridOn = Boolean(hybrid);
+
   return (
     <Card className="flex-1">
-      <CardHeader className="flex flex-row items-center gap-3 pb-3">
-        <div className="flex items-center justify-center rounded-sm bg-muted size-8">
+      <CardHeader className="pb-3">
+        <Toggle
+          variant="outline"
+          pressed={isHybridOn}
+          onPressedChange={handleToggleHybrid}
+          disabled={!isEditable || isUpdating}
+          className={cn(
+            "h-auto px-3 py-2 rounded-sm transition-colors w-auto inline-flex",
+            isEditable && !isUpdating && "cursor-pointer",
+            (!isEditable || isUpdating) && "cursor-not-allowed",
+            isHybridOn 
+              ? "bg-blue-100 hover:bg-blue-200 border-blue-300 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-900 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700 dark:data-[state=on]:bg-blue-900/30" 
+              : "bg-muted hover:bg-accent/50 hover:border-border"
+          )}
+          aria-label={isHybridOn ? "Disable hybrid" : "Enable hybrid"}
+        >
           <img
             src="/images/zoomicon.png"
             alt="Zoom"
-            className={`size-4 ${!hybrid ? "opacity-40 grayscale" : ""}`}
+            className={`size-4 transition-all ${!isHybridOn ? "opacity-40 grayscale" : ""}`}
           />
-        </div>
-        <CardTitle className="text-sm font-semibold leading-tight">Hybrid</CardTitle>
+          <span className="text-sm font-semibold leading-tight">Hybrid</span>
+        </Toggle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm leading-normal">
         {hybrid ? (
@@ -76,9 +118,8 @@ export default function HybridConfiguration({
             <div className="space-y-1">
               <Select
                 value={configValue ?? undefined}
-                onValueChange={() => {}}
-                disabled
-                aria-readonly
+                disabled={true}
+                aria-readonly={true}
               >
                 <SelectTrigger className="w-full sm:w-56">
                   <SelectValue placeholder="Not set" />
@@ -90,18 +131,8 @@ export default function HybridConfiguration({
                 </SelectContent>
               </Select>
             </div>
-            {!hybrid.meetingLink &&
-              !hybrid.meetingId &&
-              !hybrid.instructions &&
-              !hybrid.config && (
-                <span className="text-muted-foreground">
-                  No hybrid configuration
-                </span>
-              )}
           </>
-        ) : (
-          <span className="text-muted-foreground">No hybrid configuration</span>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getProfile } from "@/lib/data/profile";
-import type { ProfileRow } from "@/lib/data/tasks/tasks";
+import type { ProfileRow } from "@/lib/data/actions/actions";
 
 type UserAvatarProps = {
   profile: ProfileRow;

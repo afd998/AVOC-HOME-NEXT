@@ -16,6 +16,7 @@ import { convertTimeToMinutes, getActionDisplayName } from "./utils";
 import { actionOverdueClassName } from "./actionOverdueStyles";
 import type { EnhancedAction } from "./types";
 import { getActionIcon } from "@/core/actions/utils/getActionIcon";
+import { isStaffAssistance } from "@/core/actions/utils/isStaffAssistance";
 
 type ActionRowProps = {
   entry: EnhancedAction;
@@ -52,14 +53,7 @@ export default function ActionRow({ entry }: ActionRowProps) {
   const subtitle = subtitleParts.join(" | ");
 
   const iconName = getActionIcon(action);
-
-  // Check if this is a staff assistance action for green color
-  const type = action.type?.toUpperCase() || "";
-  const subType = action.subType?.toUpperCase() || "";
-  const isStaffAssistance =
-    type.includes("STAFF") ||
-    subType.includes("STAFF") ||
-    type.includes("ASSISTANCE");
+  const staffAssistance = isStaffAssistance(action);
 
   return (
     <Item
@@ -95,7 +89,7 @@ export default function ActionRow({ entry }: ActionRowProps) {
               ? "text-emerald-600"
               : isOverdue
                 ? "text-rose-600"
-                : isStaffAssistance
+                : staffAssistance
                   ? "text-green-600"
                   : "text-muted-foreground"
           )}
@@ -111,7 +105,7 @@ export default function ActionRow({ entry }: ActionRowProps) {
                   ? "text-emerald-600"
                   : isOverdue
                     ? "text-rose-600"
-                    : isStaffAssistance
+                    : staffAssistance
                       ? "text-green-600"
                       : "text-muted-foreground"
               )}

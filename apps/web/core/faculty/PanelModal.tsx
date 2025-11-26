@@ -14,7 +14,7 @@ interface PanelModalProps {
   editingPanel: 'left' | 'right' | null;
   panelOptions: PanelOption[];
   onClose: () => void;
-  onSelectPanel: (imageId: string) => void;
+  onSelectPanel: (imageId: string | null) => void;
 }
 
 export default function PanelModal({ 
@@ -33,6 +33,20 @@ export default function PanelModal({
           </DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {/* No Source option */}
+          <Button
+            variant="outline"
+            onClick={() => onSelectPanel("No Source")}
+            className="flex flex-col items-center p-4 h-auto rounded-lg hover:bg-accent/50 dark:hover:bg-accent/30 transition-colors border-dashed"
+          >
+            <div className="relative w-16 h-16 mb-2 flex items-center justify-center">
+              <span className="text-2xl text-muted-foreground">—</span>
+            </div>
+            <span className="text-sm font-medium text-center text-muted-foreground">
+              No Source
+            </span>
+          </Button>
+          
           {panelOptions.map((option) => (
             <Button
               key={option.id}
