@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test:event-filters": "tsx cron/25live/utils/event-filters.check.ts"
   },
   "dependencies": {
     "@iconify/react": "^4.1.1",

@@ -27,7 +27,7 @@ import { InferSelectModel } from "drizzle-orm";
 import { qcItems, qcItemDict, qcs, qcStatus, failMode, waitedReason } from "@/drizzle/schema";
 import { cn } from "@/lib/utils";
 
-type CaptureQCProps = {
+type QcItemProps = {
   task: HydratedTask;
 };
 
@@ -41,7 +41,7 @@ type WaivedReason = (typeof waitedReason.enumValues)[number] | null;
 // Fail mode fields: `${qc}-${qcItemDictId}-failMode` -> FailMode
 // Waived reason fields: `${qc}-${qcItemDictId}-waivedReason` -> WaivedReason
 // Ticket number fields: `${qc}-${qcItemDictId}-ticket` -> string
-export type CaptureQcFormValues = Record<string, QCStatus | FailMode | WaivedReason | string>;
+export type QcItemFormValues = Record<string, QCStatus | FailMode | WaivedReason | string>;
 
 // Convert database status to form status
 const statusFromDbValue = (
@@ -68,15 +68,15 @@ type QcWithItems = QcRow & {
 };
 
 // Context to expose form instance
-type CaptureQCFormContextValue = UseFormReturn<CaptureQcFormValues> | null;
-const CaptureQCFormContext = createContext<CaptureQCFormContextValue>(null);
+type QcItemFormContextValue = UseFormReturn<QcItemFormValues> | null;
+const QcItemFormContext = createContext<QcItemFormContextValue>(null);
 
-export const useCaptureQCForm = () => {
-  const context = useContext(CaptureQCFormContext);
+export const useQcItemForm = () => {
+  const context = useContext(QcItemFormContext);
   return context;
 };
 
-export default function CaptureQC({ task }: CaptureQCProps) {
+export default function QcItem({ task }: QcItemProps) {
   const referenceNumber = task.id;
   const scheduledTime = task.startTime;
   const captureQc = (task.captureQcDetails as QcWithItems | null) ?? null;
@@ -96,8 +96,8 @@ export default function CaptureQC({ task }: CaptureQCProps) {
   }, [qcItems]);
 
   // Create form field names from qcItem IDs (composite key: qc-qcItemDictId)
-  const defaultValues = useMemo<CaptureQcFormValues>(() => {
-    const values: CaptureQcFormValues = {};
+  const defaultValues = useMemo<QcItemFormValues>(() => {
+    const values: QcItemFormValues = {};
     qcItems.forEach((qcItem) => {
       // qcItemDict is the foreign key column name in the schema
       // When relation is loaded, use qcItemDict.id, otherwise use qcItemDict (the FK value)
@@ -128,7 +128,7 @@ export default function CaptureQC({ task }: CaptureQCProps) {
     return values;
   }, [qcItemsKey]);
 
-  const form = useForm<CaptureQcFormValues>({
+  const form = useForm<QcItemFormValues>({
     defaultValues,
   });
 
@@ -145,7 +145,7 @@ export default function CaptureQC({ task }: CaptureQCProps) {
   }, [qcItemsKey]); // Only depend on the stable key, not defaultValues or form
 
   return (
-    <CaptureQCFormContext.Provider value={form}>
+    <QcItemFormContext.Provider value={form}>
       <section className="space-y-2">
       <h3 className="text-sm font-semibold uppercase text-muted-foreground">
         QC Items
@@ -235,14 +235,14 @@ export default function CaptureQC({ task }: CaptureQCProps) {
                                   aria-label={`${label} passed`}
                                   className="data-[state=on]:bg-emerald-500 data-[state=on]:text-white flex-1 px-6"
                                 >
-                                  Pass
+                                  <Icon icon="mdi:check" width={20} height={20} />
                                 </ToggleGroupItem>
                                 <ToggleGroupItem
                                   value="fail"
                                   aria-label={`${label} failed`}
                                   className="data-[state=on]:bg-red-500 data-[state=on]:text-white flex-1 px-6"
                                 >
-                                  Fail
+                                  <Icon icon="mdi:close" width={20} height={20} />
                                 </ToggleGroupItem>
                                 <ToggleGroupItem
                                   value="na"
@@ -441,6 +441,7 @@ export default function CaptureQC({ task }: CaptureQCProps) {
         Reference #{referenceNumber} · Scheduled {scheduledTime ?? "TBD"}
       </div>
     </section>
-    </CaptureQCFormContext.Provider>
+    </QcItemFormContext.Provider>
   );
 }
+

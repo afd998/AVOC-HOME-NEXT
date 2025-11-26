@@ -49,6 +49,11 @@ export function computeTransforms(events: ProcessedEvent[]): Map<number, Transfo
   });
 
   const plan = new Map<number, TransformType>();
+  
+  // Room starts in divided (split) state, so if first event is combined, we need a transform
+  if (relevant[0].mode === "COMBINE") {
+    plan.set(relevant[0].eventId, relevant[0].mode);
+  }
 
   for (let i = 0; i < relevant.length - 1; i += 1) {
     const current = relevant[i];

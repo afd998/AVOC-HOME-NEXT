@@ -1,8 +1,6 @@
 import { Badge } from "../../../../../components/ui/badge";
 import Event from "@/app/(dashboard)/calendar/[slug]/components/Event/components/Event";
 import { finalEvent } from "@/lib/data/calendar/calendar";
-
-import Tasks from "@/app/(dashboard)/calendar/[slug]/components/Tasks/Tasks";
 interface RoomRowProps {
   room: string;
   roomEvents: finalEvent[];

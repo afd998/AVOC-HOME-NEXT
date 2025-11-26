@@ -1,14 +1,14 @@
-import type { CaptureQcFormValues } from "./CaptureQC";
+import type { QcItemFormValues } from "@/core/actions/QcItem";
 import type { InferInsertModel } from "drizzle-orm";
 import { qcItems } from "@/drizzle/schema";
 
 type QCItemInsert = InferInsertModel<typeof qcItems>;
 
 /**
- * Transform CaptureQC form values to QC items database structure
+ * Transform QcItem form values to QC items database structure
  */
 export function transformFormValuesToQcItems(
-  formValues: CaptureQcFormValues,
+  formValues: QcItemFormValues,
   taskId: number
 ): QCItemInsert[] {
   const qcItemsData: QCItemInsert[] = [];

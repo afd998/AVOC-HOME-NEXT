@@ -11,7 +11,6 @@ import { saveFacultyEvents } from "./faculty-events/save-rows";
 import { fetchEventsData } from "./fetchData";
 import { saveQcItemRows } from "./qc-items/save-rows";
 import { getActions } from "./actions/make-rows";
-import { type ProcessedEvent } from "../../lib/db/types";
 import { enrichEvents } from "./events/enrich-events";
 import { flattenEnrichedEvents } from "./events/flatten-enriched-events";
 import { makeQcItemRows } from "./qc-items/make-rows";
@@ -21,6 +20,7 @@ import { saveEventOtherHardwareRows } from "./event-other-hardware/save-rows";
 import { saveEventRecordingRows } from "./event-recording/save-rows";
 import { saveActions } from "./actions/save-rows";
 import { pgPool } from "../../lib/db";
+import { partitionEventsByStart } from "./utils/event-filters";
 // Validate configuration to ensure all required environment variables are present
 config.validate();
 
@@ -57,17 +57,32 @@ async function main(): Promise<void> {
   const events = await getEvents(raw);
   console.log(`📊 Processed ${events.length} events`);
 
+  const now = dayjs();
+  const { futureEvents, startedEvents } = partitionEventsByStart(events, now);
+  if (startedEvents.length > 0) {
+    const startedIds = startedEvents
+      .map((event) => event.id)
+      .filter((id): id is number => typeof id === "number");
+    console.log(
+      `⏸️ Skipping ${startedEvents.length} events that already started: ${
+        startedIds.length > 0 ? startedIds.join(", ") : "no IDs available"
+      }`
+    );
+  } else {
+    console.log(`▶️ No already-started events found for ${date}`);
+  }
+
   console.log(
     `🔗 Processing resource events, faculty events, and enriching events...`
   );
 
   // Enrich events with extension data
-  const enrichedEvents = enrichEvents(events);
+  const enrichedEvents = enrichEvents(futureEvents);
 
   // Process resource and faculty events in parallel (these don't need enriched events)
   const [resourcesEvents, facultyEvents] = await Promise.all([
-    makeResourceEventsRows(events),
-    makeFacultyEventsRows(events),
+    makeResourceEventsRows(futureEvents),
+    makeFacultyEventsRows(futureEvents),
   ]);
 
   console.log(`🔍 Processing actions and QC items...`);
@@ -78,7 +93,7 @@ async function main(): Promise<void> {
   );
 
   const batch = {
-    events,
+    events: futureEvents,
     enrichedEvents,
     resourcesEvents,
     facultyEvents,
@@ -97,7 +112,11 @@ async function main(): Promise<void> {
   } = flattenEnrichedEvents(batch.enrichedEvents);
 
   // Save events first
-  await saveEvents([...batch.events], date);
+  const startedEventIds = startedEvents
+    .map((event) => event.id)
+    .filter((id): id is number => typeof id === "number");
+
+  await saveEvents([...batch.events], date, startedEventIds);
 
   // Save extension tables and related data in parallel
   await Promise.all([

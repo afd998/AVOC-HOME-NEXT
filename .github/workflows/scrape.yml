@@ -9,68 +9,11 @@ permissions:
   contents: read
 
 jobs:
-  scrape-window-4:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        offset: [
-            -20,
-            -19,
-            -18,
-            -17,
-            -16,
-            -15,
-            -14,
-            -13,
-            -12,
-            -11,
-            -10,
-            -9,
-            -8,
-            -7,
-            -6,
-            -5,
-            -4,
-            -3,
-            -2,
-            -1,
-          ] # -20 to -1
-      max-parallel: 5
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
-      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "pnpm" # cache keyed by pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Playwright (Chromium only)
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Run scraper
-        run: pnpm exec tsx cron/25live/scrape.ts ${{ matrix.offset }}
   scrape-window-5:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         offset: [
-            0,
-            1,
             2,
             3,
             4,
@@ -89,7 +32,7 @@ jobs:
             17,
             18,
             19,
-          ] # 0 to 19
+          ] # 2 to 19
       max-parallel: 5
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

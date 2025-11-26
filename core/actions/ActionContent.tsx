@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import CaptureQC, { useCaptureQCForm } from "@/core/tasks/CaptureQC";
+import { useMemo } from "react";
+import { CardContent } from "@/components/ui/card";
+import QcItem, { useQcItemForm } from "@/core/actions/QcItem";
 import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
 import { useCalendarActionsStore } from "@/app/(dashboard)/calendar/[slug]/stores/useCalendarActionsStore";
 import ActionHeader from "./ActionHeader";
@@ -12,10 +11,7 @@ import ActionFooter from "./ActionFooter";
 import { useActionCompletion } from "./hooks/useActionCompletion";
 import type { finalEvent } from "@/lib/data/calendar/calendar";
 import type { CalendarEventResource } from "@/lib/data/calendar/event/utils/hydrate-event-resources";
-import type { EventAVConfigRow } from "@/lib/db/types";
-import AvConfiguration from "@/core/av-config/AvConfiguration";
-import HybridConfiguration from "@/core/event/EventDetails/HybridConfiguration";
-import RecordingConfiguration from "@/core/event/EventDetails/RecordingConfiguration";
+import EventConfiguration from "@/core/event/EventDetails/EventConfiguration";
 
 type ActionContentProps = {
   action: HydratedAction;
@@ -24,7 +20,6 @@ type ActionContentProps = {
 export default function ActionContent({
   action: actionProp,
 }: ActionContentProps) {
-  const router = useRouter();
   const updateAction = useCalendarActionsStore((state) => state.updateAction);
   const action = actionProp;
   const numericActionId = action.id;
@@ -33,35 +28,10 @@ export default function ActionContent({
   const hasQcItems = action.qcItems && action.qcItems.length > 0;
 
   // Get QC form instance if available (will be null if form not mounted)
-  useCaptureQCForm();
+  useQcItemForm();
 
-  // Update Zustand store when real-time updates occur
   // TODO: Implement real-time updates for actions similar to tasks
-  const handleRealtimeUpdate = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/actions/${numericActionId}`, {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        return;
-      }
-
-      const payload: { action: HydratedAction | null } = await response.json();
-      if (payload.action) {
-        updateAction(payload.action);
-      }
-    } catch (error) {
-      console.error(
-        "[ActionModal] Failed to refresh action from real-time update",
-        error
-      );
-    }
-  }, [updateAction, numericActionId]);
-
   // TODO: Set up real-time subscription for action
-  // useActionRealtime(numericActionId, handleRealtimeUpdate);
 
   const { isCompleted, isCompleting, errorMessage, handleMarkCompleted } =
     useActionCompletion(action);
@@ -157,46 +127,7 @@ export default function ActionContent({
     return type.includes("STAFF") || type.includes("ASSISTANCE") || subType.includes("STAFF") || subType.includes("ASSISTANCE");
   }, [action.subType, action.type]);
 
-  const isEventStarted = useMemo(() => {
-    if (!eventForConfiguration?.date || !eventForConfiguration?.startTime) return false;
-
-    const now = new Date();
-    const eventStart = new Date(
-      `${eventForConfiguration.date}T${eventForConfiguration.startTime}`
-    );
-
-    // Allow editing if event has started (current time >= event start time)
-    // This works for today's events and past events
-    return now >= eventStart;
-  }, [eventForConfiguration?.date, eventForConfiguration?.startTime]);
-
-  const handleUpdate = useCallback(
-    async (updates: Partial<EventAVConfigRow>) => {
-      if (!eventForConfiguration?.id) return;
-
-      try {
-        const response = await fetch(`/api/events/${eventForConfiguration.id}/av-config`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updates),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to update AV configuration");
-        }
-
-        router.refresh();
-      } catch (error) {
-        console.error("[ActionContent] Failed to update AV config", error);
-        throw error;
-      }
-    },
-    [eventForConfiguration?.id, router]
-  );
-
-  const roomName = action.eventDetails?.roomName ?? action.room;
+  const roomName = ((action.eventDetails?.roomName ?? action.room) || "").replace(/^GH\s+/i, "");
 
   return (
     <>
@@ -206,124 +137,50 @@ export default function ActionContent({
         <ActionDetails action={action} />
 
         {isConfigAction && eventForConfiguration && (
-          <div className="flex flex-wrap gap-3 md:gap-4">
-            {eventForConfiguration.avConfig && (
-              <Card className="flex-[2] min-w-[340px] basis-[460px] grow">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">AV Configuration</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <AvConfiguration
-                    avConfig={eventForConfiguration.avConfig}
-                    roomName={roomName}
-                    editable={isEventStarted}
-                    onUpdate={handleUpdate}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            <Card className="flex-1 min-w-[260px] basis-[320px]">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Other Hardware</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {eventForConfiguration.otherHardware &&
-                eventForConfiguration.otherHardware.length > 0 ? (
-                  <div className="space-y-1 text-sm leading-normal">
-                    {eventForConfiguration.otherHardware.map((hw, index) => {
-                      const hardwareName =
-                        typeof hw.otherHardwareDict === "string"
-                          ? hw.otherHardwareDict
-                          : typeof hw.otherHardwareDict === "object" &&
-                            hw.otherHardwareDict !== null
-                          ? (hw.otherHardwareDict as { id: string }).id
-                          : String(hw.otherHardwareDict);
-                      return (
-                        <div key={index}>
-                          {hardwareName}
-                          {hw.quantity && hw.quantity > 1 && ` (${hw.quantity})`}
-                          {hw.instructions && (
-                            <span className="block text-xs text-muted-foreground mt-0.5">
-                              {hw.instructions}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground text-sm">No other hardware</span>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <EventConfiguration
+            event={eventForConfiguration}
+            roomName={roomName}
+            showHybrid={false}
+            showRecording={false}
+            showAvConfig={true}
+            showOtherHardware={true}
+          />
         )}
 
         {isCaptureAction && eventForConfiguration && (
-          <div className="flex flex-wrap gap-3 md:gap-4">
-            <div className="flex-1 min-w-[260px] basis-[320px]">
-              <HybridConfiguration hybrid={eventForConfiguration.hybrid} />
-            </div>
-
-            <div className="flex-1 min-w-[260px] basis-[320px]">
-              <RecordingConfiguration recording={eventForConfiguration.recording} />
-            </div>
-
-            {eventForConfiguration.avConfig && (
-              <Card className="flex-[2] min-w-[340px] basis-[460px] grow">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">AV Configuration</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <AvConfiguration
-                    avConfig={eventForConfiguration.avConfig}
-                    roomName={roomName}
-                    editable={isEventStarted}
-                    onUpdate={handleUpdate}
-                  />
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          <EventConfiguration
+            event={eventForConfiguration}
+            roomName={roomName}
+            showHybrid={true}
+            showRecording={true}
+            showAvConfig={true}
+            showOtherHardware={false}
+          />
         )}
 
         {isStaffAssistAction && eventForConfiguration && (
-          <div className="flex flex-wrap gap-3 md:gap-4">
-            <div className="flex-1 min-w-[260px] basis-[320px]">
-              <HybridConfiguration hybrid={eventForConfiguration.hybrid} />
-            </div>
-
-            {eventForConfiguration.avConfig && (
-              <Card className="flex-[2] min-w-[340px] basis-[460px] grow">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">AV Configuration</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <AvConfiguration
-                    avConfig={eventForConfiguration.avConfig}
-                    roomName={roomName}
-                    editable={isEventStarted}
-                    onUpdate={handleUpdate}
-                  />
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          <EventConfiguration
+            event={eventForConfiguration}
+            roomName={roomName}
+            showHybrid={true}
+            showRecording={false}
+            showAvConfig={true}
+            showOtherHardware={false}
+          />
         )}
 
         {/* Always show QC items section for all actions */}
-        <CaptureQC
+        <QcItem
           task={
             {
               ...action,
-              // Adapt action structure to match what CaptureQC expects
-              // CaptureQC expects task.captureQcDetails.qcItems where each item has a 'qc' field
+              // Adapt action structure to match what QcItem expects
+              // QcItem expects task.captureQcDetails.qcItems where each item has a 'qc' field
               captureQcDetails: hasQcItems
                 ? {
                     qcItems: action.qcItems.map((item) => ({
                       ...item,
-                      qc: action.id, // Use action ID as qc reference (CaptureQC expects item.qc)
+                      qc: action.id, // Use action ID as qc reference (QcItem expects item.qc)
                       qcItemDict: item.qcItemDict ?? {
                         id: 0,
                         displayName: "",

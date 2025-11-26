@@ -19,6 +19,13 @@ import { OccurrencesModalShell } from "./OccurrencesModalShell";
 import { EventFacultyList } from "./EventFacultyList";
 import EventPageContent from "./EventPageContent";
 import EventConfiguration from "./EventConfiguration";
+import TwentyFiveLiveResources from "./25LiveResources";
+import { Button } from "../../../components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../../../components/ui/popover";
 
 interface EventDetailHeaderProps {
   event: finalEvent;
@@ -85,6 +92,28 @@ export default function EventDetailHeader({ event }: EventDetailHeaderProps) {
       {/* Right Side - Event Type/Room and Instructor Info */}
       <div className="flex-1 lg:w-1/2 lg:pl-8">
         <EventConfiguration event={event} roomName={event.roomName} />
+        
+        {event.resources.length > 0 && (
+          <div className="mt-3 flex justify-end">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-auto hover:bg-accent hover:text-accent-foreground"
+                >
+                  <span>25Live{"\u00ae"} Resources</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="w-[600px] max-w-[90vw] break-words"
+              >
+                <TwentyFiveLiveResources resources={event.resources} />
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
       </div>
       </div>
     </EventPageContent>

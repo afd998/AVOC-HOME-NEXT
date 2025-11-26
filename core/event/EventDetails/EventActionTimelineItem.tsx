@@ -134,8 +134,14 @@ export default function EventActionTimelineItem({ action }: EventActionTimelineI
                   >
                     {qcItem.qcItemDict?.instruction || "QC Item"}
                     {qcItem.status && (
-                      <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0">
-                        {qcItem.status}
+                      <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0 flex items-center gap-1">
+                        {qcItem.status === "pass" ? (
+                          <Icon icon="mdi:check" width={12} height={12} />
+                        ) : qcItem.status === "fail" ? (
+                          <Icon icon="mdi:close" width={12} height={12} />
+                        ) : (
+                          qcItem.status
+                        )}
                       </Badge>
                     )}
                   </div>

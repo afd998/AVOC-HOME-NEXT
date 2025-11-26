@@ -134,7 +134,7 @@ export default function ActionRow({ entry }: ActionRowProps) {
             />
           ) : null}
           <span className="text-muted-foreground">
-            {roomName}
+            {(roomName || "").replace(/^GH\s+/i, "")}
           </span>
         </ItemActions>
       </Link>

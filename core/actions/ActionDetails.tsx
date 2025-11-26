@@ -22,7 +22,7 @@ export default function ActionDetails({ action }: ActionDetailsProps) {
     label: string;
     value: ReactNode;
     href?: string;
-  }> = [{ label: "Venue", value: action.room }];
+  }> = [{ label: "Venue", value: (action.room || "").replace(/^GH\s+/i, "") }];
 
   if (action.eventDetails) {
     const details = action.eventDetails;

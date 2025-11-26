@@ -5,7 +5,8 @@ import { type ProcessedEvent } from "../../../lib/db/types";
 
 export async function saveEvents(
   processedEvents: ProcessedEvent[],
-  scrapeDate: string
+  scrapeDate: string,
+  protectedEventIds: number[] = []
 ): Promise<void> {
   // Get all existing events for the specified date
   const existingEvents = await db
@@ -15,9 +16,12 @@ export async function saveEvents(
 
   // Create a set of current event IDs for efficient lookup
   const currentEventIds = new Set(
-    processedEvents
-      .map((event) => event.id)
-      .filter((id): id is number => typeof id === "number")
+    [
+      ...processedEvents
+        .map((event) => event.id)
+        .filter((id): id is number => typeof id === "number"),
+      ...protectedEventIds,
+    ].filter((id): id is number => typeof id === "number")
   );
 
   // Find events that exist in the database but not in the current scrape (deleted events)
