@@ -17,6 +17,8 @@ export async function fetchEventsData(browser: Browser, startDate: string): Prom
     await page.click(".c-nav-signin");
     // Fill in login credentials
     await page.waitForSelector('input[id="idToken1"]');
+    console.log("Username loaded:", config.northwestern.username ? "✓" : "✗ MISSING");
+    console.log("Password loaded:", config.northwestern.password ? "✓" : "✗ MISSING");
     await page.fill('input[id="idToken1"]', config.northwestern.username ?? "");
     await page.fill('input[id="idToken2"]', config.northwestern.password ?? "");
     await page.click('input[id="loginButton_0"]');
