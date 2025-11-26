@@ -58,7 +58,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright (Chromium only)
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm --filter cron exec playwright install --with-deps chromium
 
       - name: Run scraper
         run: pnpm --filter cron scrape -- ${{ matrix.offset }}
@@ -114,7 +114,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright (Chromium only)
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm --filter cron exec playwright install --with-deps chromium
 
       - name: Run scraper
         run: pnpm --filter cron scrape -- ${{ matrix.offset }}
@@ -170,7 +170,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright (Chromium only)
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm --filter cron exec playwright install --with-deps chromium
 
       - name: Run scraper
         run: pnpm --filter cron scrape -- ${{ matrix.offset }}
@@ -225,7 +225,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright (Chromium only)
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm --filter cron exec playwright install --with-deps chromium
 
       - name: Run scraper
         run: pnpm --filter cron scrape -- ${{ matrix.offset }}
