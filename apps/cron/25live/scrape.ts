@@ -44,7 +44,9 @@ async function initBrowser(): Promise<Browser> {
 
 async function main(): Promise<void> {
   // Parse command line argument for date offset (defaults to 0 = today)
-  const offset = Number.parseInt(process.argv[2] ?? "0", 10);
+  // Filter out '--' which pnpm may pass through when using `pnpm run scrape -- <offset>`
+  const args = process.argv.slice(2).filter((arg) => arg !== "--");
+  const offset = Number.parseInt(args[0] ?? "0", 10);
   const date = dayjs().add(offset, "day").format("YYYY-MM-DD");
   console.log(`\n🚀 Starting scrape for date: ${date}`);
 
