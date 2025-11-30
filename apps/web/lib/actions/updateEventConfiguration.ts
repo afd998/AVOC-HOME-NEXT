@@ -263,7 +263,7 @@ async function regenerateQcItemsForEvent(
           handhelds: enrichedEvent.avConfig.handhelds,
         } : null,
         transform: enrichedEvent.transform,
-        firstLecture: enrichedEvent.firstLecture,
+        isFirstLecture: enrichedEvent.eventType === "Lecture" && enrichedEvent.seriesPos === 1,
         hasHybrid: !!enrichedEvent.hybrid,
         otherHardwareCount: enrichedEvent.otherHardware?.length ?? 0,
         otherHardware: enrichedEvent.otherHardware?.map(hw => hw.otherHardwareDict) ?? [],

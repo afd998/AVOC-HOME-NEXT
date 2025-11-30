@@ -1,6 +1,8 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import ActionContentWrapper from "./ActionContentWrapper";
 import { getActionById } from "@/lib/data/actions/action";
 import { addDisplayColumns } from "@/lib/data/calendar/actionUtils";
+import { getQueryClient } from "@/lib/query";
 
 type ActionsPageProps = {
   params: Promise<{ slug: string }>;
@@ -9,15 +11,24 @@ type ActionsPageProps = {
 export default async function ActionsPage(props: ActionsPageProps) {
   const { slug } = await props.params;
 
+  const queryClient = getQueryClient();
+
+  // Prefetch the action
   const action = await getActionById(slug);
-  if (!action) {
-    return <div>Action not found (ID: {slug})</div>;
+  if (action) {
+    const hydratedAction = addDisplayColumns([
+      action as Parameters<typeof addDisplayColumns>[0][0],
+    ])[0];
+
+    await queryClient.prefetchQuery({
+      queryKey: ["action", slug],
+      queryFn: () => Promise.resolve(hydratedAction),
+    });
   }
 
-  // ActionWithDict is compatible with ActionRow (which is an alias for ActionWithDict)
-  const hydratedAction = addDisplayColumns([
-    action as Parameters<typeof addDisplayColumns>[0][0],
-  ])[0];
-  
-  return <ActionContentWrapper actionId={slug} initialAction={hydratedAction} />;
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ActionContentWrapper actionId={slug} />
+    </HydrationBoundary>
+  );
 }

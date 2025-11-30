@@ -8,6 +8,7 @@ import {
   type EventAVConfigRow,
   type EventRecordingRow,
   type EventOtherHardwareRow,
+  type Series,
 } from "shared";
 import type { finalEvent } from "../calendar";
 import { addDisplayColumns } from "./utils/hydrate-display-columns";
@@ -29,6 +30,7 @@ export type EventWithRelations = EventType & {
     otherHardwareDict?: { id: string } | null;
   })[];
   actions?: any[]; // Will be properly typed from Drizzle query result
+  series?: Series | null;
 };
 
 type HydratedEvent = EventType & {
@@ -40,6 +42,7 @@ type HydratedEvent = EventType & {
   recording?: EventRecordingRow;
   otherHardware?: EventOtherHardwareRow[];
   actions?: ActionWithDict[];
+  series?: Series | null;
 };
 
 export async function getEventsByDate(
@@ -70,7 +73,7 @@ export async function getEventsByDate(
 }
 
 function toFinalEvent(eventWithRelations: EventWithRelations): finalEvent {
-  const { facultyEvents, resourceEvents, eventHybrids, eventAvConfigs, eventRecordings, eventOtherHardwares, actions, ...event } = eventWithRelations;
+  const { facultyEvents, resourceEvents, eventHybrids, eventAvConfigs, eventRecordings, eventOtherHardwares, actions, series, ...event } = eventWithRelations;
 
   const facultyMembers = (facultyEvents ?? [])
     .map((relation) => relation.faculty)
@@ -138,6 +141,7 @@ function toFinalEvent(eventWithRelations: EventWithRelations): finalEvent {
     recording,
     otherHardware,
     actions: mappedActions,
+    series: series ?? null,
   };
 
   return addDisplayColumns([hydratedEvent])[0] as finalEvent;
@@ -183,6 +187,7 @@ export const getEventById = async (
           },
         },
       },
+      series: true,
     },
   });
 

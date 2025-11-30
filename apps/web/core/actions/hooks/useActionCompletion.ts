@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
 import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
-import { useCalendarActionsStore } from "@/app/(dashboard)/calendar/[slug]/stores/useCalendarActionsStore";
+import { useActionMutations } from "@/lib/query";
 
 export function useActionCompletion(action: HydratedAction) {
-  const updateAction = useCalendarActionsStore((state) => state.updateAction);
+  const { updateAction } = useActionMutations();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
   const isCompleted = action.status.trim().toLowerCase() === "completed";
@@ -61,4 +61,3 @@ export function useActionCompletion(action: HydratedAction) {
     handleMarkCompleted,
   };
 }
-

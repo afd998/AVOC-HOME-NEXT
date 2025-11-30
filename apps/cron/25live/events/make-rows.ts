@@ -3,7 +3,6 @@ import { parseEventResources } from "./parse-resourses";
 import { mergeAdjacentRoomEvents } from "./merge-adjacent-room-events";
 import type { ProcessedEvent } from "shared";
 import type { RawEvent } from "../schemas";
-import { computeFirstLecture } from "./compute-first-lecture";
 import { computeTransforms } from "./compute-transform";
 
 const {
@@ -95,23 +94,20 @@ export async function getEvents(
       resources,
       updatedAt: new Date().toISOString(),
       raw: event,
-      firstLecture: false,
     };
   });
 
   const mergedEvents = mergeAdjacentRoomEvents(processedEvents);
   const filteredEvents = removeKECNoAcademicEvents(mergedEvents);
 
-  const firstLectureIds = await computeFirstLecture(filteredEvents);
   const transformMap = computeTransforms(filteredEvents);
 
-  const eventsWithFirstLectureFlag = filteredEvents.map((event) => ({
+  const eventsWithTransform = filteredEvents.map((event) => ({
     ...event,
-    firstLecture: event.eventType === "Lecture" && firstLectureIds.has(event.id),
     transform: transformMap.get(event.id) ?? null,
   }));
 
-  return eventsWithFirstLectureFlag;
+  return eventsWithTransform;
 }
 
 export {

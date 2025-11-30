@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, panoptoChecks, shifts, facultyEvents, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
+import { faculty, facultySetup, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, series, panoptoChecks, shifts, facultyEvents, shiftBlockProfile, shiftBlocks, shiftBlockProfileRoom, rooms, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -29,6 +29,10 @@ export const eventsRelations = relations(events, ({one, many}) => ({
 	profile: one(profiles, {
 		fields: [events.manOwner],
 		references: [profiles.id]
+	}),
+	series: one(series, {
+		fields: [events.series],
+		references: [series.id]
 	}),
 	panoptoChecks: many(panoptoChecks),
 	facultyEvents: many(facultyEvents),
@@ -79,6 +83,8 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	events: many(events),
 	panoptoChecks: many(panoptoChecks),
 	shifts: many(shifts),
+	shiftBlockProfiles: many(shiftBlockProfile),
+	shiftBlockProfileRooms: many(shiftBlockProfileRoom),
 }));
 
 export const notificationsRelations = relations(notifications, ({one}) => ({
@@ -90,6 +96,10 @@ export const notificationsRelations = relations(notifications, ({one}) => ({
 		fields: [notifications.userId],
 		references: [profiles.id]
 	}),
+}));
+
+export const seriesRelations = relations(series, ({many}) => ({
+	events: many(events),
 }));
 
 export const panoptoChecksRelations = relations(panoptoChecks, ({one}) => ({
@@ -119,6 +129,41 @@ export const facultyEventsRelations = relations(facultyEvents, ({one}) => ({
 		fields: [facultyEvents.faculty],
 		references: [faculty.id]
 	}),
+}));
+
+export const shiftBlockProfileRelations = relations(shiftBlockProfile, ({one}) => ({
+	profile: one(profiles, {
+		fields: [shiftBlockProfile.profile],
+		references: [profiles.id]
+	}),
+	shiftBlock: one(shiftBlocks, {
+		fields: [shiftBlockProfile.shiftBlock],
+		references: [shiftBlocks.id]
+	}),
+}));
+
+export const shiftBlocksRelations = relations(shiftBlocks, ({many}) => ({
+	shiftBlockProfiles: many(shiftBlockProfile),
+	shiftBlockProfileRooms: many(shiftBlockProfileRoom),
+}));
+
+export const shiftBlockProfileRoomRelations = relations(shiftBlockProfileRoom, ({one}) => ({
+	profile: one(profiles, {
+		fields: [shiftBlockProfileRoom.profile],
+		references: [profiles.id]
+	}),
+	room: one(rooms, {
+		fields: [shiftBlockProfileRoom.room],
+		references: [rooms.id]
+	}),
+	shiftBlock: one(shiftBlocks, {
+		fields: [shiftBlockProfileRoom.shiftBlock],
+		references: [shiftBlocks.id]
+	}),
+}));
+
+export const roomsRelations = relations(rooms, ({many}) => ({
+	shiftBlockProfileRooms: many(shiftBlockProfileRoom),
 }));
 
 export const resourceEventsRelations = relations(resourceEvents, ({one}) => ({

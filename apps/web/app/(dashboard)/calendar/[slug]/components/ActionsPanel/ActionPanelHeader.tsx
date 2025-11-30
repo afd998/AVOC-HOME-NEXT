@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback } from "react";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, UserPlus, CalendarClock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEventAssignmentsStore } from "@/lib/stores/event-assignments";
 
 type ActionPanelHeaderProps = {
   onGoToNow?: () => void;
@@ -13,6 +13,7 @@ type ActionPanelHeaderProps = {
   totalActions: number;
   tabValue: "all" | "mine";
   onTabValueChange?: (value: "all" | "mine") => void;
+  onOpenSchedule?: () => void;
 };
 
 export default function ActionPanelHeader({
@@ -21,9 +22,9 @@ export default function ActionPanelHeader({
   totalActions,
   tabValue,
   onTabValueChange,
+  onOpenSchedule,
 }: ActionPanelHeaderProps) {
-  const totalLabel =
-    totalActions === 1 ? "1 total action" : `${totalActions} total actions`;
+  const { showEventAssignments, toggleEventAssignments } = useEventAssignmentsStore();
   const handleTabValueChange = useCallback(
     (nextValue: string) => {
       if (nextValue === "all" || nextValue === "mine") {
@@ -33,18 +34,46 @@ export default function ActionPanelHeader({
     [onTabValueChange]
   );
 
-  const showTotalBadge = tabValue === "all";
-
   return (
     <header className="border-b px-4 py-3">
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold leading-none">Action View</h2>
-          {showTotalBadge ? (
-            <Badge variant="secondary" className="text-xs font-medium">
-              {totalLabel}
-            </Badge>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {!showEventAssignments && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleEventAssignments}
+                aria-label="Show assignments"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Assignments
+              </Button>
+            )}
+            {showEventAssignments && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onOpenSchedule}
+                  aria-label="Open schedule"
+                >
+                  <CalendarClock className="h-4 w-4 mr-2" />
+                  Schedule
+                </Button>
+                <Button
+                  variant={showEventAssignments ? "default" : "ghost"}
+                  size="sm"
+                  onClick={toggleEventAssignments}
+                  aria-label="Hide assignments"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Close
+                </Button>
+              </>
+            )}
+          </div>
         </div>
         <div className="flex items-center justify-between gap-3">
           <Tabs
@@ -72,4 +101,3 @@ export default function ActionPanelHeader({
     </header>
   );
 }
-

@@ -7,14 +7,29 @@ import ActionList from "./ActionList";
 import ActionPanelHeader from "./ActionPanelHeader";
 import { ActionOverdueKeyframes } from "./actionOverdueStyles";
 import { buildActionListItems } from "./utils";
-import { useCalendarActionsStore } from "../../stores/useCalendarActionsStore";
+import { useActionsQuery } from "@/lib/query";
+import ActionAssignments from "../ActionAssignments/ActionAssignments";
+import { useEventAssignmentsStore } from "@/lib/stores/event-assignments";
 
-export default function ActionsPanel() {
+type ActionsPanelProps = {
+  date: string;
+  filter: string;
+  autoHide: boolean;
+};
+
+export default function ActionsPanel({
+  date,
+  filter,
+  autoHide,
+}: ActionsPanelProps) {
   const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
-  const actionGroups = useCalendarActionsStore((state) => state.actionGroups);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(date);
+  const { data: actionGroups = [] } = useActionsQuery({ date, filter, autoHide });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const indicatorElementRef = useRef<HTMLDivElement | null>(null);
   const [hasIndicator, setHasIndicator] = useState(false);
+  const { showEventAssignments } = useEventAssignmentsStore();
 
   const { items, totalActions } = useMemo(() => {
     if (activeTab !== "all") {
@@ -29,6 +44,16 @@ export default function ActionsPanel() {
       setHasIndicator(false);
     }
   }, [totalActions]);
+
+  useEffect(() => {
+    setSelectedDate(date);
+  }, [date]);
+
+  useEffect(() => {
+    if (!showEventAssignments) {
+      setShowSchedule(false);
+    }
+  }, [showEventAssignments]);
 
   const handleIndicatorUpdate = useCallback(
     (element: HTMLDivElement | null) => {
@@ -66,6 +91,7 @@ export default function ActionsPanel() {
           tabValue={activeTab}
           onTabValueChange={setActiveTab}
           totalActions={totalActions}
+          onOpenSchedule={() => setShowSchedule(true)}
         />
         <div
           ref={scrollContainerRef}
@@ -82,8 +108,16 @@ export default function ActionsPanel() {
             )
           ) : null}
         </div>
+        <ActionAssignments
+          dates={[date]}
+          selectedDate={selectedDate}
+          onDateSelect={setSelectedDate}
+          open={showSchedule}
+          onOpenChange={setShowSchedule}
+          hideTrigger
+          showShiftBlockLines={false}
+        />
       </div>
     </>
   );
 }
-

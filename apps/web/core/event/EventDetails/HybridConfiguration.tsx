@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Icon } from "@iconify/react";
 import type { EventHybridRow } from "shared/db/types";
 import {
   Select,
@@ -54,82 +55,118 @@ export default function HybridConfiguration({
     }
   };
 
+  const handleConfigChange = async (value: string) => {
+    if (!isEditable || isUpdating) return;
+    
+    setIsUpdating(true);
+    try {
+      await onUpdate({ hybrid: { config: value } });
+    } catch (error) {
+      console.error("[HybridConfiguration] Failed to update hybrid config", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const isHybridOn = Boolean(hybrid);
 
   return (
-    <Card className="flex-1">
-      <CardHeader className="pb-3">
-        <Toggle
-          variant="outline"
-          pressed={isHybridOn}
-          onPressedChange={handleToggleHybrid}
-          disabled={!isEditable || isUpdating}
-          className={cn(
-            "h-auto px-3 py-2 rounded-sm transition-colors w-auto inline-flex",
-            isEditable && !isUpdating && "cursor-pointer",
-            (!isEditable || isUpdating) && "cursor-not-allowed",
-            isHybridOn 
-              ? "bg-blue-100 hover:bg-blue-200 border-blue-300 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-900 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700 dark:data-[state=on]:bg-blue-900/30" 
-              : "bg-muted hover:bg-accent/50 hover:border-border"
+    <Card className={cn(
+      "flex-1",
+      isHybridOn && "border-blue-300 dark:border-blue-700"
+    )}>
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <div className="w-fit">
+          <Toggle
+            variant="outline"
+            pressed={isHybridOn}
+            onPressedChange={handleToggleHybrid}
+            disabled={!isEditable || isUpdating}
+            className={cn(
+              "h-auto px-3 py-2 rounded-sm transition-colors w-auto inline-flex",
+              isEditable && !isUpdating && "cursor-pointer",
+              (!isEditable || isUpdating) && "cursor-not-allowed",
+              isHybridOn 
+                ? "bg-blue-100 hover:bg-blue-200 border-blue-300 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-900 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700 dark:data-[state=on]:bg-blue-900/30" 
+                : "bg-muted hover:bg-accent/50 hover:border-border"
+            )}
+            aria-label={isHybridOn ? "Disable hybrid" : "Enable hybrid"}
+          >
+            <img
+              src="/images/zoomicon.png"
+              alt="Zoom"
+              className={`size-4 transition-all ${!isHybridOn ? "opacity-40 grayscale" : ""}`}
+            />
+            <span className="text-sm font-semibold leading-tight">Hybrid</span>
+          </Toggle>
+        </div>
+        <div className="text-sm">
+          <span className="font-medium">Meeting ID: </span>
+          {hybrid?.meetingId ? (
+            (() => {
+              const meetingHref =
+                hybrid.meetingLink ??
+                (hybrid.meetingId
+                  ? `https://northwestern.zoom.us/j/${hybrid.meetingId}`
+                  : undefined);
+              return meetingHref ? (
+                <a
+                  href={meetingHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  {hybrid.meetingId}
+                </a>
+              ) : (
+                hybrid.meetingId
+              );
+            })()
+          ) : (
+            <span className="text-muted-foreground">None</span>
           )}
-          aria-label={isHybridOn ? "Disable hybrid" : "Enable hybrid"}
-        >
-          <img
-            src="/images/zoomicon.png"
-            alt="Zoom"
-            className={`size-4 transition-all ${!isHybridOn ? "opacity-40 grayscale" : ""}`}
-          />
-          <span className="text-sm font-semibold leading-tight">Hybrid</span>
-        </Toggle>
+        </div>
       </CardHeader>
       <CardContent className="space-y-2 text-sm leading-normal">
         {hybrid ? (
           <>
-            {hybrid.meetingId && (
-              <div>
-                <span className="font-medium">Meeting ID: </span>
-                {(() => {
-                  const meetingHref =
-                    hybrid.meetingLink ??
-                    (hybrid.meetingId
-                      ? `https://northwestern.zoom.us/j/${hybrid.meetingId}`
-                      : undefined);
-                  return meetingHref ? (
-                    <a
-                      href={meetingHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {hybrid.meetingId}
-                    </a>
-                  ) : (
-                    hybrid.meetingId
-                  );
-                })()}
-              </div>
-            )}
-            <div>
-              <span className="font-medium">Instructions: </span>
-              <span className="whitespace-pre-line">
-                {hybrid.instructions ?? "None"}
-              </span>
-            </div>
             <div className="space-y-1">
               <Select
                 value={configValue ?? undefined}
-                disabled={true}
-                aria-readonly={true}
+                disabled={!isEditable || isUpdating}
+                onValueChange={handleConfigChange}
               >
                 <SelectTrigger className="w-full sm:w-56">
                   <SelectValue placeholder="Not set" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="presenter">Remote Presenter</SelectItem>
-                  <SelectItem value="audience">Remote Audience</SelectItem>
-                  <SelectItem value="both">Both</SelectItem>
+                  <SelectItem value="presenter">
+                    <div className="flex items-center gap-2">
+                      <Icon icon="streamline-ultimate:meeting-remote" width={16} height={16} />
+                      <span>Remote Presenter</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="audience">
+                    <div className="flex items-center gap-2">
+                      <Icon icon="streamline-ultimate:work-from-home-laptop-meeting-bold" width={16} height={16} />
+                      <span>Remote Audience</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="both">
+                    <div className="flex items-center gap-2">
+                      <Icon icon="streamline-ultimate:work-from-home-laptop-meeting-bold" width={16} height={16} />
+                      <Icon icon="streamline-ultimate:meeting-remote" width={16} height={16} />
+                      <span>Remote Audience + Presenter</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <span className="font-medium">Instructions: </span>
+              <span className="whitespace-pre-line">
+                {hybrid.instructions ?? "None"}
+              </span>
             </div>
           </>
         ) : null}

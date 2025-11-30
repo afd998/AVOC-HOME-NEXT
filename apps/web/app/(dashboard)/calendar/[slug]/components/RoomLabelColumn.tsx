@@ -1,18 +1,18 @@
 import React from "react";
-import { Badge } from "../../../../../components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "../../../../../components/ui/context-menu";
-import UserAvatar from "../../../../../core/User/UserAvatar";
-import { useUserProfile } from "../../../../../core/User/useUserProfile";
-import { useEventAssignments } from "../../../contexts/EventAssignmentsContext";
+} from "@/components/ui/context-menu";
+import UserAvatar from "@/core/User/UserAvatar";
+import { useUserProfile } from "@/core/User/useUserProfile";
+import { useEventAssignmentsStore } from "@/lib/stores/event-assignments";
 import {
   useShiftBlocks,
   useUpdateShiftBlocks,
-} from "../EventAssignments/hooks/useShiftBlocks";
+} from "@/features/SessionAssignments/hooks/useShiftBlocks";
 
 interface RoomLabelColumnProps {
   headerHeightPx: number;
@@ -53,7 +53,7 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
     setSelectedShiftBlock,
     setSelectedShiftBlockId,
     setSelectedShiftBlockIndex,
-  } = useEventAssignments();
+  } = useEventAssignmentsStore();
   const { data: shiftBlocks = [] } = useShiftBlocks(dateString);
   const updateShiftBlocks = useUpdateShiftBlocks();
 
@@ -174,8 +174,8 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
 
       const blocksToInsert = updatedBlocks.map((b: any) => ({
         date: b.date,
-        start_time: b.start_time,
-        end_time: b.end_time,
+        startTime: b.startTime,
+        endTime: b.endTime,
         assignments: b.assignments,
       }));
 
@@ -185,18 +185,18 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
           onSuccess: (insertedBlocks) => {
             clearSelection();
             if (Array.isArray(insertedBlocks) && selectedShiftBlock) {
-              const prevStart = selectedShiftBlock.start_time;
-              const prevEnd = selectedShiftBlock.end_time;
+              const prevStart = selectedShiftBlock.startTime;
+              const prevEnd = selectedShiftBlock.endTime;
               if (prevStart && prevEnd) {
                 const matchIndex = blocksToInsert.findIndex(
                   (block) =>
-                    block.start_time === prevStart &&
-                    block.end_time === prevEnd
+                    block.startTime === prevStart &&
+                    block.endTime === prevEnd
                 );
                 const match = insertedBlocks.find(
                   (block) =>
-                    block.start_time === prevStart &&
-                    block.end_time === prevEnd
+                    (block as any).startTime === prevStart &&
+                    (block as any).endTime === prevEnd
                 );
                 if (match) {
                   setSelectedShiftBlockId(match.id.toString());

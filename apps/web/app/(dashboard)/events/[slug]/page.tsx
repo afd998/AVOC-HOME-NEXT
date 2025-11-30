@@ -1,22 +1,30 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import EventDetailHeader from "@/core/event/EventDetails/EventDetailHeader";
 import EventActionsSection from "@/core/event/EventDetails/EventActionsSection";
 import { getEventById } from "@/lib/data/calendar/event/events";
+import { getQueryClient } from "@/lib/query";
+
 type EventsPageProps = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export default async function EventsPage(props: EventsPageProps) {
   const { slug } = await props.params;
-  console.log(slug);
-  const event = await getEventById(slug);
+  
+  const queryClient = getQueryClient();
 
-  if (!event) {
-    return <div>Event not found</div>;
-  }
+  // Prefetch the event
+  await queryClient.prefetchQuery({
+    queryKey: ["event", slug],
+    queryFn: () => getEventById(slug),
+  });
+
+  const dehydratedState = dehydrate(queryClient);
+
   return (
-    <div>
-      <EventDetailHeader event={event} />
-      <EventActionsSection event={event} />
-    </div>
+    <HydrationBoundary state={dehydratedState}>
+      <EventDetailHeader eventId={slug} />
+      <EventActionsSection eventId={slug} />
+    </HydrationBoundary>
   );
 }

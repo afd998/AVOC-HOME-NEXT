@@ -6,6 +6,7 @@ import {
   type EventRecordingRow,
   type EventOtherHardwareRow,
   type Event as EventType,
+  type Series,
 } from "shared";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { FacultyMember } from "./event/utils/hyrdate-faculty";
@@ -26,6 +27,7 @@ type HydratedEvent = EventType & {
   recording?: EventRecordingRow;
   otherHardware?: EventOtherHardwareRow[];
   actions?: ActionWithDict[];
+  series?: Series | null;
 };
 export type finalEvent = EventWithDisplay<HydratedEvent>;
 export type RoomRowData = { roomName: string; events: finalEvent[] };

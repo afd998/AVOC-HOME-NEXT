@@ -63,12 +63,12 @@ export default function CalendarDragShell({
       {header ? (
         <div
           className="sticky top-[-10px] z-40 overflow-hidden"
-          style={{ height: `${stickyHeaderHeight}px` }}
+          style={{ minHeight: headerHeightPx ? `${stickyHeaderHeight}px` : undefined }}
         >
           <div
             style={{
               width: `${contentWidth * pageZoom}px`,
-              height: `${stickyHeaderHeight}px`,
+              minHeight: headerHeightPx ? `${stickyHeaderHeight}px` : undefined,
               transform: `translateX(-${scrollPosition.left}px)`,
             }}
           >
@@ -77,7 +77,7 @@ export default function CalendarDragShell({
                 transform: `scaleY(${pageZoom})`,
                 transformOrigin: "top left",
                 width: `${contentWidth * pageZoom}px`,
-                height: `${headerHeightPx}px`,
+                minHeight: headerHeightPx ? `${headerHeightPx}px` : undefined,
               }}
             >
               {header}

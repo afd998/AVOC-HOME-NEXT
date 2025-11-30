@@ -28,13 +28,20 @@ export function generateQcItemsForAction(
     createdAt: new Date().toISOString(),
   });
 
+  // Helper function to check if a source is valid (exists and is not "No Source")
+  const isValidSource = (source: string | null | undefined): boolean => {
+    return !!source && source !== "No Source";
+  };
+
   if (action.type === "CAPTURE QC") {
     const dicts = [1, 4, 7];
-    if (eventAVConfigRow.leftSource) dicts.push(2);
-    if (eventAVConfigRow.rightSource) dicts.push(3);
-    if (eventAVConfigRow.centerSource) dicts.push(5);
+    if (isValidSource(eventAVConfigRow.leftSource)) dicts.push(2);
+    if (isValidSource(eventAVConfigRow.rightSource)) dicts.push(3);
+    if (isValidSource(eventAVConfigRow.centerSource)) dicts.push(5);
+    // First lecture in series check (replaces firstLecture field)
+    const isFirstLecture = event.eventType === "Lecture" && event.seriesPos === 1;
     if (
-      event.firstLecture &&
+      isFirstLecture &&
       !eventRecordingRow?.type?.toLowerCase().includes("canvas")
     ) {
       dicts.push(6);
@@ -97,10 +104,11 @@ export function generateQcItemsForAction(
   if (action.type?.toUpperCase() === "STAFF ASSISTANCE" && action.subType === "Session Setup") {
 
     const dicts: number[] = [];
-    if (eventAVConfigRow.leftSource) dicts.push(22);
-    if (eventAVConfigRow.rightSource) dicts.push(23);
-    if (eventAVConfigRow.centerSource) dicts.push(24);
-    if (event.firstLecture) dicts.push(25);
+    if (isValidSource(eventAVConfigRow.leftSource)) dicts.push(22);
+    if (isValidSource(eventAVConfigRow.rightSource)) dicts.push(23);
+    if (isValidSource(eventAVConfigRow.centerSource)) dicts.push(24);
+    // First lecture in series check (replaces firstLecture field)
+    if (event.eventType === "Lecture" && event.seriesPos === 1) dicts.push(25);
     if (event.hybrid) dicts.push(26);
     if (
       (eventAVConfigRow.handhelds ?? 0) > 0 ||

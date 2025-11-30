@@ -23,8 +23,9 @@ const baseEvent = {
   date: "2024-01-15",
   instructorNames: null,
   organization: null,
-  firstLecture: null,
   transform: null,
+  series: null,
+  seriesPos: null,
 } satisfies ProcessedEvent;
 
 const events: ProcessedEvent[] = [

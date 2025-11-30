@@ -1,6 +1,6 @@
  import { Suspense } from "react";
 
-import { Users, Calendar as CalendarIcon } from "lucide-react";
+import { Users, Calendar as CalendarIcon, LayoutDashboard } from "lucide-react";
 
 import { NavUser } from "./nav-user";
 import {
@@ -136,6 +136,14 @@ export async function AppSidebar({
                   <SidebarMenuButton className="w-full justify-start">
                     <CalendarIcon className="h-4 w-4" />
                     <span>Events</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/manager-dashboard">
+                  <SidebarMenuButton className="w-full justify-start">
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span>Manager Dashboard</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>

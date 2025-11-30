@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { CardContent } from "@/components/ui/card";
 import QcItem, { useQcItemForm } from "@/core/actions/QcItem";
 import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
-import { useCalendarActionsStore } from "@/app/(dashboard)/calendar/[slug]/stores/useCalendarActionsStore";
 import ActionHeader from "./ActionHeader";
 import ActionDetails from "./ActionDetails";
 import ActionFooter from "./ActionFooter";
@@ -20,14 +19,11 @@ type ActionContentProps = {
 export default function ActionContent({
   action: actionProp,
 }: ActionContentProps) {
-  const updateAction = useCalendarActionsStore((state) => state.updateAction);
   const action = actionProp;
   
   if (!action) {
     return null;
   }
-  
-  const numericActionId = action.id;
 
   // All actions can have QC items, so always show the QC form if there are qcItems
   const hasQcItems = action.qcItems && action.qcItems.length > 0;

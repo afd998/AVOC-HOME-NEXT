@@ -1,7 +1,9 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import ActionDialogShell from "@/app/(dashboard)/calendar/[slug]/@actionModal/ActionDialogShell";
 import ActionDialogContent from "./ActionDialogContent";
 import { getActionById } from "@/lib/data/actions/action";
 import { addDisplayColumns } from "@/lib/data/calendar/actionUtils";
+import { getQueryClient } from "@/lib/query";
 
 type ActionsPageProps = {
   params: Promise<{
@@ -12,16 +14,25 @@ type ActionsPageProps = {
 
 export default async function ActionsPage({ params }: ActionsPageProps) {
   const { slug, actionid } = await params;
-  // Fetch action server-side and ensure it's in the store
-  // Since this is an intercepted route, action should already be in store,
-  // but we fetch here to ensure it's available
+  
+  const queryClient = getQueryClient();
+
+  // Prefetch the action
   const action = await getActionById(actionid);
-  const hydratedAction = action ? addDisplayColumns([action])[0] : null;
+  if (action) {
+    const hydratedAction = addDisplayColumns([action])[0];
+
+    await queryClient.prefetchQuery({
+      queryKey: ["action", actionid],
+      queryFn: () => Promise.resolve(hydratedAction),
+    });
+  }
 
   return (
-    <ActionDialogShell>
-      <ActionDialogContent actionId={actionid} slug={slug} initialAction={hydratedAction} />
-    </ActionDialogShell>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ActionDialogShell>
+        <ActionDialogContent actionId={actionid} slug={slug} />
+      </ActionDialogShell>
+    </HydrationBoundary>
   );
 }
-

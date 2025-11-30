@@ -8,6 +8,9 @@ import {
   facultyEvents,
   roomFilters,
   shiftBlocks,
+  shifts,
+  profiles,
+  rooms,
   eventHybrid,
   eventAvConfig,
   eventOtherHardware,
@@ -17,14 +20,34 @@ import {
   waitedReason,
   faculty,
   facultySetup,
+  series,
+  shiftBlockProfileRoom,
+  shiftBlockProfile,
 } from "./schema";
 
 export type RoomFilter = InferSelectModel<typeof roomFilters>;
 export type Event = InferSelectModel<typeof events>;
 export type ShiftBlock = InferSelectModel<typeof shiftBlocks>;
+export type Shift = InferSelectModel<typeof shifts>;
+export type Profile = InferSelectModel<typeof profiles>;
+export type Room = InferSelectModel<typeof rooms>;
+export type ShiftBlockProfileRoom = InferSelectModel<typeof shiftBlockProfileRoom>;
+export type ShiftBlockProfile = InferSelectModel<typeof shiftBlockProfile>;
+export type ShiftBlockAssignment = {
+  user: string;
+  name?: string | null;
+  rooms: string[];
+  profile?: Profile | null;
+  profileId?: string | null;
+};
+export type ShiftBlockWithAssignments = ShiftBlock & {
+  assignments: ShiftBlockAssignment[];
+};
 export type ActionRow = InferInsertModel<typeof actions>;
 export type Faculty = InferSelectModel<typeof faculty>;
 export type FacultySetup = InferSelectModel<typeof facultySetup>;
+export type Series = InferSelectModel<typeof series>;
+export type SeriesRow = InferInsertModel<typeof series>;
 
 export type EventResource = {
   itemName: string;

@@ -239,7 +239,7 @@ function DefaultEvent({ event }: { event: finalEvent }) {
   );
 }
 
-export default async function EventContent({ event }: { event: finalEvent }) {
+export default function EventContent({ event }: { event: finalEvent }) {
   // const shouldFetchOrg =
   //   event.organization === "JAPAN CLUB" ||
   //   event.organization === "KELLOGG MARKETING CLUB" ||

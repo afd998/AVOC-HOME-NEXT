@@ -1,6 +1,7 @@
-﻿import Link from "next/link";
+﻿"use client";
+
+import Link from "next/link";
 import { truncateEventName } from "@/core/event/eventUtils";
-import type { finalEvent } from "@/lib/data/calendar/calendar";
 import { MapPin, ChevronUp, ChevronDown } from "lucide-react";
 import {
   Card,
@@ -32,12 +33,31 @@ import {
   formatDate,
   formatTimeFromHHMMSS,
 } from "@/lib/utils/timeUtils";
+import { useEventQuery } from "@/lib/query";
 
 interface EventDetailHeaderProps {
-  event: finalEvent;
+  eventId: string;
 }
 
-export default function EventDetailHeader({ event }: EventDetailHeaderProps) {
+export default function EventDetailHeader({ eventId }: EventDetailHeaderProps) {
+  const { data: event, isLoading } = useEventQuery({ eventId });
+
+  if (isLoading) {
+    return (
+      <EventPageContent>
+        <div>Loading...</div>
+      </EventPageContent>
+    );
+  }
+
+  if (!event) {
+    return (
+      <EventPageContent>
+        <div>Event not found</div>
+      </EventPageContent>
+    );
+  }
+
   return (
     <EventPageContent>
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between">
@@ -45,20 +65,49 @@ export default function EventDetailHeader({ event }: EventDetailHeaderProps) {
       <div className="flex-1 lg:w-1/2 space-y-4">
         <Card>
           <CardContent className="p-4">
-            <div className="space-y-2">
-              {event.eventName && (
-                <h1 className="text-2xl sm:text-4xl font-bold mb-0.5 uppercase">
-                  {truncateEventName(event)}
-                </h1>
+            <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-4">
+              {/* First Column - Series Info */}
+              {event.seriesPos != null && event.series?.totalEvents != null && event.itemId && event.date && (
+                <Link href={`/series/${event.itemId}`} className="flex-shrink-0">
+                  <Item variant="outline" className="cursor-pointer">
+                    <ItemMedia variant="icon">
+                      <div className="flex flex-col items-center justify-center">
+                        <ChevronUp className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4" />
+                      </div>
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle>
+                        {new Date(event.date + "T00:00:00").toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </ItemTitle>
+                      <ItemDescription>
+                        {event.seriesPos}/{event.series.totalEvents}
+                      </ItemDescription>
+                    </ItemContent>
+                  </Item>
+                </Link>
               )}
 
-              {event.lectureTitle && (
-                <h2 className="text-md sm:text-lg font-medium mb-2 = break-words">
-                  "{event.lectureTitle}"
-                </h2>
-              )}
+              {/* Second Column - Event Name, Lecture Title, Full Event Name */}
+              <div className="space-y-2">
+                {event.eventName && (
+                  <h1 className="text-2xl sm:text-4xl font-bold mb-0.5 uppercase truncate">
+                    {truncateEventName(event)}
+                  </h1>
+                )}
 
-              <p className="text-xs sm:text-sm mb-0">{event.eventName || ""}</p>
+                {event.lectureTitle && (
+                  <h2 className="text-md sm:text-lg font-medium mb-2 break-words">
+                    "{event.lectureTitle}"
+                  </h2>
+                )}
+
+                <p className="text-xs sm:text-sm mb-0 break-words">{event.eventName || ""}</p>
+              </div>
             </div>
           </CardContent>
         </Card>

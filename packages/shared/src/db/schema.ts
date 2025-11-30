@@ -250,6 +250,17 @@ export const roomFilters = pgTable("room_filters", {
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
 
+export const series = pgTable("series", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	id: bigint({ mode: "number" }).primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	seriesName: text("series_name").notNull(),
+	seriesType: text("series_type").notNull(),
+	totalEvents: integer("total_events").notNull(),
+	firstDate: date("first_date").notNull(),
+	lastDate: date("last_date").notNull(),
+});
+
 export const resourcesDict = pgTable("resources_dict", {
 	id: text().primaryKey().notNull(),
 	name: text(),
@@ -280,8 +291,11 @@ export const events = pgTable("events", {
 	date: date().notNull(),
 	instructorNames: jsonb("instructor_names"),
 	organization: text(),
-	firstLecture: boolean(),
 	transform: text(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	seriesPos: bigint("series_pos", { mode: "number" }),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	series: bigint({ mode: "number" }),
 }, (table) => [
 	index("idx_events_date_start_time").using("btree", table.date.asc().nullsLast().op("date_ops"), table.startTime.asc().nullsLast().op("date_ops")),
 	index("idx_events_event_name_start_time").using("btree", table.eventName.asc().nullsLast().op("text_ops"), table.startTime.asc().nullsLast().op("text_ops")),
@@ -294,8 +308,25 @@ export const events = pgTable("events", {
 			foreignColumns: [profiles.id],
 			name: "events_man_owner_fkey"
 		}),
+	foreignKey({
+			columns: [table.series],
+			foreignColumns: [series.id],
+			name: "events_series_fkey"
+		}).onDelete("cascade"),
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 	check("instructor_name_is_array_or_null", sql`(instructor_names IS NULL) OR (jsonb_typeof(instructor_names) = 'array'::text)`),
+]);
+
+export const shiftBlocks = pgTable("shift_blocks", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "shift_blocks_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	assignments: jsonb(),
+	startTime: time("start_time"),
+	endTime: time("end_time"),
+	date: date(),
+}, (table) => [
+	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
 
 export const panoptoChecks = pgTable("panopto_checks", {
@@ -320,18 +351,6 @@ export const panoptoChecks = pgTable("panopto_checks", {
 			name: "panopto_checks_event_id_fkey"
 		}).onDelete("cascade"),
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
-]);
-
-export const shiftBlocks = pgTable("shift_blocks", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "shift_blocks_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	assignments: jsonb(),
-	startTime: time("start_time"),
-	endTime: time("end_time"),
-	date: date(),
-}, (table) => [
-	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
 
 export const shifts = pgTable("shifts", {
@@ -375,6 +394,51 @@ export const facultyEvents = pgTable("faculty_events", {
 			name: "faculty_events_faculty_fkey"
 		}),
 	primaryKey({ columns: [table.faculty, table.event], name: "faculty_events_pkey"}),
+]);
+
+export const shiftBlockProfile = pgTable("shift_block_profile", {
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	shiftBlock: bigint("shift_block", { mode: "number" }).notNull(),
+	profile: uuid().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.profile],
+			foreignColumns: [profiles.id],
+			name: "shift_block_profile_profile_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.shiftBlock],
+			foreignColumns: [shiftBlocks.id],
+			name: "shift_block_profile_shift_block_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.shiftBlock, table.profile], name: "shift_block_profile_pkey"}),
+]);
+
+export const shiftBlockProfileRoom = pgTable("shift_block_profile_room", {
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	room: bigint({ mode: "number" }).notNull(),
+	profile: uuid().notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	shiftBlock: bigint("shift_block", { mode: "number" }).notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.profile],
+			foreignColumns: [profiles.id],
+			name: "shift_block_profile_room_profile_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.room],
+			foreignColumns: [rooms.id],
+			name: "shift_block_profile_room_room_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.shiftBlock],
+			foreignColumns: [shiftBlocks.id],
+			name: "shift_block_profile_room_shift_block_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.room, table.profile, table.shiftBlock], name: "shift_block_profile_room_pkey"}),
 ]);
 
 export const resourceEvents = pgTable("resource_events", {

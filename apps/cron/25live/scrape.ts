@@ -21,6 +21,8 @@ import { saveEventRecordingRows } from "./event-recording/save-rows";
 import { saveActions } from "./actions/save-rows";
 import { pgPool } from "shared";
 import { partitionEventsByStart } from "./utils/event-filters";
+import { ensureSeriesExist, updateSeriesFromDb, computeSeriesPositions } from "./series/save-rows";
+import { updateEventSeriesPositions } from "./events/save-rows";
 // Validate configuration to ensure all required environment variables are present
 config.validate();
 
@@ -58,6 +60,20 @@ async function main(): Promise<void> {
   console.log(`🔄 Processing events...`);
   const events = await getEvents(raw);
   console.log(`📊 Processed ${events.length} events`);
+
+  // Set series FK on events (positions computed after save from DB)
+  events.forEach((event) => {
+    if (event.itemId != null) {
+      event.series = event.itemId;
+    }
+  });
+
+  // Collect unique series IDs for later processing
+  const seriesIds = [...new Set(
+    events
+      .map((e) => e.itemId)
+      .filter((id): id is number => id != null)
+  )];
 
   const now = dayjs();
   const { futureEvents, startedEvents } = partitionEventsByStart(events, now);
@@ -113,12 +129,24 @@ async function main(): Promise<void> {
     eventRecordingRows,
   } = flattenEnrichedEvents(batch.enrichedEvents);
 
-  // Save events first
+  // Ensure series records exist first (for FK constraint)
+  await ensureSeriesExist(batch.events);
+
+  // Save events
   const startedEventIds = startedEvents
     .map((event) => event.id)
     .filter((id): id is number => typeof id === "number");
 
   await saveEvents([...batch.events], date, startedEventIds);
+
+  // Now compute accurate series data from ALL events in DB
+  console.log(`📚 Computing series data from database...`);
+  await updateSeriesFromDb(seriesIds);
+  
+  // Compute and update event positions based on all events in each series
+  const positionMap = await computeSeriesPositions(seriesIds);
+  await updateEventSeriesPositions(positionMap);
+  console.log(`📚 Updated ${positionMap.size} event positions`);
 
   // Save extension tables and related data in parallel
   await Promise.all([

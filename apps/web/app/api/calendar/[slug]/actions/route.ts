@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { getActionsCalendar } from "@/lib/data/calendar/actionsCalendar";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export async function GET(request: Request, context: RouteContext) {
-  const { slug } = context.params;
+  const { slug } = await context.params;
   const url = new URL(request.url);
   const filterParam = url.searchParams.get("filter");
   const autoHideParam = url.searchParams.get("autoHide");

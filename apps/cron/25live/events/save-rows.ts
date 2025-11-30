@@ -1,6 +1,30 @@
 import { eq, inArray, sql } from "drizzle-orm";
 import { db, events, type ProcessedEvent } from "shared";
 
+/**
+ * Updates the seriesPos column for events based on a position map.
+ * This is called after computing positions from ALL events in the database.
+ */
+export async function updateEventSeriesPositions(
+  positionMap: Map<number, number>
+): Promise<void> {
+  if (positionMap.size === 0) {
+    return;
+  }
+
+  // Build CASE statement for batch update
+  const eventIds = [...positionMap.keys()];
+  const caseStatements = eventIds
+    .map((id) => `WHEN ${id} THEN ${positionMap.get(id)}`)
+    .join(" ");
+
+  await db.execute(sql`
+    UPDATE events 
+    SET series_pos = CASE id ${sql.raw(caseStatements)} END
+    WHERE id IN (${sql.raw(eventIds.join(", "))})
+  `);
+}
+
 export async function saveEvents(
   processedEvents: ProcessedEvent[],
   scrapeDate: string,
@@ -60,7 +84,8 @@ export async function saveEvents(
         updatedAt: sql`excluded.updated_at`,
         organization: sql`excluded.organization`,
         instructorNames: sql`excluded.instructor_names`,
-        firstLecture: sql`excluded."firstLecture"`,
+        series: sql`excluded.series`,
+        seriesPos: sql`excluded.series_pos`,
       },
     });
 }

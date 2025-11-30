@@ -13,6 +13,16 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+// Handle pool errors to prevent unhandled 'error' events from crashing the process
+// This commonly happens when Supabase's pooler terminates idle connections
+pool.on("error", (err) => {
+  // Ignore expected shutdown/termination errors
+  if (err.message?.includes("shutdown") || err.message?.includes("termination")) {
+    return;
+  }
+  console.error("Unexpected database pool error:", err);
+});
+
 // Combine schema and relations for drizzle
 const fullSchema = {
   ...schema,

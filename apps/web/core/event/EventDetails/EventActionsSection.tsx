@@ -1,18 +1,19 @@
 "use client";
 
-import type { finalEvent } from "@/lib/data/calendar/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Phone } from "lucide-react";
 import EventPageContent from "./EventPageContent";
 import EventActionsTimeline from "./EventActionsTimeline";
+import { useEventQuery } from "@/lib/query";
 
 interface EventActionsSectionProps {
-  event: finalEvent;
+  eventId: string;
 }
 
-export default function EventActionsSection({ event }: EventActionsSectionProps) {
-  const actions = event.actions || [];
+export default function EventActionsSection({ eventId }: EventActionsSectionProps) {
+  const { data: event } = useEventQuery({ eventId });
+  const actions = event?.actions || [];
 
   if (actions.length === 0) {
     return null;
@@ -36,4 +37,3 @@ export default function EventActionsSection({ event }: EventActionsSectionProps)
     </EventPageContent>
   );
 }
-

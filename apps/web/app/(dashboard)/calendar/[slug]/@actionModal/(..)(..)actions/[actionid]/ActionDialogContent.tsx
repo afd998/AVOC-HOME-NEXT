@@ -1,55 +1,25 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
 import ActionContent from "@/core/actions/ActionContent";
-import { useCalendarActionsStore } from "@/app/(dashboard)/calendar/[slug]/stores/useCalendarActionsStore";
-import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
+import { useActionQuery } from "@/lib/query";
 
 type ActionDialogContentProps = {
   actionId: string;
   slug: string;
-  initialAction: HydratedAction | null;
 };
 
 export default function ActionDialogContent({
-  initialAction,
-  ...props
+  actionId,
 }: ActionDialogContentProps) {
-  const updateAction = useCalendarActionsStore((state) => state.updateAction);
-  // Get action from store (will be updated by real-time updates)
-  const action = useCalendarActionsStore(
-    useCallback(
-      (state) => {
-        const numericId = Number(props.actionId);
-        if (!Number.isInteger(numericId)) {
-          return null;
-        }
-        for (const group of state.actionGroups) {
-          const match = group.actions.find((action) => action.id === numericId);
-          if (match) {
-            return match;
-          }
-        }
-        return null;
-      },
-      [props.actionId]
-    )
-  );
+  const { data: action, isLoading } = useActionQuery({ actionId });
 
-  // Add initial action to store if provided
-  useEffect(() => {
-    if (initialAction) {
-      updateAction(initialAction);
-    }
-  }, [initialAction, updateAction]);
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-  // Use action from store if available, otherwise fall back to initialAction
-  const currentAction = action ?? initialAction;
-
-  if (!currentAction) {
+  if (!action) {
     return null;
   }
 
-  return <ActionContent action={currentAction} />;
+  return <ActionContent action={action} />;
 }
-

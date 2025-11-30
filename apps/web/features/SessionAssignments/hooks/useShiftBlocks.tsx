@@ -1,35 +1,117 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../../lib/supabase';
-import type { Database } from '../../../types/supabase';
+import type {
+  ShiftBlockWithAssignments,
+  ShiftBlock as SharedShiftBlock,
+  ShiftBlockAssignment,
+} from "shared";
 
-export type ShiftBlock = Database['public']['Tables']['shift_blocks']['Row'];
-export type ShiftBlockInsert = Database['public']['Tables']['shift_blocks']['Insert'];
-export type Shift = Database['public']['Tables']['shifts']['Row'];
+export type ShiftBlock = ShiftBlockWithAssignments;
+export type ShiftBlockInsert = Pick<SharedShiftBlock, "date" | "startTime" | "endTime"> & {
+  assignments?: unknown;
+};
+
+export type Shift = {
+  id: number;
+  date: string;
+  start_time: string | null;
+  end_time: string | null;
+  profile_id: string | null;
+  created_at?: string | null;
+};
+
+type ShiftBlockApiRow = {
+  id: number;
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+  assignments?: unknown;
+  createdAt?: string | null;
+  shiftBlockProfileRooms?: Array<{
+    profile?: { id: string; name?: string | null } | null;
+    room?: { name?: string | null } | null;
+  }>;
+};
+
+type ShiftBlockResponse = {
+  shiftBlocks: ShiftBlockApiRow[];
+  rooms?: { name: string | null }[];
+};
+
+const normalizeAssignments = (block: ShiftBlockApiRow): ShiftBlockAssignment[] => {
+  // Prefer assignments array if provided by the API
+  if (Array.isArray((block as any).assignments)) {
+    return (block as any).assignments.map((a: any) => ({
+      user: a.user,
+      name: a.name ?? a.user,
+      rooms: Array.isArray(a.rooms) ? a.rooms : [],
+      profile:
+        a.profile ??
+        (a.user
+          ? {
+              id: a.user,
+              name: a.name ?? a.user,
+            }
+          : null),
+    }));
+  }
+
+  // Fallback to relations
+  if (Array.isArray(block.shiftBlockProfileRooms)) {
+    const grouped = new Map<string, ShiftBlockAssignment>();
+    block.shiftBlockProfileRooms.forEach((rel) => {
+      const profileId = rel.profile?.id;
+      if (!profileId) return;
+      const entry =
+        grouped.get(profileId) ??
+        ({
+          user: profileId,
+          name: rel.profile?.name ?? profileId,
+          rooms: [],
+          profile: rel.profile ?? {
+            id: profileId,
+            name: rel.profile?.name ?? profileId,
+          },
+        } as ShiftBlockAssignment);
+      const roomName = rel.room?.name;
+      if (roomName) entry.rooms.push(roomName);
+      grouped.set(profileId, entry);
+    });
+    return Array.from(grouped.values());
+  }
+
+  return [];
+};
+
+const mapShiftBlock = (block: ShiftBlockApiRow): ShiftBlock => ({
+  id: block.id,
+  date: block.date,
+  startTime: block.startTime,
+  endTime: block.endTime,
+  assignments: Array.isArray((block as any).assignments)
+    ? (block as any).assignments
+    : normalizeAssignments(block),
+  createdAt: block.createdAt ?? null,
+});
 
 
 export function useShiftBlocks(date: string | null) {
   return useQuery({
     queryKey: ['shift_blocks', date],
-    queryFn: async () => {
-      if (date == null) {
-        // If no date provided, fetch all shift blocks
-        const { data, error } = await supabase
-          .from('shift_blocks')
-          .select('*')
-          .order('date', { ascending: true })
-          .order('start_time', { ascending: true });
-        if (error) throw error;
-        return data || [];
+    queryFn: async (): Promise<ShiftBlock[]> => {
+      const url = date
+        ? `/api/assignments/shift-blocks?date=${encodeURIComponent(date)}`
+        : '/api/assignments/shift-blocks';
+
+      const res = await fetch(url, { method: 'GET' });
+      if (!res.ok) {
+        throw new Error('Failed to fetch shift blocks');
       }
-      
-      // Fetch shift blocks for specific date
-      const { data, error } = await supabase
-        .from('shift_blocks')
-        .select('*')
-        .eq('date', date)
-        .order('start_time', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      const data: ShiftBlockResponse = await res.json();
+      const blocks = (data.shiftBlocks ?? []).map(mapShiftBlock);
+      if (typeof window !== 'undefined') {
+        console.log('[useShiftBlocks] fetched', blocks.length, 'blocks', blocks);
+      }
+      return blocks;
     },
     staleTime: Infinity, // Data never becomes stale - only invalidated on page refresh
     gcTime: 1000 * 60 * 60 * 24, // Keep in cache for 24 hours
@@ -54,48 +136,35 @@ export function useUpdateShiftBlocks() {
       console.log('  📅 Date:', date);
       console.log('  📦 New blocks:', newBlocks.length);
       
-      // Delete existing blocks for this date
-      const { error: deleteError } = await supabase
-        .from('shift_blocks')
-        .delete()
-        .eq('date', date);
-      
-      if (deleteError) {
-        console.error('❌ Error deleting existing blocks:', deleteError);
-        throw deleteError;
-      }
-      
-      console.log('🗑️ Deleted existing shift blocks for date', date);
-      
       // Insert new blocks
       if (newBlocks.length > 0) {
         // Filter out any zero-duration blocks before inserting
         const validBlocks = newBlocks.filter(block => {
-          if (block.start_time === block.end_time) {
-            console.error(`🚨 ERROR: Attempting to insert zero-duration block: ${block.start_time} -> ${block.end_time}`);
+          if (block.startTime === block.endTime) {
+            console.error(`🚨 ERROR: Attempting to insert zero-duration block: ${block.startTime} -> ${block.endTime}`);
             return false;
           }
           return true;
         });
         
         console.log(`🔍 Filtered ${newBlocks.length - validBlocks.length} zero-duration blocks`);
-        console.log('🔍 Valid blocks to insert:', validBlocks.map(b => ({ start: b.start_time, end: b.end_time })));
-        
-        const { data, error: insertError } = await supabase
-          .from('shift_blocks')
-          .insert(validBlocks)
-          .select();
-        
-        if (insertError) {
-          console.error('❌ Error inserting new blocks:', insertError);
-          throw insertError;
+        console.log('🔍 Valid blocks to insert:', validBlocks.map(b => ({ start: b.startTime, end: b.endTime })));
+
+        const res = await fetch('/api/assignments/shift-blocks', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date, newBlocks: validBlocks }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error('❌ Error inserting new blocks:', text);
+          throw new Error('Failed to update shift blocks');
         }
-        
-        console.log('✅ Successfully inserted', data?.length, 'new blocks');
-        
-     
-        
-        return data;
+
+        const data: ShiftBlockResponse = await res.json();
+        console.log('✅ Successfully inserted', data.shiftBlocks?.length, 'new blocks');
+        return (data.shiftBlocks ?? []).map(mapShiftBlock);
       }
       
       return [];
@@ -122,86 +191,19 @@ export function useCopyScheduleFromPreviousWeek() {
       weekDates: Date[], 
       previousWeekStartDate: Date 
     }) => {
-      // First, delete all existing shifts and shift blocks for the target week
-      const deletePromises = weekDates.map(async (targetDate) => {
-        const targetDateString = targetDate.toISOString().split('T')[0];
-        
-        // Delete all shifts for this date
-        const { error: shiftsDeleteError } = await supabase
-          .from('shifts')
-          .delete()
-          .eq('date', targetDateString);
-        
-        if (shiftsDeleteError) throw shiftsDeleteError;
-        
-        // Delete all shift blocks for this date
-        const { error: blocksDeleteError } = await supabase
-          .from('shift_blocks')
-          .delete()
-          .eq('date', targetDateString);
-        
-        if (blocksDeleteError) throw blocksDeleteError;
+      const weekDateStrings = weekDates.map((d) => d.toISOString().split('T')[0]);
+      const res = await fetch('/api/assignments/shift-blocks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weekDates: weekDateStrings,
+          previousWeekStartDate: previousWeekStartDate.toISOString().split('T')[0],
+        }),
       });
-      
-      await Promise.all(deletePromises);
-      
-      // Then copy from previous week
-      const copyPromises = weekDates.map(async (targetDate, index) => {
-        const targetDateString = targetDate.toISOString().split('T')[0];
-        const sourceDate = new Date(previousWeekStartDate);
-        sourceDate.setDate(sourceDate.getDate() + index);
-        const sourceDateString = sourceDate.toISOString().split('T')[0];
-        
-        // Copy shift blocks
-        const { data: sourceBlocks, error: blocksError } = await supabase
-          .from('shift_blocks')
-          .select('*')
-          .eq('date', sourceDateString);
-        
-        if (blocksError) throw blocksError;
-        
-        if (sourceBlocks && sourceBlocks.length > 0) {
-          const blocksToInsert = sourceBlocks.map(block => {
-            const { id, created_at, ...blockWithoutId } = block;
-            return {
-              ...blockWithoutId,
-              date: targetDateString
-            };
-          });
-          
-          const { error: insertBlocksError } = await supabase
-            .from('shift_blocks')
-            .insert(blocksToInsert);
-          
-          if (insertBlocksError) throw insertBlocksError;
-        }
-        
-        // Copy shifts
-        const { data: sourceShifts, error: shiftsError } = await supabase
-          .from('shifts')
-          .select('*')
-          .eq('date', sourceDateString);
-        
-        if (shiftsError) throw shiftsError;
-        
-        if (sourceShifts && sourceShifts.length > 0) {
-          const shiftsToInsert = sourceShifts.map(shift => {
-            const { id, created_at, ...shiftWithoutId } = shift;
-            return {
-              ...shiftWithoutId,
-              date: targetDateString
-            };
-          });
-          
-          const { error: insertShiftsError } = await supabase
-            .from('shifts')
-            .insert(shiftsToInsert);
-          
-          if (insertShiftsError) throw insertShiftsError;
-        }
-      });
-      
-      await Promise.all(copyPromises);
+
+      if (!res.ok) {
+        throw new Error('Failed to copy schedule from previous week');
+      }
     },
     onSuccess: async (_, variables) => {
       // First, refetch all shift_blocks queries for the week dates
@@ -226,26 +228,26 @@ export function useAllRoomsAssigned(date: string | null) {
     queryFn: async (): Promise<boolean> => {
       if (!date) return false;
 
-      // Get all rooms
-      const { data: rooms, error: roomsError } = await supabase
-        .from('rooms')
-        .select('name')
-        .order('name');
-      
-      if (roomsError) throw roomsError;
-      const allRoomNames = rooms.map(room => room.name).filter((name): name is string => Boolean(name));
+      const url = `/api/assignments/shift-blocks?date=${encodeURIComponent(
+        date
+      )}&includeRooms=true`;
+
+      const res = await fetch(url, { method: 'GET' });
+      if (!res.ok) {
+        throw new Error('Failed to load rooms/shift blocks');
+      }
+
+      const data: ShiftBlockResponse = await res.json();
+      const allRoomNames = (data.rooms ?? [])
+        .map((room) => room.name)
+        .filter((name): name is string => Boolean(name));
       
       if (allRoomNames.length === 0) return false;
 
-      // Get shift blocks for the date
-      const { data: shiftBlocks, error: blocksError } = await supabase
-        .from('shift_blocks')
-        .select('*')
-        .eq('date', date)
-        .order('start_time', { ascending: true });
-      
-      if (blocksError) throw blocksError;
-      if (!shiftBlocks || shiftBlocks.length === 0) return false;
+      const shiftBlocks =
+        data.shiftBlocks?.map(mapShiftBlock).filter((b) => b.date === date) ??
+        [];
+      if (shiftBlocks.length === 0) return false;
 
       // Collect all assigned rooms from all shift blocks
       const assignedRooms = new Set<string>();
