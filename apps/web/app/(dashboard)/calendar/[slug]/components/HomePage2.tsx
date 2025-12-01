@@ -2,10 +2,10 @@
 
 import React from "react";
 import VerticalLines from "@/app/(dashboard)/calendar/[slug]/components/VerticalLines";
-import RoomRows from "@/app/(dashboard)/calendar/[slug]/components/RoomRows";
 import CalendarShellMetricsUpdater from "@/app/(dashboard)/calendar/[slug]/components/CalendarShellMetricsUpdater";
 import CurrentTimeIndicator from "@/app/(dashboard)/calendar/[slug]/components/CurrentTimeIndicator";
 import ShiftBlockLines from "@/app/(dashboard)/calendar/[slug]/components/ActionAssignments/components/ShiftBlockLines";
+import RoomRows from "@/app/(dashboard)/calendar/[slug]/components/RoomRows";
 import { useCalendarShell } from "@/app/(dashboard)/calendar/[slug]/components/CalendarShellProvider";
 import {
   CALENDAR_END_HOUR,
@@ -33,7 +33,16 @@ export default function HomePage2({
     autoHide,
   });
   const { showEventAssignments } = useEventAssignmentsStore();
-  const { pixelsPerMinute, contentWidth, pageZoom, scrollLeft, startHour, setHeaderAddon } = useCalendarShell();
+  const {
+    pixelsPerMinute,
+    contentWidth,
+    pageZoom,
+    scrollLeft,
+    scrollTop,
+    startHour,
+    rowHeightPx,
+    setHeaderAddon,
+  } = useCalendarShell();
   const [selectedRange, setSelectedRange] = React.useState<{ leftPx: number; widthPx: number } | null>(null);
 
   const actualRowCount = calendar.length;
@@ -119,6 +128,7 @@ export default function HomePage2({
       <div className="relative pointer-events-auto">
         <RoomRows
           calendar={calendar}
+          dateString={slug}
         />
       </div>
     </>

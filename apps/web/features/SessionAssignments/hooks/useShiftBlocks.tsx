@@ -180,6 +180,66 @@ export function useUpdateShiftBlocks() {
   });
 }
 
+// Mutation for assigning a set of rooms to a specific profile (or unassigning) within a shift block
+export function useAssignRoomsToShiftBlock() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      shiftBlockId,
+      roomNames,
+      targetUserId,
+    }: {
+      shiftBlockId: number | string;
+      roomNames: string[];
+      targetUserId: string | null;
+      date?: string | null;
+    }) => {
+      if (!shiftBlockId && shiftBlockId !== 0) {
+        console.error("[useAssignRoomsToShiftBlock] missing shiftBlockId", {
+          shiftBlockId,
+          roomNames,
+          targetUserId,
+        });
+        throw new Error("Missing shift block id");
+      }
+
+      const res = await fetch(`/api/assignments/shift-blocks/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shiftBlockId, roomNames, targetUserId }),
+      });
+
+      if (!res.ok) {
+        let message = "Failed to assign rooms to shift block";
+        try {
+          const err = await res.json();
+          console.error("[useAssignRoomsToShiftBlock] response error", err);
+          message = `${res.status} ${err?.error ?? message}${
+            err?.details ? ` (${err.details})` : ""
+          }${err?.rawId ? ` rawId=${err.rawId}` : ""}${
+            typeof err?.parsed !== "undefined" ? ` parsed=${err.parsed}` : ""
+          }`;
+        } catch {
+          const text = await res.text().catch(() => "");
+          message = text || message;
+        }
+        console.error("[useAssignRoomsToShiftBlock] error", message);
+        throw new Error(message);
+      }
+
+      const data: { shiftBlock?: ShiftBlockApiRow | null } = await res.json();
+      return data.shiftBlock ? mapShiftBlock(data.shiftBlock as ShiftBlockApiRow) : null;
+    },
+    onSuccess: async (data, variables) => {
+      const dateParam = variables.date ?? null;
+      await queryClient.refetchQueries({ queryKey: ["shift_blocks", dateParam] });
+      await queryClient.refetchQueries({ queryKey: ["shift_blocks"] });
+      queryClient.invalidateQueries({ queryKey: ["eventOwnership"] });
+    },
+  });
+}
+
 
 
 // Mutation for copying schedule from previous week

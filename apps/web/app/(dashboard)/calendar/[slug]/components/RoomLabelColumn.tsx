@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,7 +13,7 @@ import { useUserProfile } from "@/core/User/useUserProfile";
 import { useEventAssignmentsStore } from "@/lib/stores/event-assignments";
 import {
   useShiftBlocks,
-  useUpdateShiftBlocks,
+  useAssignRoomsToShiftBlock,
 } from "@/features/SessionAssignments/hooks/useShiftBlocks";
 
 interface RoomLabelColumnProps {
@@ -55,7 +57,8 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
     setSelectedShiftBlockIndex,
   } = useEventAssignmentsStore();
   const { data: shiftBlocks = [] } = useShiftBlocks(dateString);
-  const updateShiftBlocks = useUpdateShiftBlocks();
+  const assignRoomsToShiftBlock = useAssignRoomsToShiftBlock();
+  const isAssigning = assignRoomsToShiftBlock.isPending;
 
   const labelRoomOrder = React.useMemo(() => {
     const baseRooms = Array.isArray(roomRows)
@@ -142,70 +145,26 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
       }
 
       const roomNames = Array.from(selectedRoomsSet);
-      const assignments: any[] = Array.isArray(
-        (selectedShiftBlock as any).assignments
-      )
-        ? (selectedShiftBlock as any).assignments
-        : [];
 
-      let newAssignments = assignments.map((a: any) => ({
-        user: a.user,
-        rooms: Array.isArray(a.rooms) ? [...a.rooms] : [],
-      }));
-
-      newAssignments = newAssignments.map((a: any) => ({
-        ...a,
-        rooms: a.rooms.filter((r: string) => !selectedRoomsSet.has(r)),
-      }));
-
-      if (targetUserId !== null) {
-        const target = newAssignments.find((a: any) => a.user === targetUserId);
-        if (target) {
-          const merged = new Set<string>([...target.rooms, ...roomNames]);
-          target.rooms = Array.from(merged);
-        }
-      }
-
-      const updatedBlocks = shiftBlocks.map((b: any) =>
-        selectedShiftBlock && b.id === selectedShiftBlock.id
-          ? { ...b, assignments: newAssignments }
-          : b
-      );
-
-      const blocksToInsert = updatedBlocks.map((b: any) => ({
-        date: b.date,
-        startTime: b.startTime,
-        endTime: b.endTime,
-        assignments: b.assignments,
-      }));
-
-      updateShiftBlocks.mutate(
-        { date: dateString, newBlocks: blocksToInsert },
+      assignRoomsToShiftBlock.mutate(
         {
-          onSuccess: (insertedBlocks) => {
+          shiftBlockId: selectedShiftBlock.id,
+          roomNames,
+          targetUserId,
+          date: dateString,
+        },
+        {
+          onSuccess: (updatedBlock) => {
             clearSelection();
-            if (Array.isArray(insertedBlocks) && selectedShiftBlock) {
-              const prevStart = selectedShiftBlock.startTime;
-              const prevEnd = selectedShiftBlock.endTime;
-              if (prevStart && prevEnd) {
-                const matchIndex = blocksToInsert.findIndex(
-                  (block) =>
-                    block.startTime === prevStart &&
-                    block.endTime === prevEnd
-                );
-                const match = insertedBlocks.find(
-                  (block) =>
-                    (block as any).startTime === prevStart &&
-                    (block as any).endTime === prevEnd
-                );
-                if (match) {
-                  setSelectedShiftBlockId(match.id.toString());
-                  setSelectedShiftBlock(match);
-                  setSelectedShiftBlockIndex(
-                    matchIndex >= 0 ? matchIndex : null
-                  );
-                }
-              }
+            if (updatedBlock) {
+              setSelectedShiftBlockId(updatedBlock.id.toString());
+              setSelectedShiftBlock(updatedBlock);
+              const matchIndex = shiftBlocks.findIndex(
+                (block: any) => block.id === updatedBlock.id
+              );
+              setSelectedShiftBlockIndex(
+                matchIndex >= 0 ? matchIndex : null
+              );
             }
           },
         }
@@ -216,7 +175,7 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
       selectedShiftBlock,
       selectedRoomsSet,
       shiftBlocks,
-      updateShiftBlocks,
+      assignRoomsToShiftBlock,
       dateString,
       clearSelection,
       setSelectedShiftBlockId,
@@ -271,7 +230,7 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
                   <div
                     data-room-label
                     style={{ height: `${rowHeightPx}px` }}
-                    className="flex text-foreground flex-col bg-primary/10 items-center justify-center pointer-events-auto cursor-pointer"
+                    className="flex text-foreground flex-col items-center justify-center pointer-events-auto cursor-pointer"
                     onClick={(event) => selectRoomLabel(room.name, event)}
                   >
                     <div className="flex flex-col items-center">
@@ -308,6 +267,7 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
                     {selectedRoomsSet.size > 0 && (
                       <>
                         <ContextMenuItem
+                          disabled={isAssigning}
                           onClick={() => {
                             void handleMoveSelectedRooms(null);
                           }}
@@ -317,6 +277,7 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
                         {shiftAssignments.map((a: any) => (
                           <ContextMenuItem
                             key={a.user}
+                            disabled={isAssigning}
                             onClick={() => {
                               void handleMoveSelectedRooms(a.user);
                             }}
@@ -336,12 +297,12 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
           {(filteredLCEvents ?? []).map((roomData: any) => (
             <ContextMenu key={`label-${roomData.room_name}`}>
               <ContextMenuTrigger asChild>
-                <div
-                  data-room-label
-                  style={{ height: `${rowHeightPx}px` }}
-                  className="flex items-center justify-center pointer-events-auto cursor-pointer"
-                  onClick={(event) => selectRoomLabel(roomData.room_name, event)}
-                >
+                  <div
+                    data-room-label
+                    style={{ height: `${rowHeightPx}px` }}
+                    className="flex items-center justify-center pointer-events-auto cursor-pointer"
+                    onClick={(event) => selectRoomLabel(roomData.room_name, event)}
+                  >
                   <div>
                     <Badge
                       className={`${
@@ -367,6 +328,7 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
                   {selectedRoomsSet.size > 0 && (
                     <>
                       <ContextMenuItem
+                        disabled={isAssigning}
                         onClick={() => {
                           void handleMoveSelectedRooms(null);
                         }}
@@ -376,6 +338,7 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
                       {shiftAssignments.map((a: any) => (
                         <ContextMenuItem
                           key={a.user}
+                          disabled={isAssigning}
                           onClick={() => {
                             void handleMoveSelectedRooms(a.user);
                           }}

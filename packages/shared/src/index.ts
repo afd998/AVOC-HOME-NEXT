@@ -4,7 +4,21 @@ export * from "./db/schema";
 export * from "./db/types";
 
 // Re-export drizzle-orm utilities so consumers don't need to depend on drizzle-orm directly
-export { eq, and, or, not, inArray, notInArray, sql, desc, asc } from "drizzle-orm";
+export {
+  eq,
+  and,
+  or,
+  not,
+  inArray,
+  notInArray,
+  sql,
+  desc,
+  asc,
+  lt,
+  lte,
+  gt,
+  gte,
+} from "drizzle-orm";
 export type { InferSelectModel, InferInsertModel } from "drizzle-orm";
 
 // QC Generation

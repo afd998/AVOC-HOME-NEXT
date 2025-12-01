@@ -15,6 +15,11 @@ import {
   type ShiftBlockProfileRoom,
   shiftBlockProfile,
   type ShiftBlockProfile,
+  and,
+  actions,
+  events,
+  gte,
+  lt,
 } from "shared";
 import { unstable_cacheTag as cacheTag } from "next/cache";
 
@@ -204,6 +209,196 @@ export async function getAllShiftBlocks(): Promise<ShiftBlockWithAssignments[]> 
     );
   } catch (error) {
     console.error("[db] assignments.getAllShiftBlocks", { error });
+    throw error;
+  }
+}
+
+/**
+ * Reassign a set of rooms within a shift block to a target profile (or unassign).
+ * This operates on the junction table rather than the JSON assignments column.
+ */
+export async function assignRoomsToShiftBlock(
+  shiftBlockId: number,
+  roomNames: string[],
+  targetProfileId: string | null
+): Promise<ShiftBlockWithAssignments | null> {
+  try {
+    console.log("[assignRoomsToShiftBlock] start", {
+      shiftBlockId,
+      roomNames,
+      targetProfileId,
+    });
+    const uniqueRoomNames = Array.from(
+      new Set(
+        (roomNames ?? []).filter(
+          (name): name is string =>
+            typeof name === "string" && name.trim().length > 0
+        )
+      )
+    );
+
+    // Build a set of candidate names to improve matching (raw, without GH prefix, and with GH prefix)
+    const candidateNames = new Set<string>();
+    uniqueRoomNames.forEach((n) => {
+      const trimmed = n.trim();
+      if (!trimmed) return;
+      candidateNames.add(trimmed);
+      const withoutGh = trimmed.replace(/^GH\s+/i, "");
+      if (withoutGh !== trimmed) {
+        candidateNames.add(withoutGh);
+      } else {
+        candidateNames.add(`GH ${trimmed}`);
+      }
+    });
+    const candidateList = Array.from(candidateNames);
+    console.log("[assignRoomsToShiftBlock] candidateList", candidateList);
+
+    return await db.transaction(async (tx) => {
+      const blockMeta = await tx.query.shiftBlocks.findFirst({
+        where: eq(shiftBlocks.id, shiftBlockId),
+        columns: { date: true, startTime: true, endTime: true },
+      });
+
+      // Pull rooms once and match by normalized name to avoid casing/prefix issues
+      const allRooms = await tx.select().from(rooms);
+      const normalize = (value: string | null | undefined) =>
+        (value ?? "").trim().toLowerCase();
+
+      const roomIdByKey = new Map<string, number>();
+      allRooms.forEach((room) => {
+        const base = normalize(room.name);
+        if (!base) return;
+        roomIdByKey.set(base, room.id as number);
+        const withoutGh = base.replace(/^gh\s+/, "");
+        if (withoutGh !== base) {
+          roomIdByKey.set(withoutGh, room.id as number);
+        } else {
+          roomIdByKey.set(`gh ${base}`, room.id as number);
+        }
+      });
+
+      const roomIds: number[] = [];
+      candidateList.forEach((candidate) => {
+        const norm = normalize(candidate);
+        const match =
+          roomIdByKey.get(norm) ??
+          roomIdByKey.get(norm.replace(/^gh\s+/, "")) ??
+          roomIdByKey.get(`gh ${norm}`);
+        if (typeof match === "number") {
+          roomIds.push(match);
+        }
+      });
+
+      console.log("[assignRoomsToShiftBlock] matched rooms", {
+        matchedCount: roomIds.length,
+        roomIds,
+        totalRooms: allRooms.length,
+      });
+
+      if (roomIds.length === 0) {
+        throw new Error(
+          `ROOMS_NOT_FOUND:${uniqueRoomNames.join(",") || "unknown"}`
+        );
+      }
+
+      // Remove the selected rooms from any profile assignments within this block
+      await tx
+        .delete(shiftBlockProfileRoom)
+        .where(
+          and(
+            eq(shiftBlockProfileRoom.shiftBlock, shiftBlockId),
+            inArray(shiftBlockProfileRoom.room, roomIds)
+          )
+        );
+
+      // If a target profile is provided, add junction rows for it
+      if (targetProfileId) {
+        const rows: ShiftBlockProfileRoom[] = roomIds.map((roomId) => ({
+          createdAt: new Date().toISOString(),
+          profile: targetProfileId,
+          room: roomId,
+          shiftBlock: shiftBlockId,
+        })) as any;
+
+        if (rows.length > 0) {
+          await tx
+            .insert(shiftBlockProfileRoom)
+            .values(rows)
+            .onConflictDoNothing();
+        }
+      }
+
+      // Update actions assigned_to for actions in these rooms within the block window
+      if (
+        blockMeta?.date &&
+        blockMeta.startTime &&
+        blockMeta.endTime &&
+        roomIds.length > 0 &&
+        targetProfileId !== undefined // allow null to unassign
+      ) {
+        const eventsForRooms = await tx
+          .select({ id: events.id, roomName: events.roomName })
+          .from(events)
+          .where(
+            and(
+              eq(events.date, blockMeta.date),
+              inArray(events.roomName, candidateList)
+            )
+          );
+
+        const eventIds = eventsForRooms
+          .map((e) => e.id)
+          .filter((id): id is number => typeof id === "number");
+
+        if (eventIds.length > 0) {
+          const updateResult = await tx
+            .update(actions)
+            .set({ assignedTo: targetProfileId })
+            .where(
+              and(
+                inArray(actions.event, eventIds),
+                gte(actions.startTime, blockMeta.startTime),
+                lt(actions.startTime, blockMeta.endTime)
+              )
+            )
+            .returning({ id: actions.id });
+
+          console.log("[assignRoomsToShiftBlock] updated actions", {
+            count: updateResult.length,
+            actionIds: updateResult.map((r) => r.id),
+          });
+        }
+      }
+
+      const updated = await tx.query.shiftBlocks.findFirst({
+        where: eq(shiftBlocks.id, shiftBlockId),
+        with: {
+          shiftBlockProfileRooms: { with: { profile: true, room: true } },
+          shiftBlockProfiles: { with: { profile: true } },
+        },
+      });
+
+      console.log("[assignRoomsToShiftBlock] success", {
+        shiftBlockId,
+        assignedRooms: roomIds.length,
+        targetProfileId,
+      });
+
+      if (!updated) return null;
+
+      return toAssignments(
+        updated,
+        updated.shiftBlockProfileRooms ?? [],
+        updated.shiftBlockProfiles ?? []
+      );
+    });
+  } catch (error) {
+    console.error("[db] assignments.assignRoomsToShiftBlock", {
+      shiftBlockId,
+      roomNames,
+      targetProfileId,
+      error,
+    });
     throw error;
   }
 }

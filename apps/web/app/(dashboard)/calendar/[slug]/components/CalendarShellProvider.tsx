@@ -21,6 +21,7 @@ type CalendarShellContextValue = {
   pageZoom: number;
   contentWidth: number;
   scrollLeft: number;
+  scrollTop: number;
   setActualRowCount: (count: number) => void;
   setDataAutoHide: (value: "true" | undefined) => void;
   setHeaderAddon: (node: ReactNode | null) => void;
@@ -40,6 +41,7 @@ export function CalendarShellProvider({ children }: { children: ReactNode }) {
   const [actualRowCount, setActualRowCount] = useState(1);
   const [dataAutoHide, setDataAutoHide] = useState<"true" | undefined>(undefined);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [scrollTop, setScrollTop] = useState(0);
   const [headerAddon, setHeaderAddonState] = useState<ReactNode | null>(null);
 
   // Calculate content width based on calendar config
@@ -48,6 +50,7 @@ export function CalendarShellProvider({ children }: { children: ReactNode }) {
 
   const handleScrollChange = useCallback((position: { left: number; top: number }) => {
     setScrollLeft(position.left);
+    setScrollTop(position.top);
   }, []);
 
   const setHeaderAddon = useCallback((node: ReactNode | null) => {
@@ -65,11 +68,12 @@ export function CalendarShellProvider({ children }: { children: ReactNode }) {
       pageZoom: CALENDAR_PAGE_ZOOM,
       contentWidth,
       scrollLeft,
+      scrollTop,
       setActualRowCount,
       setDataAutoHide,
       setHeaderAddon,
     }),
-    [actualRowCount, dataAutoHide, contentWidth, scrollLeft, setHeaderAddon]
+    [actualRowCount, dataAutoHide, contentWidth, scrollLeft, scrollTop, setHeaderAddon]
   );
 
   return (

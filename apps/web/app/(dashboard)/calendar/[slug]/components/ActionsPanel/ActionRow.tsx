@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/item";
 import { cn } from "@/lib/utils";
 import { Icon } from "@iconify/react";
+import UserAvatar from "@/core/User/UserAvatar";
+import { getProfileDisplayName } from "@/core/User/utils";
 
 import { convertTimeToMinutes, getActionDisplayName } from "./utils";
 import { actionOverdueClassName } from "./actionOverdueStyles";
@@ -23,6 +25,8 @@ type ActionRowProps = {
 
 export default function ActionRow({ entry }: ActionRowProps) {
   const { action, roomName } = entry;
+  const assignedProfile = action.assignedToProfile;
+  const assignedName = getProfileDisplayName(assignedProfile);
 
   const title = getActionDisplayName(action);
   const normalizedStatus = action.status?.trim() || null;
@@ -115,6 +119,13 @@ export default function ActionRow({ entry }: ActionRowProps) {
           </ItemDescription>
         </ItemContent>
         <ItemActions className="ml-auto flex flex-col items-end gap-2 text-xs font-medium uppercase">
+          {assignedProfile ? (
+            <UserAvatar
+              profile={assignedProfile as any}
+              size="sm"
+              variant="solid"
+            />
+          ) : null}
           {isCompleted ? (
             <Check
               aria-label="Completed"
