@@ -109,60 +109,65 @@ function SeriesEventCard({ event, index, total }: SeriesEventCardProps) {
 
   return (
     <Card className="group relative transition-all duration-300 ease-out">
-      <Link href={`/events/${event.id}`} className="no-underline">
-        <CardHeader className="px-5 py-4 cursor-pointer">
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1 flex-1">
-              <CardTitle className="text-base font-semibold">
-                {dayOfWeek ? `${dayOfWeek}, ` : ""}{dateLabel}
-                {startLabel ? ` | ${startLabel}` : ""}
-                {endLabel ? ` - ${endLabel}` : ""}
-              </CardTitle>
-              <CardMeta
-                label="Room"
-                value={event.roomName || "Unknown room"}
-              />
-              {event.faculty && event.faculty.length > 0 ? (
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">Instructors:</p>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {event.faculty.map((member) => (
-                      <FacultyItem
-                        key={member.id}
-                        faculty={member}
-                        compact={true}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ) : event.instructorNames && Array.isArray(event.instructorNames) && event.instructorNames.length > 0 ? (
+      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:items-stretch">
+        <Link
+          href={`/events/${event.id}`}
+          className="no-underline block border-b border-border md:border-b-0 md:border-r md:border-border"
+        >
+          <CardHeader className="px-5 py-4 cursor-pointer h-full">
+            <div className="flex items-start justify-between gap-4 h-full">
+              <div className="space-y-1 flex-1">
+                <CardTitle className="text-base font-semibold">
+                  {dayOfWeek ? `${dayOfWeek}, ` : ""}{dateLabel}
+                  {startLabel ? ` | ${startLabel}` : ""}
+                  {endLabel ? ` - ${endLabel}` : ""}
+                </CardTitle>
                 <CardMeta
-                  label="Instructors"
-                  value={formatInstructorSummary(event.instructorNames)}
+                  label="Room"
+                  value={event.roomName || "Unknown room"}
                 />
-              ) : null}
-              {event.section && (
-                <CardMeta label="Section" value={event.section} />
-              )}
+                {event.faculty && event.faculty.length > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground">Instructors:</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {event.faculty.map((member) => (
+                        <FacultyItem
+                          key={member.id}
+                          faculty={member}
+                          compact={true}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : event.instructorNames && Array.isArray(event.instructorNames) && event.instructorNames.length > 0 ? (
+                  <CardMeta
+                    label="Instructors"
+                    value={formatInstructorSummary(event.instructorNames)}
+                  />
+                ) : null}
+                {event.section && (
+                  <CardMeta label="Section" value={event.section} />
+                )}
+              </div>
+              <div className="flex flex-col items-end gap-2 text-sm text-muted-foreground">
+                <span>
+                  {index + 1} of {total}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col items-end gap-2 text-sm text-muted-foreground">
-              <span>
-                {index + 1} of {total}
-              </span>
-            </div>
-          </div>
-        </CardHeader>
-      </Link>
-      <CardContent className="px-5 pb-5 pt-0">
-        <EventConfiguration
-          event={event}
-          roomName={event.roomName || "Unknown room"}
-          showHybrid={true}
-          showRecording={true}
-          showAvConfig={true}
-          showOtherHardware={true}
-        />
-      </CardContent>
+          </CardHeader>
+        </Link>
+        <CardContent className="px-5 py-5 md:h-full">
+          <EventConfiguration
+            event={event}
+            roomName={event.roomName || "Unknown room"}
+            showHybrid={true}
+            showRecording={true}
+            showAvConfig={true}
+            showOtherHardware={true}
+          />
+        </CardContent>
+      </div>
     </Card>
   );
 }
@@ -200,4 +205,3 @@ function formatInstructorSummary(
 
   return `${readable.slice(0, 2).join(", ")} +${readable.length - 2} more`;
 }
-

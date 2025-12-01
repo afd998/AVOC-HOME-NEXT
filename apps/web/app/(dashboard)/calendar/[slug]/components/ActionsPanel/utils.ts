@@ -30,14 +30,20 @@ export function convertTimeToMinutes(time?: string) {
 }
 
 export function getActionDisplayName(action: HydratedAction) {
-  // Actions use type and subType instead of taskDictDetails
   const type = typeof action.type === "string" ? action.type.trim() : "";
   const subType = typeof action.subType === "string" ? action.subType.trim() : "";
-  
+  const isConfig =
+    type.toUpperCase().includes("CONFIG") ||
+    subType.toUpperCase().includes("CONFIG");
+
+  if (isConfig) {
+    return "Configure Space";
+  }
+
   if (subType.length > 0) {
     return subType;
   }
-  
+
   if (type.length > 0) {
     return type;
   }
@@ -115,4 +121,3 @@ export function buildActionListItems(
 
   return { items, totalActions: sortedActions.length };
 }
-

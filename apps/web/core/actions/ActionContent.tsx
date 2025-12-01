@@ -5,7 +5,6 @@ import { CardContent } from "@/components/ui/card";
 import QcItem, { useQcItemForm } from "@/core/actions/QcItem";
 import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
 import ActionHeader from "./ActionHeader";
-import ActionDetails from "./ActionDetails";
 import ActionFooter from "./ActionFooter";
 import { useActionCompletion } from "./hooks/useActionCompletion";
 import type { finalEvent } from "@/lib/data/calendar/calendar";
@@ -110,6 +109,14 @@ export default function ActionContent({
     } as finalEvent;
   }, [action.eventDetails]);
 
+  const eventTitle =
+    eventForConfiguration?.eventName?.trim() || "Linked Event";
+  const eventLink = eventForConfiguration?.id
+    ? `/events/${eventForConfiguration.id}`
+    : undefined;
+
+  const roomName = ((action.eventDetails?.roomName ?? action.room) || "").replace(/^GH\s+/i, "");
+
   const isConfigAction = useMemo(() => {
     const type = action.type?.toUpperCase() || "";
     const subType = action.subType?.toUpperCase() || "";
@@ -128,46 +135,71 @@ export default function ActionContent({
     return type.includes("STAFF") || type.includes("ASSISTANCE") || subType.includes("STAFF") || subType.includes("ASSISTANCE");
   }, [action.subType, action.type]);
 
-  const roomName = ((action.eventDetails?.roomName ?? action.room) || "").replace(/^GH\s+/i, "");
+  const eventConfigProps = useMemo(() => {
+    if (!eventForConfiguration) return null;
+
+    if (isConfigAction) {
+      return {
+        event: eventForConfiguration,
+        roomName,
+        headerTitle: eventTitle,
+        headerHref: eventLink,
+        showHybrid: false,
+        showRecording: false,
+        showAvConfig: true,
+        showOtherHardware: true,
+      };
+    }
+
+    if (isCaptureAction) {
+      return {
+        event: eventForConfiguration,
+        roomName,
+        headerTitle: eventTitle,
+        headerHref: eventLink,
+        showHybrid: true,
+        showRecording: true,
+        showAvConfig: true,
+        showOtherHardware: false,
+      };
+    }
+
+    if (isStaffAssistAction) {
+      return {
+        event: eventForConfiguration,
+        roomName,
+        headerTitle: eventTitle,
+        headerHref: eventLink,
+        showHybrid: true,
+        showRecording: false,
+        showAvConfig: true,
+        showOtherHardware: false,
+      };
+    }
+
+    return null;
+  }, [
+    eventForConfiguration,
+    eventLink,
+    eventTitle,
+    isCaptureAction,
+    isConfigAction,
+    isStaffAssistAction,
+    roomName,
+  ]);
 
   return (
     <>
       <ActionHeader action={action} errorMessage={errorMessage} />
 
       <CardContent className="space-y-6 flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-6 pt-0">
-        <ActionDetails action={action} />
-
-        {isConfigAction && eventForConfiguration && (
-          <EventConfiguration
-            event={eventForConfiguration}
-            roomName={roomName}
-            showHybrid={false}
-            showRecording={false}
-            showAvConfig={true}
-            showOtherHardware={true}
-          />
-        )}
-
-        {isCaptureAction && eventForConfiguration && (
-          <EventConfiguration
-            event={eventForConfiguration}
-            roomName={roomName}
-            showHybrid={true}
-            showRecording={true}
-            showAvConfig={true}
-            showOtherHardware={false}
-          />
-        )}
-
-        {isStaffAssistAction && eventForConfiguration && (
-          <EventConfiguration
-            event={eventForConfiguration}
-            roomName={roomName}
-            showHybrid={true}
-            showRecording={false}
-            showAvConfig={true}
-            showOtherHardware={false}
-          />
+        {eventConfigProps && (
+          <section className="space-y-2">
+            <h3 className="text-sm font-semibold uppercase text-muted-foreground">
+              Event
+            </h3>
+            <EventConfiguration {...eventConfigProps} />
+          </section>
         )}
 
         {/* Always show QC items section for all actions */}

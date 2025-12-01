@@ -43,7 +43,7 @@ export async function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="flex flex-col items-center justify-center py-2 gap-2">
+        <div className="flex flex-col items-center justify-center py-1 gap-1">
           <Suspense  fallback={null}> 
           
             <LogoButton />

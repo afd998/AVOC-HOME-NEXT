@@ -30,11 +30,11 @@ export default function RoomRow({
       }}
     >
       <div
-        className={`sticky bg-backgroun/80 left-0 w-24 flex flex-col items-center justify-center  transition-all duration-300 ease-in-out cursor-pointer event-no-select ${
+        className={`sticky bg-backgroun/80 left-0 w-24 flex flex-col items-center justify-center transition-all duration-300 ease-in-out cursor-pointer event-no-select ${
           isLastRow ? "rounded-bl-md" : ""
         }`}
         style={{
-          zIndex: 36,
+          zIndex: 60,
           ...rowHeightStyle,
         }}
         data-room-label="true"

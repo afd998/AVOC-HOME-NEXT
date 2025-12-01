@@ -20,6 +20,7 @@ import ActionRow from "./ActionRow";
 import { convertTimeToMinutes } from "./utils";
 import type { RecordingGroupItem } from "./types";
 import { actionOverdueClassName } from "./actionOverdueStyles";
+import { getActionIconConfig } from "@/core/actions/utils/getActionIcon";
 
 type RecordingGroupProps = {
   group: RecordingGroupItem;
@@ -28,7 +29,10 @@ type RecordingGroupProps = {
 export default function RecordingGroup({ group }: RecordingGroupProps) {
   const { actions, groupKey } = group;
 
-  const title = actions.length === 1 ? "Recording Check" : "Recording Checks";
+  const title = "Capture QC";
+  const iconConfig = actions[0]?.action
+    ? getActionIconConfig(actions[0].action)
+    : { icon: "jam:eye-f", colorClass: "text-purple-600" };
   const completedCount = actions.reduce((count, { action }) => {
     const normalizedStatus = action.status?.trim().toLowerCase();
     return normalizedStatus === "completed" ? count + 1 : count;
@@ -90,10 +94,10 @@ export default function RecordingGroup({ group }: RecordingGroupProps) {
           >
             <div className="flex items-center justify-center w-full h-full rounded-full border bg-muted/50">
               <Icon
-                icon="mdi:video"
+                icon={iconConfig.icon}
                 width={16}
                 height={16}
-                className="w-4 h-4 text-muted-foreground"
+                className={cn("w-4 h-4", iconConfig.colorClass)}
               />
             </div>
           </ItemMedia>
@@ -121,4 +125,3 @@ export default function RecordingGroup({ group }: RecordingGroupProps) {
     </Collapsible>
   );
 }
-

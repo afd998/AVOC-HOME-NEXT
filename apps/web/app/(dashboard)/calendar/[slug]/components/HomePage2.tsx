@@ -96,17 +96,18 @@ export default function HomePage2({
           <div
             style={{
               position: "absolute",
-              width: `${contentWidth * pageZoom}px`,
+              top: 0,
+              left: 0,
+              width: `${contentWidth}px`,
               height: `${overlayHeight}px`,
-              transform: `translateX(-${scrollLeft * pageZoom}px)`,
               overflow: "hidden",
             }}
           >
             <div
               style={{
                 position: "absolute",
-                left: `${selectedRange.leftPx * pageZoom}px`,
-                width: `${selectedRange.widthPx * pageZoom}px`,
+                left: `${selectedRange.leftPx}px`,
+                width: `${selectedRange.widthPx}px`,
                 height: "100%",
                 backgroundColor: "rgba(59, 131, 246, 0.18)",
                 borderRadius: "8px",

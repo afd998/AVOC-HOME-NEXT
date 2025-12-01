@@ -8,6 +8,12 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "full",
 });
 
+const numericDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "2-digit",
+  day: "2-digit",
+  year: "numeric",
+});
+
 const timeFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
@@ -32,6 +38,22 @@ export function formatDate(value: string) {
     return value;
   }
   return dateFormatter.format(date);
+}
+
+/**
+ * Formats a PostgreSQL date string as MM/DD/YYYY
+ * @param value - Date string in YYYY-MM-DD format
+ * @returns Formatted date string or "No date" if invalid/empty
+ */
+export function formatDateNumeric(value: string) {
+  if (!value) {
+    return "No date";
+  }
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return numericDateFormatter.format(date);
 }
 
 /**
@@ -66,4 +88,3 @@ export function formatDateTime(value: string | null | undefined) {
   }
   return dateTimeFormatter.format(date);
 }
-

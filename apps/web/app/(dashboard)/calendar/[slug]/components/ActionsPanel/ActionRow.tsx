@@ -15,8 +15,7 @@ import { Icon } from "@iconify/react";
 import { convertTimeToMinutes, getActionDisplayName } from "./utils";
 import { actionOverdueClassName } from "./actionOverdueStyles";
 import type { EnhancedAction } from "./types";
-import { getActionIcon } from "@/core/actions/utils/getActionIcon";
-import { isStaffAssistance } from "@/core/actions/utils/isStaffAssistance";
+import { getActionIconConfig } from "@/core/actions/utils/getActionIcon";
 
 type ActionRowProps = {
   entry: EnhancedAction;
@@ -52,8 +51,7 @@ export default function ActionRow({ entry }: ActionRowProps) {
   const subtitleParts = [action.eventDetails?.eventName?.trim()].filter(Boolean);
   const subtitle = subtitleParts.join(" | ");
 
-  const iconName = getActionIcon(action);
-  const staffAssistance = isStaffAssistance(action);
+  const { icon: iconName, colorClass: defaultIconColor } = getActionIconConfig(action);
 
   return (
     <Item
@@ -89,9 +87,7 @@ export default function ActionRow({ entry }: ActionRowProps) {
               ? "text-emerald-600"
               : isOverdue
                 ? "text-rose-600"
-                : staffAssistance
-                  ? "text-green-600"
-                  : "text-muted-foreground"
+                : defaultIconColor
           )}
         >
           <div className="flex items-center justify-center w-full h-full rounded-full border bg-muted/50">
@@ -105,9 +101,7 @@ export default function ActionRow({ entry }: ActionRowProps) {
                   ? "text-emerald-600"
                   : isOverdue
                     ? "text-rose-600"
-                    : staffAssistance
-                      ? "text-green-600"
-                      : "text-muted-foreground"
+                    : defaultIconColor
               )}
             />
           </div>
@@ -135,4 +129,3 @@ export default function ActionRow({ entry }: ActionRowProps) {
     </Item>
   );
 }
-

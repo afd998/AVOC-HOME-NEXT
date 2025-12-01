@@ -1,10 +1,13 @@
 "use client";
 
 import { useMemo, useCallback } from "react";
+import Link from "next/link";
 import type { finalEvent } from "@/lib/data/calendar/calendar";
 import {
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
 } from "../../../components/ui/card";
 import {
   ItemGroup,
@@ -22,6 +25,8 @@ import { updateEventConfiguration, type EventConfigurationUpdates } from "@/lib/
 interface EventConfigurationProps {
   event: finalEvent;
   roomName: string;
+  headerTitle?: string;
+  headerHref?: string;
   showHybrid?: boolean;
   showRecording?: boolean;
   showAvConfig?: boolean;
@@ -31,6 +36,8 @@ interface EventConfigurationProps {
 export default function EventConfiguration({ 
   event, 
   roomName,
+  headerTitle,
+  headerHref,
   showHybrid = true,
   showRecording = true,
   showAvConfig = true,
@@ -61,6 +68,19 @@ export default function EventConfiguration({
   return (
     <EventConfigurationProvider isEditable={isEventStarted} onUpdate={handleUpdate}>
       <Card className="mb-3">
+        {headerTitle ? (
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-semibold leading-tight">
+              {headerHref ? (
+                <Link href={headerHref} className="hover:underline">
+                  {headerTitle}
+                </Link>
+              ) : (
+                headerTitle
+              )}
+            </CardTitle>
+          </CardHeader>
+        ) : null}
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-3 md:gap-4">
             {showHybrid && (
@@ -127,4 +147,3 @@ export default function EventConfiguration({
     </EventConfigurationProvider>
   );
 }
-

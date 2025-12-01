@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import {
   Item,
   ItemContent,
@@ -8,10 +7,6 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
-import {
-  formatDate as formatActionDate,
-  formatTime as formatActionTime,
-} from "@/app/utils/dateTime";
 
 interface ActionDetailsProps {
   action: HydratedAction;
@@ -24,42 +19,8 @@ export default function ActionDetails({ action }: ActionDetailsProps) {
     href?: string;
   }> = [{ label: "Venue", value: (action.room || "").replace(/^GH\s+/i, "") }];
 
-  if (action.eventDetails) {
-    const details = action.eventDetails;
-    const eventTitle = details.eventName.trim() || "Linked Event";
-    const dateLabel = formatActionDate(details.date);
-    const startLabel = details.startTime
-      ? formatActionTime(details.startTime)
-      : null;
-    const endLabel = details.endTime ? formatActionTime(details.endTime) : null;
-    const eventTimingLabel =
-      startLabel && endLabel
-        ? `${dateLabel} · ${startLabel} - ${endLabel}`
-        : null;
-
-    const eventLink = `/events/${details.id}`;
-
-    actionDetails.push({
-      label: "Event",
-      value: (
-        <>
-          <span className="font-medium text-foreground">{eventTitle}</span>
-          {eventTimingLabel ? (
-            <span className="block text-xs text-muted-foreground">
-              {eventTimingLabel}
-            </span>
-          ) : null}
-        </>
-      ),
-      href: eventLink,
-    });
-  }
-
   return (
     <section className="space-y-2">
-      <h3 className="text-sm font-semibold uppercase text-muted-foreground">
-        Action Details
-      </h3>
       <ItemGroup className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
         {actionDetails.map(({ label, value, href }) => {
           const content = (
@@ -102,4 +63,3 @@ export default function ActionDetails({ action }: ActionDetailsProps) {
     </section>
   );
 }
-

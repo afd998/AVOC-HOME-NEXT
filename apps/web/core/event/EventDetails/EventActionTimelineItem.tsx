@@ -7,8 +7,10 @@ import { formatTime } from "@/app/utils/dateTime";
 import { Icon } from "@iconify/react";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { getActionIcon } from "@/core/actions/utils/getActionIcon";
-import { isStaffAssistance } from "@/core/actions/utils/isStaffAssistance";
+import {
+  getActionIcon,
+  getActionIconConfig,
+} from "@/core/actions/utils/getActionIcon";
 import { cn } from "@/lib/utils";
 
 interface EventActionTimelineItemProps {
@@ -36,14 +38,16 @@ function getActionDisplayName(type: string | null, subType: string | null): stri
 }
 
 export default function EventActionTimelineItem({ action }: EventActionTimelineItemProps) {
-  const iconName = getActionIcon(action);
+  const iconConfig = getActionIconConfig(action);
+  const iconName = iconConfig.icon;
   const statusVariant = getStatusVariant(action.status);
   const displayName = getActionDisplayName(action.type, action.subType);
   const assignedToName = getProfileDisplayName(action.assignedToProfile);
   const completedByName = getProfileDisplayName(action.completedByProfile);
   const formattedTime = action.startTime ? formatTime(action.startTime) : "";
   const actionLink = `/actions/${action.id}`;
-  const staffAssistance = isStaffAssistance(action);
+  const backgroundClass = iconConfig.colorClass.replace("text-", "bg-");
+  const iconColorClass = iconConfig.colorClass;
 
   return (
     <Link href={actionLink} className="relative flex items-start gap-4 hover:opacity-80 transition-opacity cursor-pointer">
@@ -63,13 +67,13 @@ export default function EventActionTimelineItem({ action }: EventActionTimelineI
       <div className="relative flex flex-col items-center">
         <div className={cn(
           "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-background",
-          staffAssistance ? "bg-green-600" : "bg-primary"
+          backgroundClass || "bg-primary"
         )}>
           <Icon 
             icon={iconName} 
             className={cn(
               "h-4 w-4",
-              staffAssistance ? "text-white" : "text-primary-foreground"
+              iconColorClass || "text-primary-foreground"
             )} 
           />
         </div>
@@ -149,4 +153,3 @@ export default function EventActionTimelineItem({ action }: EventActionTimelineI
     </Link>
   );
 }
-
