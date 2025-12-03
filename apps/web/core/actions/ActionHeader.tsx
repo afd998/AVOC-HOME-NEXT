@@ -1,18 +1,14 @@
-import { Badge } from "@/components/ui/badge";
-import {
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+"use client";
+
+import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import UserAvatar from "@/core/User/UserAvatar";
 import { Icon } from "@iconify/react";
-import { getActionIconConfig } from "./utils/getActionIcon";
-import { getStatusVariant } from "./utils/getStatusVariant";
+import ActionIcon from "./ActionIcon";
 import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
 import {
   formatDateNumeric as formatActionDate,
   formatTime as formatActionTime,
 } from "@/app/utils/dateTime";
-import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
 interface ActionHeaderProps {
@@ -21,7 +17,6 @@ interface ActionHeaderProps {
 }
 
 export default function ActionHeader({ action, errorMessage }: ActionHeaderProps) {
-  const { icon: iconName, colorClass: iconColorClass } = getActionIconConfig(action);
   const typeUpper = action.type?.toUpperCase() || "";
   const subTypeUpper = action.subType?.toUpperCase() || "";
   const isConfigAction =
@@ -42,28 +37,16 @@ export default function ActionHeader({ action, errorMessage }: ActionHeaderProps
     startDateTime && !Number.isNaN(startDateTime.getTime())
       ? formatDistanceToNow(startDateTime, { addSuffix: true })
       : null;
-  const formattedStatus = action.status.trim() || "No status set";
-  const hasStatus = action.status.trim().length > 0;
-  const statusVariant = getStatusVariant(action.status);
   const venue =
     (action.eventDetails?.roomName ?? action.room ?? "").replace(/^GH\s+/i, "") ||
     "No venue";
+  const assignedProfile = action.assignedToProfile;
 
   return (
     <CardHeader className="gap-4 shrink-0">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-background">
-            <Icon
-              icon={iconName}
-              width={48}
-              height={48}
-              className={cn(
-                "h-12 w-12 p-3",
-                iconColorClass
-              )}
-            />
-          </span>
+          <ActionIcon action={action} size="lg" className="shrink-0" />
           <div className="flex flex-col gap-1 text-left">
             <CardTitle className="text-xl font-semibold">
               {displayName}
@@ -96,11 +79,16 @@ export default function ActionHeader({ action, errorMessage }: ActionHeaderProps
             </CardDescription>
           </div>
         </div>
-        {hasStatus ? (
-          <Badge variant={statusVariant} className="uppercase tracking-wide">
-            {formattedStatus}
-          </Badge>
-        ) : null}
+        <div className="flex items-center gap-3 self-center">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Assigned to
+          </span>
+          {assignedProfile ? (
+            <UserAvatar profile={assignedProfile} size="md" variant="solid" />
+          ) : (
+            <span className="text-xs text-muted-foreground">Unassigned</span>
+          )}
+        </div>
       </div>
       {errorMessage ? (
         <p className="text-sm text-destructive">{errorMessage}</p>

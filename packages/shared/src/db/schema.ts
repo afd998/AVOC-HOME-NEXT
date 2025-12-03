@@ -270,6 +270,18 @@ export const resourcesDict = pgTable("resources_dict", {
 	unique("resources_id_key").on(table.id),
 ]);
 
+export const shiftBlocks = pgTable("shift_blocks", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "shift_blocks_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	assignments: jsonb(),
+	startTime: time("start_time"),
+	endTime: time("end_time"),
+	date: date(),
+}, (table) => [
+	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
+]);
+
 export const events = pgTable("events", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	eventType: text("event_type"),
@@ -296,6 +308,8 @@ export const events = pgTable("events", {
 	seriesPos: bigint("series_pos", { mode: "number" }),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	series: bigint({ mode: "number" }),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	venue: bigint({ mode: "number" }),
 }, (table) => [
 	index("idx_events_date_start_time").using("btree", table.date.asc().nullsLast().op("date_ops"), table.startTime.asc().nullsLast().op("date_ops")),
 	index("idx_events_event_name_start_time").using("btree", table.eventName.asc().nullsLast().op("text_ops"), table.startTime.asc().nullsLast().op("text_ops")),
@@ -313,20 +327,13 @@ export const events = pgTable("events", {
 			foreignColumns: [series.id],
 			name: "events_series_fkey"
 		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.venue],
+			foreignColumns: [rooms.id],
+			name: "events_venue_fkey"
+		}).onDelete("cascade"),
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 	check("instructor_name_is_array_or_null", sql`(instructor_names IS NULL) OR (jsonb_typeof(instructor_names) = 'array'::text)`),
-]);
-
-export const shiftBlocks = pgTable("shift_blocks", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "shift_blocks_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	assignments: jsonb(),
-	startTime: time("start_time"),
-	endTime: time("end_time"),
-	date: date(),
-}, (table) => [
-	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
 
 export const panoptoChecks = pgTable("panopto_checks", {

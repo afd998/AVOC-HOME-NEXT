@@ -11,6 +11,7 @@ import {
 import UserAvatar from "@/core/User/UserAvatar";
 import Event from "@/app/(dashboard)/calendar/[slug]/components/Event/components/Event";
 import { finalEvent } from "@/lib/data/calendar/calendar";
+import Link from "next/link";
 
 interface RoomRowProps {
   room: string;
@@ -27,6 +28,7 @@ interface RoomRowProps {
   isAssigning?: boolean;
   assignedUserId?: string | null;
   assignedUserName?: string | null;
+  venueId?: number | null;
 }
 
 export default function RoomRow({
@@ -44,16 +46,21 @@ export default function RoomRow({
   isAssigning = false,
   assignedUserId = null,
   assignedUserName = null,
+  venueId = null,
 }: RoomRowProps) {
   const rowHeightPx = 90;
   const roomText = room.replace(/^GH\s+/, "");
   const rowHeightStyle = { height: `${rowHeightPx}px` } as const;
+  const venueHref =
+    !interactive && venueId !== null && venueId !== undefined
+      ? `/venues/${venueId}`
+      : null;
 
-  const label = (
+  const labelContent = (
     <div
       data-room-label="true"
       style={{
-        zIndex: 60,
+        zIndex: 50,
         ...rowHeightStyle,
       }}
       className={`sticky left-0 w-24 flex flex-col items-center justify-center transition-all duration-300 ease-in-out cursor-pointer event-no-select ${
@@ -90,6 +97,14 @@ export default function RoomRow({
         </div>
       ) : null}
     </div>
+  );
+
+  const label = venueHref ? (
+    <Link href={venueHref} className="block focus-visible:outline-none">
+      {labelContent}
+    </Link>
+  ) : (
+    labelContent
   );
 
   return (

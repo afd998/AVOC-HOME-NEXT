@@ -15,10 +15,6 @@ export default function EventActionsSection({ eventId }: EventActionsSectionProp
   const { data: event } = useEventQuery({ eventId });
   const actions = event?.actions || [];
 
-  if (actions.length === 0) {
-    return null;
-  }
-
   return (
     <EventPageContent>
       <Card className="mb-0">

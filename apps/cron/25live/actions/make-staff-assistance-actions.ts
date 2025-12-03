@@ -13,6 +13,7 @@ export function makeStaffAssistanceActions(
   const staffAssistanceResource = event.resources.find((resource) =>
     resource.itemName.includes("Staff Assistance")
   );
+  console.log("hybrid row", eventHybridRow);
   if (eventHybridRow || staffAssistanceResource) {
     return [
       {

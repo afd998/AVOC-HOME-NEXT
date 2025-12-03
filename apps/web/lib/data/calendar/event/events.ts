@@ -9,6 +9,7 @@ import {
   type EventRecordingRow,
   type EventOtherHardwareRow,
   type Series,
+  type Room,
 } from "shared";
 import type { finalEvent } from "../calendar";
 import { addDisplayColumns } from "./utils/hydrate-display-columns";
@@ -23,6 +24,7 @@ export type EventWithRelations = EventType & {
     quantity: number | null;
     instructions: string | null;
   }[];
+  room?: Room | null;
   eventHybrids?: EventHybridRow[];
   eventAvConfigs?: EventAVConfigRow[];
   eventRecordings?: EventRecordingRow[];
@@ -37,6 +39,7 @@ type HydratedEvent = EventType & {
   faculty: FacultyMember[];
   resources: CalendarEventResource[];
   isFirstSession: boolean;
+  room?: Room | null;
   hybrid?: EventHybridRow;
   avConfig?: EventAVConfigRow;
   recording?: EventRecordingRow;
@@ -62,6 +65,7 @@ export async function getEventsByDate(
             resourcesDict: true,
           },
         },
+        room: true,
       },
     });
 
@@ -188,6 +192,7 @@ export const getEventById = async (
         },
       },
       series: true,
+      room: true,
     },
   });
 
@@ -242,6 +247,7 @@ export const getEventsBySeries = async (
           },
         },
       },
+      room: true,
     },
   });
 

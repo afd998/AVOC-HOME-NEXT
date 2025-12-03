@@ -17,4 +17,12 @@ export {
   shiftBlocksQueryKey,
   profilesQueryKey,
 } from "./useAssignmentsQuery";
+export {
+  useVenueCalendarQuery,
+  venueCalendarQueryKey,
+} from "./useVenueCalendarQuery";
+export {
+  useVenuesQuery,
+  venuesQueryKey,
+} from "./useVenuesQuery";
 

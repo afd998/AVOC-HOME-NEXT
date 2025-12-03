@@ -1,7 +1,7 @@
 // app/api/crumb/route.ts
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
-import { eq, db, faculty, events } from "shared";
+import { eq, db, faculty, events, rooms } from "shared";
 import { unstable_cacheTag as cacheTag } from "next/cache"; 
 import { revalidateTag } from "next/cache";
 
@@ -10,6 +10,7 @@ const LABEL_OVERRIDES: Record<string, string> = {
   calendar: "Calendar",
   faculty: "Faculty",
   events: "Events",
+  venues: "Venues",
   settings: "Settings",
   schedule: "Schedule",
   "session-assignments": "Session Assignments",
@@ -64,6 +65,7 @@ async function generateBreadcrumbs(
   const breadcrumbs: BreadcrumbItemData[] = [];
   const facultyNameCache = new Map<number, string | null>();
   const eventNameCache = new Map<number, string | null>();
+  const venueNameCache = new Map<number, string | null>();
 
   const getFacultyName = async (id: number): Promise<string | null> => {
     if (facultyNameCache.has(id)) {
@@ -103,6 +105,28 @@ async function generateBreadcrumbs(
     } catch (error) {
       console.error(`[crumb] failed to load event ${id}:`, error);
       eventNameCache.set(id, null);
+      return null;
+    }
+  };
+
+  const getVenueName = async (id: number): Promise<string | null> => {
+    if (venueNameCache.has(id)) {
+      return venueNameCache.get(id) ?? null;
+    }
+    try {
+      const record = await db.query.rooms.findFirst({
+        where: eq(rooms.id, id),
+        columns: {
+          name: true,
+          spelling: true,
+        },
+      });
+      const name = record?.name ?? record?.spelling ?? null;
+      venueNameCache.set(id, name);
+      return name;
+    } catch (error) {
+      console.error(`[crumb] failed to load venue ${id}:`, error);
+      venueNameCache.set(id, null);
       return null;
     }
   };
@@ -159,7 +183,18 @@ async function generateBreadcrumbs(
             label = resolvedName;
           }
         }
+      } else if (parentSegment === "venues") {
+        const venueId = Number(segment);
+
+        if (!Number.isNaN(venueId)) {
+          const resolvedName = await getVenueName(venueId);
+          if (resolvedName) {
+            label = resolvedName;
+          } else {
+            label = `Room ${venueId}`;
+          }
       }
+    }
     }
 
     breadcrumbs.push({

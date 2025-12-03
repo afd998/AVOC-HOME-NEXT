@@ -236,6 +236,8 @@ export function useAssignRoomsToShiftBlock() {
       await queryClient.refetchQueries({ queryKey: ["shift_blocks", dateParam] });
       await queryClient.refetchQueries({ queryKey: ["shift_blocks"] });
       queryClient.invalidateQueries({ queryKey: ["eventOwnership"] });
+      // Ensure Actions panel (actionpanel queries) picks up latest assignments
+      queryClient.invalidateQueries({ queryKey: ["actionpanel"] });
     },
   });
 }

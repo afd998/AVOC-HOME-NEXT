@@ -66,10 +66,12 @@ function Calendar({
   // Handle date selection with URL navigation if enabled
   const handleSelect = React.useCallback(
     (date: Date | undefined) => {
-      if (useUrlNavigation && date) {
-        const yyyy = date.getFullYear();
-        const mm = String(date.getMonth() + 1).padStart(2, "0");
-        const dd = String(date.getDate()).padStart(2, "0");
+      const targetDate = date ?? selectedDate;
+
+      if (useUrlNavigation && targetDate) {
+        const yyyy = targetDate.getFullYear();
+        const mm = String(targetDate.getMonth() + 1).padStart(2, "0");
+        const dd = String(targetDate.getDate()).padStart(2, "0");
         const params = new URLSearchParams(searchParams.toString());
         const queryString = params.toString();
         const nextPath = `/calendar/${yyyy}-${mm}-${dd}${
@@ -78,7 +80,7 @@ function Calendar({
         router.push(nextPath);
       }
     },
-    [useUrlNavigation, router, searchParams]
+    [useUrlNavigation, router, searchParams, selectedDate]
   );
 
   return (

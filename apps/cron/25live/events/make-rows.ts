@@ -1,7 +1,7 @@
-import * as utils from "../events/index"; 
-import { parseEventResources } from "./parse-resourses";  
+import { db, rooms, type ProcessedEvent } from "shared";
+import * as utils from "../events/index";
+import { parseEventResources } from "./parse-resourses";
 import { mergeAdjacentRoomEvents } from "./merge-adjacent-room-events";
-import type { ProcessedEvent } from "shared";
 import type { RawEvent } from "../schemas";
 import { computeTransforms } from "./compute-transform";
 
@@ -15,6 +15,57 @@ const {
   parseRoomName,
   toTimeStrings,
 } = utils;
+
+const normalizeRoomName = (value: unknown): string | null => {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  return trimmed.replace(/\s+/g, "").toUpperCase();
+};
+
+const buildRoomLookup = async (): Promise<Map<string, number>> => {
+  const roomRows = await db
+    .select({
+      id: rooms.id,
+      name: rooms.name,
+      spelling: rooms.spelling,
+    })
+    .from(rooms);
+
+  const lookup = new Map<string, number>();
+
+  roomRows.forEach(({ id, name, spelling }) => {
+    const normalizedName = normalizeRoomName(name);
+    if (normalizedName && !lookup.has(normalizedName)) {
+      lookup.set(normalizedName, id);
+    }
+
+    const normalizedSpelling = normalizeRoomName(spelling);
+    if (normalizedSpelling && !lookup.has(normalizedSpelling)) {
+      lookup.set(normalizedSpelling, id);
+    }
+  });
+
+  return lookup;
+};
+
+const resolveVenueId = (
+  roomName: string | null | undefined,
+  roomLookup: Map<string, number>
+): number | null => {
+  const normalized = normalizeRoomName(roomName);
+  if (!normalized) {
+    return null;
+  }
+
+  return roomLookup.get(normalized) ?? null;
+};
 
 function removeKECNoAcademicEvents(
   eventsList: ProcessedEvent[]
@@ -68,6 +119,11 @@ export async function getEvents(
     );
   });
 
+  const roomLookup =
+    filteredData.length > 0
+      ? await buildRoomLookup()
+      : new Map<string, number>();
+
   const processedEvents = filteredData.map<ProcessedEvent>((event) => {
     const { startTimeStr, endTimeStr } = toTimeStrings(event.start, event.end);
 
@@ -75,6 +131,7 @@ export async function getEvents(
       ? event.subject_item_date.split("T")[0]
       : new Date().toISOString().split("T")[0];
     const resources = parseEventResources(event);
+    const roomName = parseRoomName(event.subject_itemName ?? "") ?? "";
 
     return {
       itemId: event.itemId,
@@ -90,7 +147,8 @@ export async function getEvents(
       organization: getOrganization(event),
       instructorNames: getInstructorNames(event),
       lectureTitle: getLectureTitle(event),
-      roomName: parseRoomName(event.subject_itemName ?? "") ?? "",
+      roomName,
+      venue: resolveVenueId(roomName, roomLookup),
       resources,
       updatedAt: new Date().toISOString(),
       raw: event,

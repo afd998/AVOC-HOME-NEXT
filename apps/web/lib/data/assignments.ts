@@ -21,7 +21,7 @@ import {
   gte,
   lt,
 } from "shared";
-import { unstable_cacheTag as cacheTag } from "next/cache";
+import { unstable_cacheTag as cacheTag, revalidateTag } from "next/cache";
 
 // Types for the returned data
 export type ShiftRow = Shift;
@@ -222,6 +222,7 @@ export async function assignRoomsToShiftBlock(
   roomNames: string[],
   targetProfileId: string | null
 ): Promise<ShiftBlockWithAssignments | null> {
+  let blockDateForCache: string | null = null;
   try {
     console.log("[assignRoomsToShiftBlock] start", {
       shiftBlockId,
@@ -253,11 +254,12 @@ export async function assignRoomsToShiftBlock(
     const candidateList = Array.from(candidateNames);
     console.log("[assignRoomsToShiftBlock] candidateList", candidateList);
 
-    return await db.transaction(async (tx) => {
+    const updatedBlock = await db.transaction(async (tx) => {
       const blockMeta = await tx.query.shiftBlocks.findFirst({
         where: eq(shiftBlocks.id, shiftBlockId),
         columns: { date: true, startTime: true, endTime: true },
       });
+      blockDateForCache = blockMeta?.date ?? null;
 
       // Pull rooms once and match by normalized name to avoid casing/prefix issues
       const allRooms = await tx.select().from(rooms);
@@ -392,6 +394,18 @@ export async function assignRoomsToShiftBlock(
         updated.shiftBlockProfiles ?? []
       );
     });
+
+    if (blockDateForCache) {
+      try {
+        await revalidateTag(`calendar:${blockDateForCache}`);
+      } catch (revalidateError) {
+        console.error("[assignRoomsToShiftBlock] revalidateTag failed", {
+          blockDateForCache,
+          error: revalidateError,
+        });
+      }
+    }
+    return updatedBlock;
   } catch (error) {
     console.error("[db] assignments.assignRoomsToShiftBlock", {
       shiftBlockId,

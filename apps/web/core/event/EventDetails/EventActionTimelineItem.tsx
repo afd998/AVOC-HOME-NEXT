@@ -3,15 +3,12 @@
 import type { ActionWithDict } from "@/lib/data/actions/actions";
 import { Badge } from "@/components/ui/badge";
 import { getProfileDisplayName } from "@/core/User/utils";
+import UserAvatar from "@/core/User/UserAvatar";
 import { formatTime } from "@/app/utils/dateTime";
 import { Icon } from "@iconify/react";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import {
-  getActionIcon,
-  getActionIconConfig,
-} from "@/core/actions/utils/getActionIcon";
-import { cn } from "@/lib/utils";
+import ActionIcon from "@/core/actions/ActionIcon";
 
 interface EventActionTimelineItemProps {
   action: ActionWithDict;
@@ -38,16 +35,13 @@ function getActionDisplayName(type: string | null, subType: string | null): stri
 }
 
 export default function EventActionTimelineItem({ action }: EventActionTimelineItemProps) {
-  const iconConfig = getActionIconConfig(action);
-  const iconName = iconConfig.icon;
   const statusVariant = getStatusVariant(action.status);
   const displayName = getActionDisplayName(action.type, action.subType);
   const assignedToName = getProfileDisplayName(action.assignedToProfile);
   const completedByName = getProfileDisplayName(action.completedByProfile);
   const formattedTime = action.startTime ? formatTime(action.startTime) : "";
   const actionLink = `/actions/${action.id}`;
-  const backgroundClass = iconConfig.colorClass.replace("text-", "bg-");
-  const iconColorClass = iconConfig.colorClass;
+  const assignedProfile = action.assignedToProfile;
 
   return (
     <Link href={actionLink} className="relative flex items-start gap-4 hover:opacity-80 transition-opacity cursor-pointer">
@@ -65,18 +59,12 @@ export default function EventActionTimelineItem({ action }: EventActionTimelineI
       
       {/* Timeline dot with connecting line */}
       <div className="relative flex flex-col items-center">
-        <div className={cn(
-          "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-background",
-          backgroundClass || "bg-primary"
-        )}>
-          <Icon 
-            icon={iconName} 
-            className={cn(
-              "h-4 w-4",
-              iconColorClass || "text-primary-foreground"
-            )} 
-          />
-        </div>
+        <ActionIcon
+          action={action}
+          size="md"
+          variant="tinted"
+          className="relative z-10 border-2 border-background"
+        />
         {/* Vertical line extending down */}
         <div className="absolute top-8 left-1/2 -translate-x-1/2 w-0.5 bg-border h-6" />
       </div>
@@ -104,8 +92,18 @@ export default function EventActionTimelineItem({ action }: EventActionTimelineI
           {/* Details */}
           <div className="space-y-1 text-xs text-muted-foreground">
             {assignedToName && (
-              <div>
-                <span className="font-medium">Assigned to:</span> {assignedToName}
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Assigned to:</span>
+                {assignedProfile ? (
+                  <UserAvatar
+                    profile={assignedProfile}
+                    size="sm"
+                    variant="solid"
+                    className="shrink-0"
+                  />
+                ) : (
+                  <span className="text-muted-foreground">Unassigned</span>
+                )}
               </div>
             )}
             {completedByName && (

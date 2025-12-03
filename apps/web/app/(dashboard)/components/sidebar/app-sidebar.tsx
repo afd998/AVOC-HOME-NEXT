@@ -1,4 +1,4 @@
- import { Suspense } from "react";
+import { Suspense } from "react";
 
 import { Users, Calendar as CalendarIcon, LayoutDashboard } from "lucide-react";
 
@@ -36,6 +36,19 @@ import ThemeToggle from "@/components/theme/theme-toggle";
 import { LogoButton } from "./logo-button";
 import { Filters } from "./filters";
 import { CalendarOnly } from "./calendar-only"; 
+
+const RoomIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+  >
+    <path d="M12 2C8.14 2 5 5.06 5 8.83c0 4.77 4.65 9.65 6.44 11.3.31.28.81.28 1.12 0C14.35 18.48 19 13.6 19 8.83 19 5.06 15.86 2 12 2Zm0 8.75a1.75 1.75 0 1 1 0-3.5 1.75 1.75 0 0 1 0 3.5Z" />
+  </svg>
+);
 export async function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
@@ -132,10 +145,18 @@ export async function AppSidebar({
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Link href="/events">
+                <Link href="/series">
                   <SidebarMenuButton className="w-full justify-start">
                     <CalendarIcon className="h-4 w-4" />
-                    <span>Events</span>
+                    <span>Series</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/venues">
+                  <SidebarMenuButton className="w-full justify-start">
+                    <RoomIcon className="h-4 w-4" />
+                    <span>Venues</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>

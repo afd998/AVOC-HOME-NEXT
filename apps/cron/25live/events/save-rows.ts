@@ -86,6 +86,7 @@ export async function saveEvents(
         instructorNames: sql`excluded.instructor_names`,
         series: sql`excluded.series`,
         seriesPos: sql`excluded.series_pos`,
+        venue: sql`excluded.venue`,
       },
     });
 }

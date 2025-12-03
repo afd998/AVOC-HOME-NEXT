@@ -155,7 +155,11 @@ export default function RoomRows({ calendar, dateString }: RoomRowsProps) {
     <div>
       {calendar.map(
         (
-          { roomName, events }: { roomName: string; events: finalEvent[] },
+          {
+            roomName,
+            events,
+            venueId,
+          }: { roomName: string; events: finalEvent[]; venueId: number | null },
           index: number
         ) => {
           const assignedEntry = shiftAssignments.find(
@@ -178,6 +182,7 @@ export default function RoomRows({ calendar, dateString }: RoomRowsProps) {
               isAssigning={isAssigning}
               assignedUserId={assignedEntry?.user ?? null}
               assignedUserName={assignedEntry?.name ?? null}
+              venueId={venueId}
             />
           );
         }

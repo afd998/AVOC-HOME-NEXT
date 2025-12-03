@@ -7,6 +7,7 @@ import {
   type EventOtherHardwareRow,
   type Event as EventType,
   type Series,
+  type Room,
 } from "shared";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { FacultyMember } from "./event/utils/hyrdate-faculty";
@@ -28,9 +29,15 @@ type HydratedEvent = EventType & {
   otherHardware?: EventOtherHardwareRow[];
   actions?: ActionWithDict[];
   series?: Series | null;
+  room?: Room | null;
 };
 export type finalEvent = EventWithDisplay<HydratedEvent>;
-export type RoomRowData = { roomName: string; events: finalEvent[] };
+export type RoomRowData = {
+  roomName: string;
+  events: finalEvent[];
+  venueId: number | null;
+  room?: Room | null;
+};
 export async function getCalendar(
   date: string,
   filter: string,
@@ -124,6 +131,25 @@ export async function getCalendar(
   return visibleRoomGroups;
 }
 
+export async function getVenueCalendarRow(
+  date: string,
+  venueId: string | number,
+  filter = "All Rooms",
+  autoHide = false
+): Promise<RoomRowData | null> {
+  const numericVenueId =
+    typeof venueId === "string"
+      ? Number.parseInt(venueId, 10)
+      : venueId;
+
+  if (!Number.isFinite(numericVenueId)) {
+    return null;
+  }
+
+  const rows = await getCalendar(date, filter, autoHide);
+  return rows.find((row) => row.venueId === numericVenueId) ?? null;
+}
+
 function groupEventsByRoom(events: finalEvent[]): RoomRowData[] {
   // Group events by roomName
   const groupedEvents = events.reduce((acc, event) => {
@@ -136,10 +162,19 @@ function groupEventsByRoom(events: finalEvent[]): RoomRowData[] {
   }, {} as Record<string, finalEvent[]>);
 
   // Convert to array of objects
-  return Object.entries(groupedEvents).map(([roomName, events]) => ({
-    roomName,
-    events,
-  }));
+  return Object.entries(groupedEvents).map(([roomName, events]) => {
+    const room = events.find((event) => event.room)?.room ?? null;
+    const venueId =
+      room?.id ??
+      (events.find((event) => typeof event.venue === "number")?.venue ?? null);
+
+    return {
+      roomName,
+      events,
+      venueId,
+      room,
+    };
+  });
 }
 
 function handleMergedRooms(roomGroups: RoomRowData[]): RoomRowData[] {
@@ -151,7 +186,12 @@ function handleMergedRooms(roomGroups: RoomRowData[]): RoomRowData[] {
     const expandedNames = expandMergedRoomNames(group.roomName).slice(1);
     expandedNames.forEach((name) => {
       if (existingRoomNames.has(name)) return;
-      const emptyGroup: RoomRowData = { roomName: name, events: [] };
+      const emptyGroup: RoomRowData = {
+        roomName: name,
+        events: [],
+        venueId: null,
+        room: null,
+      };
       roomGroups.push(emptyGroup);
       existingRoomNames.add(name);
     });
@@ -172,10 +212,17 @@ function handleMergedRooms(roomGroups: RoomRowData[]): RoomRowData[] {
         ...roomGroups[targetIndex].events,
         ...room.events,
       ];
+
+      if (!roomGroups[targetIndex].venueId && room.venueId) {
+        roomGroups[targetIndex].venueId = room.venueId;
+        roomGroups[targetIndex].room = room.room ?? roomGroups[targetIndex].room ?? null;
+      }
     } else {
       roomGroups.push({
         roomName: baseRoomName,
         events: [...room.events],
+        venueId: room.venueId ?? null,
+        room: room.room ?? null,
       });
     }
 

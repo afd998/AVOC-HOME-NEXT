@@ -10,14 +10,13 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { cn } from "@/lib/utils";
-import { Icon } from "@iconify/react";
 import UserAvatar from "@/core/User/UserAvatar";
 import { getProfileDisplayName } from "@/core/User/utils";
+import ActionIcon from "@/core/actions/ActionIcon";
 
 import { convertTimeToMinutes, getActionDisplayName } from "./utils";
 import { actionOverdueClassName } from "./actionOverdueStyles";
 import type { EnhancedAction } from "./types";
-import { getActionIconConfig } from "@/core/actions/utils/getActionIcon";
 
 type ActionRowProps = {
   entry: EnhancedAction;
@@ -55,7 +54,11 @@ export default function ActionRow({ entry }: ActionRowProps) {
   const subtitleParts = [action.eventDetails?.eventName?.trim()].filter(Boolean);
   const subtitle = subtitleParts.join(" | ");
 
-  const { icon: iconName, colorClass: defaultIconColor } = getActionIconConfig(action);
+  const iconColorOverride = isCompleted
+    ? "text-emerald-600"
+    : isOverdue
+      ? "text-rose-600"
+      : undefined;
 
   return (
     <Item
@@ -85,30 +88,14 @@ export default function ActionRow({ entry }: ActionRowProps) {
       >
         <ItemMedia
           variant="default"
-          className={cn(
-            "mt-1",
-            isCompleted
-              ? "text-emerald-600"
-              : isOverdue
-                ? "text-rose-600"
-                : defaultIconColor
-          )}
+          className="mt-1"
         >
-          <div className="flex items-center justify-center w-full h-full rounded-full border bg-muted/50">
-            <Icon
-              icon={iconName}
-              width={16}
-              height={16}
-              className={cn(
-                "w-4 h-4",
-                isCompleted
-                  ? "text-emerald-600"
-                  : isOverdue
-                    ? "text-rose-600"
-                    : defaultIconColor
-              )}
-            />
-          </div>
+          <ActionIcon
+            action={action}
+            size="sm"
+            variant="muted"
+            colorClassName={iconColorOverride}
+          />
         </ItemMedia>
         <ItemContent className="flex-1 gap-1">
           <ItemTitle className="text-sm font-medium leading-tight">
@@ -118,23 +105,24 @@ export default function ActionRow({ entry }: ActionRowProps) {
             {subtitle || "No additional details"}
           </ItemDescription>
         </ItemContent>
-        <ItemActions className="ml-auto flex flex-col items-end gap-2 text-xs font-medium uppercase">
-          {assignedProfile ? (
-            <UserAvatar
-              profile={assignedProfile as any}
-              size="sm"
-              variant="solid"
-            />
-          ) : null}
+        <ItemActions className="ml-auto flex items-center gap-3 text-xs font-medium uppercase">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <span>{(roomName || "").replace(/^GH\s+/i, "")}</span>
+            {assignedProfile ? (
+              <UserAvatar
+                profile={assignedProfile as any}
+                size="sm"
+                variant="solid"
+                className="h-[20px] w-[20px] shrink-0"
+              />
+            ) : null}
+          </div>
           {isCompleted ? (
             <Check
               aria-label="Completed"
               className="h-4 w-4 shrink-0 text-emerald-600"
             />
           ) : null}
-          <span className="text-muted-foreground">
-            {(roomName || "").replace(/^GH\s+/i, "")}
-          </span>
         </ItemActions>
       </Link>
     </Item>

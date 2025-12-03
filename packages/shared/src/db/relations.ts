@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, series, panoptoChecks, shifts, facultyEvents, shiftBlockProfile, shiftBlocks, shiftBlockProfileRoom, rooms, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
+import { faculty, facultySetup, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, series, rooms, panoptoChecks, shifts, facultyEvents, shiftBlockProfile, shiftBlocks, shiftBlockProfileRoom, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -33,6 +33,10 @@ export const eventsRelations = relations(events, ({one, many}) => ({
 	series: one(series, {
 		fields: [events.series],
 		references: [series.id]
+	}),
+	room: one(rooms, {
+		fields: [events.venue],
+		references: [rooms.id]
 	}),
 	panoptoChecks: many(panoptoChecks),
 	facultyEvents: many(facultyEvents),
@@ -102,6 +106,11 @@ export const seriesRelations = relations(series, ({many}) => ({
 	events: many(events),
 }));
 
+export const roomsRelations = relations(rooms, ({many}) => ({
+	events: many(events),
+	shiftBlockProfileRooms: many(shiftBlockProfileRoom),
+}));
+
 export const panoptoChecksRelations = relations(panoptoChecks, ({one}) => ({
 	profile: one(profiles, {
 		fields: [panoptoChecks.completedByUserId],
@@ -160,10 +169,6 @@ export const shiftBlockProfileRoomRelations = relations(shiftBlockProfileRoom, (
 		fields: [shiftBlockProfileRoom.shiftBlock],
 		references: [shiftBlocks.id]
 	}),
-}));
-
-export const roomsRelations = relations(rooms, ({many}) => ({
-	shiftBlockProfileRooms: many(shiftBlockProfileRoom),
 }));
 
 export const resourceEventsRelations = relations(resourceEvents, ({one}) => ({
