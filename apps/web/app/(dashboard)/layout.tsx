@@ -13,7 +13,6 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  "use cache";
   return (
     <div>
       <SidebarShell collapsible="icon" className="h-svh">
