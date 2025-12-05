@@ -41,6 +41,7 @@ export type EventWithResourceDetails = EventRow & {
 export type ActionWithDict = Omit<ActionRow, "event"> & {
   eventDetails: EventWithResourceDetails | null;
   assignedToProfile: ProfileRow | null;
+  assignedToManualProfile: ProfileRow | null;
   completedByProfile: ProfileRow | null;
   qcItems: (QcItemRow & {
     qcItemDict: QcItemDictRow | null;
@@ -95,6 +96,7 @@ export async function getActionsByDate(date: string): Promise<ActionWithDict[]> 
           },
         },
         profile_assignedTo: true,
+        profile_assignedToManual: true,
         profile_completedBy: true,
         qcItems: {
           with: {
@@ -105,13 +107,21 @@ export async function getActionsByDate(date: string): Promise<ActionWithDict[]> 
     });
 
     return validActions.map(
-      ({ event, profile_assignedTo, profile_completedBy, qcItems, ...actionData }) => {
+      ({
+        event,
+        profile_assignedTo,
+        profile_assignedToManual,
+        profile_completedBy,
+        qcItems,
+        ...actionData
+      }) => {
         const eventWithResources = event as EventWithResourceDetails | null;
 
         return {
           ...actionData,
           eventDetails: eventWithResources ?? null,
           assignedToProfile: profile_assignedTo ?? null,
+          assignedToManualProfile: profile_assignedToManual ?? null,
           completedByProfile: profile_completedBy ?? null,
           qcItems: (qcItems ?? []).map((item) => ({
             ...item,

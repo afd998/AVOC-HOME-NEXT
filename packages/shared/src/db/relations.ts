@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, series, rooms, panoptoChecks, shifts, facultyEvents, shiftBlockProfile, shiftBlocks, shiftBlockProfileRoom, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
+import { faculty, facultySetup, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, series, venues, panoptoChecks, shifts, facultyEvents, shiftBlockProfile, shiftBlocks, shiftBlockProfileRoom, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -34,9 +34,9 @@ export const eventsRelations = relations(events, ({one, many}) => ({
 		fields: [events.series],
 		references: [series.id]
 	}),
-	room: one(rooms, {
+	venue: one(venues, {
 		fields: [events.venue],
-		references: [rooms.id]
+		references: [venues.id]
 	}),
 	panoptoChecks: many(panoptoChecks),
 	facultyEvents: many(facultyEvents),
@@ -64,6 +64,11 @@ export const actionsRelations = relations(actions, ({one, many}) => ({
 		references: [profiles.id],
 		relationName: "actions_assignedTo_profiles_id"
 	}),
+	profile_assignedToManual: one(profiles, {
+		fields: [actions.assignedToManual],
+		references: [profiles.id],
+		relationName: "actions_assignedToManual_profiles_id"
+	}),
 	profile_completedBy: one(profiles, {
 		fields: [actions.completedBy],
 		references: [profiles.id],
@@ -79,6 +84,9 @@ export const actionsRelations = relations(actions, ({one, many}) => ({
 export const profilesRelations = relations(profiles, ({many}) => ({
 	actions_assignedTo: many(actions, {
 		relationName: "actions_assignedTo_profiles_id"
+	}),
+	actions_assignedToManual: many(actions, {
+		relationName: "actions_assignedToManual_profiles_id"
 	}),
 	actions_completedBy: many(actions, {
 		relationName: "actions_completedBy_profiles_id"
@@ -106,7 +114,7 @@ export const seriesRelations = relations(series, ({many}) => ({
 	events: many(events),
 }));
 
-export const roomsRelations = relations(rooms, ({many}) => ({
+export const venuesRelations = relations(venues, ({many}) => ({
 	events: many(events),
 	shiftBlockProfileRooms: many(shiftBlockProfileRoom),
 }));
@@ -161,9 +169,9 @@ export const shiftBlockProfileRoomRelations = relations(shiftBlockProfileRoom, (
 		fields: [shiftBlockProfileRoom.profile],
 		references: [profiles.id]
 	}),
-	room: one(rooms, {
+	venue: one(venues, {
 		fields: [shiftBlockProfileRoom.room],
-		references: [rooms.id]
+		references: [venues.id]
 	}),
 	shiftBlock: one(shiftBlocks, {
 		fields: [shiftBlockProfileRoom.shiftBlock],

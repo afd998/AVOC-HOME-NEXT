@@ -10,6 +10,7 @@ import { buildActionListItems } from "./utils";
 import { useActionsQuery } from "@/lib/query";
 import ActionAssignments from "../ActionAssignments/ActionAssignments";
 import { useEventAssignmentsStore } from "@/lib/stores/event-assignments";
+import { supabase } from "@/lib/supabase";
 
 type ActionsPanelProps = {
   date: string;
@@ -25,18 +26,74 @@ export default function ActionsPanel({
   const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
   const [showSchedule, setShowSchedule] = useState(false);
   const [selectedDate, setSelectedDate] = useState(date);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const { data: actionGroups = [] } = useActionsQuery({ date, filter, autoHide });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const indicatorElementRef = useRef<HTMLDivElement | null>(null);
   const [hasIndicator, setHasIndicator] = useState(false);
   const { showEventAssignments } = useEventAssignmentsStore();
 
-  const { items, totalActions } = useMemo(() => {
-    if (activeTab !== "all") {
-      return { items: [], totalActions: 0 };
-    }
-    return buildActionListItems(actionGroups);
-  }, [activeTab, actionGroups]);
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadUser = async () => {
+      try {
+        setIsLoadingUser(true);
+        const { data, error } = await supabase.auth.getUser();
+        if (!isMounted) return;
+        if (error) {
+          console.error("[ActionsPanel] Failed to get user", error);
+        }
+        setCurrentUserId(data.user?.id ?? null);
+      } finally {
+        if (isMounted) setIsLoadingUser(false);
+      }
+    };
+
+    loadUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!isMounted) return;
+        setCurrentUserId(session?.user?.id ?? null);
+      }
+    );
+
+    return () => {
+      isMounted = false;
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
+
+  const filteredActionGroups = useMemo(() => {
+    if (activeTab !== "mine") return actionGroups;
+    if (!currentUserId) return [];
+
+    return actionGroups
+      .map((group) => ({
+        ...group,
+        actions: group.actions.filter(
+          (action) => {
+            // Manual assignee takes precedence over auto assignments
+            const effectiveAssigneeId =
+              action.assignedToManual ??
+              action.assignedToManualProfile?.id ??
+              action.assignedTo ??
+              action.assignedToProfile?.id ??
+              null;
+
+            return effectiveAssigneeId === currentUserId;
+          }
+        ),
+      }))
+      .filter((group) => group.actions.length > 0);
+  }, [actionGroups, activeTab, currentUserId]);
+
+  const { items, totalActions } = useMemo(
+    () => buildActionListItems(filteredActionGroups),
+    [filteredActionGroups]
+  );
 
   useEffect(() => {
     if (totalActions === 0) {
@@ -87,7 +144,7 @@ export default function ActionsPanel({
       <div className="flex h-full flex-col">
         <ActionPanelHeader
           onGoToNow={handleGoToNow}
-          goNowDisabled={activeTab !== "all" || !hasIndicator}
+          goNowDisabled={!hasIndicator}
           tabValue={activeTab}
           onTabValueChange={setActiveTab}
           totalActions={totalActions}
@@ -97,16 +154,23 @@ export default function ActionsPanel({
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto px-4 py-3"
         >
-          {activeTab === "all" ? (
-            totalActions === 0 ? (
-              <ActionEmptyState />
-            ) : (
-              <ActionList
-                items={items}
-                onIndicatorUpdate={handleIndicatorUpdate}
-              />
-            )
-          ) : null}
+          {activeTab === "mine" && isLoadingUser ? (
+            <ActionEmptyState message="Loading your actions..." />
+          ) : totalActions === 0 ? (
+            <ActionEmptyState
+              message={
+                activeTab === "mine"
+                  ? "No actions assigned to you for this date."
+                  : undefined
+              }
+            />
+          ) : (
+            <ActionList
+              items={items}
+              onIndicatorUpdate={handleIndicatorUpdate}
+              hideAssignedAvatar={activeTab === "mine"}
+            />
+          )}
         </div>
         <ActionAssignments
           dates={[date]}

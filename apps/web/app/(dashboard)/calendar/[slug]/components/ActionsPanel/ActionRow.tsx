@@ -20,11 +20,16 @@ import type { EnhancedAction } from "./types";
 
 type ActionRowProps = {
   entry: EnhancedAction;
+  hideAssignedAvatar?: boolean;
 };
 
-export default function ActionRow({ entry }: ActionRowProps) {
+export default function ActionRow({
+  entry,
+  hideAssignedAvatar = false,
+}: ActionRowProps) {
   const { action, roomName } = entry;
-  const assignedProfile = action.assignedToProfile;
+  const assignedProfile =
+    action.assignedToManualProfile ?? action.assignedToProfile;
   const assignedName = getProfileDisplayName(assignedProfile);
 
   const title = getActionDisplayName(action);
@@ -108,7 +113,7 @@ export default function ActionRow({ entry }: ActionRowProps) {
         <ItemActions className="ml-auto flex items-center gap-3 text-xs font-medium uppercase">
           <div className="flex items-center gap-2 text-muted-foreground">
             <span>{(roomName || "").replace(/^GH\s+/i, "")}</span>
-            {assignedProfile ? (
+            {assignedProfile && !hideAssignedAvatar ? (
               <UserAvatar
                 profile={assignedProfile as any}
                 size="sm"

@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Database } from '../../../types/supabase';
 
-type RoomFilter = Database['public']['Tables']['room_filters']['Row'];
+type RoomFilter = Database['public']['Tables']['venue_filters']['Row'];
 
 export interface Filter {
   id: number;
@@ -42,7 +42,7 @@ export const useFilters = () => {
     queryFn: async () => {
       // Fetch all filters
       const { data: allFilters, error } = await supabase
-        .from('room_filters')
+        .from('venue_filters')
         .select('*');
 
       if (error) throw error;

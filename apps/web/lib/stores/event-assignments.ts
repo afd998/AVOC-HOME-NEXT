@@ -22,6 +22,7 @@ interface EventAssignmentsStore {
   setSelectedShiftBlock: (block: ShiftBlock | null) => void
   selectedShiftBlockIndex: number | null
   setSelectedShiftBlockIndex: (index: number | null) => void
+  resetShiftBlockSelection: () => void
 }
 
 export const useEventAssignmentsStore = create<EventAssignmentsStore>((set) => ({
@@ -35,4 +36,10 @@ export const useEventAssignmentsStore = create<EventAssignmentsStore>((set) => (
   setSelectedShiftBlock: (block) => set({ selectedShiftBlock: block }),
   selectedShiftBlockIndex: null,
   setSelectedShiftBlockIndex: (index) => set({ selectedShiftBlockIndex: index }),
+  resetShiftBlockSelection: () =>
+    set({
+      selectedShiftBlockId: null,
+      selectedShiftBlock: null,
+      selectedShiftBlockIndex: null,
+    }),
 }))

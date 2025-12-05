@@ -16,7 +16,7 @@ export function LogoButton() {
           alt="Home"
           width={40}
           height={40}
-          className="h-10 w-10 object-contain group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6"
+          className="h-10 w-10 object-contain dark:brightness-200 dark:contrast-100 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6"
           priority
         />
         <span className="text-sm font-semibold text-foreground group-data-[collapsible=icon]:hidden">

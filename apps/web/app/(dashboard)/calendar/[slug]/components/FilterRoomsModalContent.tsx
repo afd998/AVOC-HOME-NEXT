@@ -23,7 +23,6 @@ type FilterRoomsModalContentProps = {
   filters: RoomFilter[];
 };
 
-const MY_EVENTS_FILTER = "My Events";
 const DEFAULT_FILTER = "All Rooms";
 
 export default function FilterRoomsModalContent({
@@ -92,29 +91,6 @@ export default function FilterRoomsModalContent({
 
   return (
     <ItemGroup className="max-h-80 overflow-y-auto">
-      <Item className="p-0">
-        <Button
-          asChild
-          variant="ghost"
-          className={cn(
-            "w-full justify-start gap-4 px-4 py-3 text-left",
-            currentFilter === MY_EVENTS_FILTER
-              ? "bg-accent/50"
-              : "hover:bg-accent/50"
-          )}
-        >
-          <Link href={createHref(MY_EVENTS_FILTER)} onClick={handleSelect}>
-            {renderCheckIcon(currentFilter === MY_EVENTS_FILTER)}
-            <ItemContent>
-              <ItemTitle>My Events</ItemTitle>
-              <ItemDescription>
-                Show only events assigned to me
-              </ItemDescription>
-            </ItemContent>
-          </Link>
-        </Button>
-      </Item>
-
       {filters.map((filter, index) => {
         const filterName = filter.name ?? undefined;
         const displayName = filterName ?? DEFAULT_FILTER;

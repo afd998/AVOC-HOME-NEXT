@@ -1,43 +1,21 @@
 import { getFilters } from "../filters";
-import {
-  type RoomFilter,
-  type EventHybridRow,
-  type EventAVConfigRow,
-  type EventRecordingRow,
-  type EventOtherHardwareRow,
-  type Event as EventType,
-  type Series,
-  type Room,
-} from "shared";
+import { type Room } from "shared";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-import { FacultyMember } from "./event/utils/hyrdate-faculty";
-import type { CalendarEventResource } from "./event/utils/hydrate-event-resources";
 import {
   addDisplayColumns,
   type EventWithDisplay,
 } from "./event/utils/hydrate-display-columns";
-import { getEventsByDate } from "./event/events";
-import type { ActionWithDict } from "@/lib/data/actions/actions";
+import { getEventsByDate, type CalendarEventHydrated } from "./event/events";
+import {
+  groupEventsByRoom,
+  handleMergedRooms,
+  type RoomGroup,
+} from "./utils/room-groups";
+import { filterEvents, resolveRoomList } from "./utils/room-filters";
 
-type HydratedEvent = EventType & {
-  faculty: FacultyMember[];
-  resources: CalendarEventResource[];
-  isFirstSession: boolean;
-  hybrid?: EventHybridRow;
-  avConfig?: EventAVConfigRow;
-  recording?: EventRecordingRow;
-  otherHardware?: EventOtherHardwareRow[];
-  actions?: ActionWithDict[];
-  series?: Series | null;
-  room?: Room | null;
-};
+type HydratedEvent = CalendarEventHydrated;
 export type finalEvent = EventWithDisplay<HydratedEvent>;
-export type RoomRowData = {
-  roomName: string;
-  events: finalEvent[];
-  venueId: number | null;
-  room?: Room | null;
-};
+export type RoomRowData = RoomGroup<finalEvent>;
 export async function getCalendar(
   date: string,
   filter: string,
@@ -51,7 +29,7 @@ export async function getCalendar(
     timestamp: new Date().toISOString(),
   });
   cacheTag(`calendar:${date}:${filter}:${autoHide ? "hide" : "show"}`);
-  const rawEvents = await (async () => {
+  const eventsWithRelations = await (async () => {
     try {
       const result = await getEventsByDate(date);
       console.log("[calendar.getCalendar] getEventsByDate resolved", {
@@ -71,24 +49,12 @@ export async function getCalendar(
     }
   })();
 
-  const eventsWithRelations: HydratedEvent[] = rawEvents.map(
-    ({ facultyEvents, resourceEvents, ...event }) => ({
-      ...event,
-      faculty: (facultyEvents ?? []).map((relation) => relation.faculty),
-      resources: (resourceEvents ?? []).map((relation) => ({
-        id: relation.resourcesDict.id,
-        quantity: relation.quantity ?? 0,
-        instruction: relation.instructions ?? "",
-        displayName: relation.resourcesDict.name ?? relation.resourcesDict.id,
-        isAVResource: Boolean(relation.resourcesDict.isAv),
-        is_av: Boolean(relation.resourcesDict.isAv),
-        icon: relation.resourcesDict.icon ?? null,
-      })),
-      isFirstSession: false,
-    })
+  const roomFilters = await getFilters();
+  const { events: filteredEvents, allowedRoomNames } = await filterEvents(
+    eventsWithRelations,
+    filter,
+    roomFilters
   );
-
-  const filteredEvents = await filterEvents(eventsWithRelations, filter);
   console.log("[calendar.getCalendar] filterEvents complete", {
     inputCount: eventsWithRelations.length,
     outputCount: filteredEvents.length,
@@ -97,6 +63,30 @@ export async function getCalendar(
   });
   const enhancedEvents = addDisplayColumns(filteredEvents);
   const roomGroups = groupEventsByRoom(enhancedEvents);
+  if (!autoHide) {
+    const { roomsToEnsure, roomLookup } = await resolveRoomList(
+      filter,
+      allowedRoomNames
+    );
+    if (roomsToEnsure.length > 0) {
+      const existingRooms = new Set(roomGroups.map((group) => group.roomName));
+      const missingRooms = roomsToEnsure.filter(
+        (roomName) => !existingRooms.has(roomName)
+      );
+
+      if (missingRooms.length > 0) {
+        missingRooms.forEach((roomName) => {
+          const roomRecord = roomLookup.get(roomName) ?? null;
+          roomGroups.push({
+            roomName,
+            events: [],
+            venueId: roomRecord?.id ?? null,
+            room: roomRecord,
+          });
+        });
+      }
+    }
+  }
   const finalRoomGroups = handleMergedRooms(roomGroups);
   const visibleRoomGroups = autoHide
     ? finalRoomGroups.filter((group) => group.events.length > 0)
@@ -148,149 +138,4 @@ export async function getVenueCalendarRow(
 
   const rows = await getCalendar(date, filter, autoHide);
   return rows.find((row) => row.venueId === numericVenueId) ?? null;
-}
-
-function groupEventsByRoom(events: finalEvent[]): RoomRowData[] {
-  // Group events by roomName
-  const groupedEvents = events.reduce((acc, event) => {
-    const roomName = event.roomName;
-    if (!acc[roomName]) {
-      acc[roomName] = [];
-    }
-    acc[roomName].push(event);
-    return acc;
-  }, {} as Record<string, finalEvent[]>);
-
-  // Convert to array of objects
-  return Object.entries(groupedEvents).map(([roomName, events]) => {
-    const room = events.find((event) => event.room)?.room ?? null;
-    const venueId =
-      room?.id ??
-      (events.find((event) => typeof event.venue === "number")?.venue ?? null);
-
-    return {
-      roomName,
-      events,
-      venueId,
-      room,
-    };
-  });
-}
-
-function handleMergedRooms(roomGroups: RoomRowData[]): RoomRowData[] {
-  // Ensure any "&" rooms also create groups for the additional rooms they reference.
-  const existingRoomNames = new Set(roomGroups.map((group) => group.roomName));
-  roomGroups.forEach((group) => {
-    if (!group.roomName.includes("&")) return;
-
-    const expandedNames = expandMergedRoomNames(group.roomName).slice(1);
-    expandedNames.forEach((name) => {
-      if (existingRoomNames.has(name)) return;
-      const emptyGroup: RoomRowData = {
-        roomName: name,
-        events: [],
-        venueId: null,
-        room: null,
-      };
-      roomGroups.push(emptyGroup);
-      existingRoomNames.add(name);
-    });
-  });
-
-  // Normalize "&" room names by merging their events into the first segment (base room).
-  for (let i = roomGroups.length - 1; i >= 0; i--) {
-    const room = roomGroups[i];
-    if (!room.roomName.includes("&")) continue;
-
-    const baseRoomName = room.roomName.split("&")[0].trim();
-    const targetIndex = roomGroups.findIndex(
-      (candidate) => candidate.roomName === baseRoomName
-    );
-
-    if (targetIndex !== -1) {
-      roomGroups[targetIndex].events = [
-        ...roomGroups[targetIndex].events,
-        ...room.events,
-      ];
-
-      if (!roomGroups[targetIndex].venueId && room.venueId) {
-        roomGroups[targetIndex].venueId = room.venueId;
-        roomGroups[targetIndex].room = room.room ?? roomGroups[targetIndex].room ?? null;
-      }
-    } else {
-      roomGroups.push({
-        roomName: baseRoomName,
-        events: [...room.events],
-        venueId: room.venueId ?? null,
-        room: room.room ?? null,
-      });
-    }
-
-    roomGroups.splice(i, 1);
-  }
-
-  return roomGroups;
-}
-
-function expandMergedRoomNames(roomName: string): string[] {
-  const trimmedName = roomName.trim();
-  if (!trimmedName.includes("&")) {
-    return [trimmedName];
-  }
-
-  const segments = trimmedName.split("&").map((segment) => segment.trim());
-  const [firstSegment, ...restSegments] = segments;
-
-  if (!firstSegment) {
-    return [trimmedName];
-  }
-
-  const lastSpaceIndex = firstSegment.lastIndexOf(" ");
-  const prefix =
-    lastSpaceIndex >= 0 ? firstSegment.slice(0, lastSpaceIndex + 1) : "";
-  const baseSuffix = firstSegment.slice(lastSpaceIndex + 1);
-
-  const expandedSegments = [firstSegment];
-
-  restSegments.forEach((segment) => {
-    if (!segment) return;
-
-    if (segment.includes(" ")) {
-      expandedSegments.push(segment);
-      return;
-    }
-
-    if (baseSuffix.length >= segment.length && baseSuffix.length > 0) {
-      const mergedSuffix =
-        baseSuffix.slice(0, baseSuffix.length - segment.length) + segment;
-      expandedSegments.push(`${prefix}${mergedSuffix}`);
-      return;
-    }
-
-    expandedSegments.push(`${prefix}${segment}`);
-  });
-
-  return expandedSegments;
-}
-
-async function filterEvents<T extends EventType>(
-  eventsToFilter: T[],
-  filter: string
-): Promise<T[]> {
-  if (filter === "All Rooms") {
-    return eventsToFilter;
-  }
-
-  if (filter === "My Events") {
-    return eventsToFilter;
-  }
-
-  const roomFilters: RoomFilter[] = await getFilters();
-  const filterObject = roomFilters.find((f: RoomFilter) => f.name === filter);
-  if (!filterObject) {
-    return eventsToFilter;
-  }
-
-  const allowedRooms = new Set(filterObject.display as string[]);
-  return eventsToFilter.filter((event) => allowedRooms.has(event.roomName));
 }

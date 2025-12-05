@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@iconify/react";
 import { Phone } from "lucide-react";
 import EventPageContent from "./EventPageContent";
 import EventActionsTimeline from "./EventActionsTimeline";
@@ -21,9 +22,14 @@ export default function EventActionsSection({ eventId }: EventActionsSectionProp
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm">Actions</CardTitle>
-            <Button variant="outline" size="icon" aria-label="Phone call">
-              <Phone className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" aria-label="Help desk">
+                <Icon icon="carbon:help-desk" className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon" aria-label="Phone call">
+                <Phone className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="pt-0">

@@ -100,32 +100,34 @@ export default function HybridConfiguration({
             <span className="text-sm font-semibold leading-tight">Hybrid</span>
           </Toggle>
         </div>
-        <div className="text-sm">
-          <span className="font-medium">Meeting ID: </span>
-          {hybrid?.meetingId ? (
-            (() => {
-              const meetingHref =
-                hybrid.meetingLink ??
-                (hybrid.meetingId
-                  ? `https://northwestern.zoom.us/j/${hybrid.meetingId}`
-                  : undefined);
-              return meetingHref ? (
-                <a
-                  href={meetingHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  {hybrid.meetingId}
-                </a>
-              ) : (
-                hybrid.meetingId
-              );
-            })()
-          ) : (
-            <span className="text-muted-foreground">None</span>
-          )}
-        </div>
+        {isHybridOn ? (
+          <div className="text-sm">
+            <span className="font-medium">Meeting ID: </span>
+            {hybrid?.meetingId ? (
+              (() => {
+                const meetingHref =
+                  hybrid.meetingLink ??
+                  (hybrid.meetingId
+                    ? `https://northwestern.zoom.us/j/${hybrid.meetingId}`
+                    : undefined);
+                return meetingHref ? (
+                  <a
+                    href={meetingHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {hybrid.meetingId}
+                  </a>
+                ) : (
+                  hybrid.meetingId
+                );
+              })()
+            ) : (
+              <span className="text-muted-foreground">None</span>
+            )}
+          </div>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-2 text-sm leading-normal">
         {hybrid ? (

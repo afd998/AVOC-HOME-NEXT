@@ -1,7 +1,7 @@
 // import FacultyStatusBars from './FacultyStatusBars';
 import { FacultyAvatar } from "./FacultyAvatar";
 
-import { ExternalLink, Calendar } from "lucide-react";
+import { ExternalLink, Calendar, Mail } from "lucide-react";
 import {
   Item,
   ItemActions,
@@ -53,7 +53,7 @@ export default async function FacultyProfile({
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-6 overflow-hidden bg-background text-foreground border border-white/20 dark:border-white/10 p-3 sm:p-6 md:flex-row">
-      <div className="w-full flex-shrink-0 md:basis-[30%] md:max-w-[30%]">
+      <div className="w-full flex-shrink-0 md:basis-[40%] md:max-w-[40%]">
         <Item variant="outline" className="w-full flex-shrink-0">
           <ItemMedia>
             {facultyMember?.kelloggdirectoryImageUrl ? (
@@ -75,7 +75,7 @@ export default async function FacultyProfile({
             )}
           </ItemMedia>
           <ItemContent>
-            <ItemTitle>
+            <ItemTitle className="flex items-center gap-2">
               <span className="text-base sm:text-lg font-medium truncate">
                 {(() => {
                   const fullName = facultyMember?.kelloggdirectoryName || "";
@@ -83,36 +83,47 @@ export default async function FacultyProfile({
                   if (nameParts.length >= 2) {
                     const firstName = nameParts[0];
                     const lastName = nameParts.slice(1).join(" ");
-                    return `Dr. ${firstName} - ${lastName}`;
+                    return `Dr. ${firstName} ${lastName}`;
                   }
                   return `Dr. ${fullName}`;
                 })()}
               </span>
+              {facultyMember?.kelloggdirectoryBioUrl && (
+                <a
+                  href={facultyMember.kelloggdirectoryBioUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                  title="Open directory profile"
+                  aria-label="Open directory profile"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
             </ItemTitle>
             {facultyMember?.kelloggdirectoryTitle && (
               <ItemDescription className="truncate">
                 {facultyMember.kelloggdirectoryTitle}
               </ItemDescription>
             )}
-          </ItemContent>
-          <ItemActions>
-            {facultyMember?.kelloggdirectoryBioUrl && (
-              <a
-                href={facultyMember.kelloggdirectoryBioUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors shrink-0"
-                title="View faculty directory page"
-                aria-label="Open faculty profile"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </a>
+            {facultyMember?.email && (
+              <ItemDescription className="flex items-start gap-2 text-sm text-primary break-words">
+                <Mail className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <a
+                  href={`mailto:${facultyMember.email}`}
+                  className="hover:underline break-words"
+                  title={`Email ${facultyMember.kelloggdirectoryName ?? ""}`}
+                >
+                  {facultyMember.email}
+                </a>
+              </ItemDescription>
             )}
-          </ItemActions>
+          </ItemContent>
+          <ItemActions></ItemActions>
         </Item>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto sm:space-y-6 pr-1 min-h-0 md:basis-[70%] md:max-w-[70%]">
+      <div className="flex-1 space-y-4 overflow-y-auto sm:space-y-6 pr-1 min-h-0 md:basis-[60%] md:max-w-[60%]">
         {/* Session Setups - commented out for now */}
         {/* <Suspense
           fallback={<Skeleton className="bg-gray-200 dark:bg-gray-800 h-full w-full min-h-[120px]" />}

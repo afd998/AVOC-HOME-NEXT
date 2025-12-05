@@ -24,9 +24,13 @@ import { getActionIconConfig } from "@/core/actions/utils/getActionIcon";
 
 type RecordingGroupProps = {
   group: RecordingGroupItem;
+  hideAssignedAvatar?: boolean;
 };
 
-export default function RecordingGroup({ group }: RecordingGroupProps) {
+export default function RecordingGroup({
+  group,
+  hideAssignedAvatar = false,
+}: RecordingGroupProps) {
   const { actions, groupKey } = group;
 
   const title = "Capture QC";
@@ -117,6 +121,7 @@ export default function RecordingGroup({ group }: RecordingGroupProps) {
               <ActionRow
                 key={`${groupKey}-${entry.action.id}`}
                 entry={entry}
+                hideAssignedAvatar={hideAssignedAvatar}
               />
             ))}
           </ItemGroup>

@@ -6,6 +6,7 @@
     "scrape": "tsx 25live/scrape.ts",
     "scrape:hot": "tsx 25live/scrape.ts --hot",
     "scrape:academic": "tsx academicCalendarScrape.ts",
+    "scrape:faculty": "tsx faculty/scrape-kellogg-directory.ts",
     "test:event-filters": "tsx 25live/utils/event-filters.check.ts"
   },
   "dependencies": {

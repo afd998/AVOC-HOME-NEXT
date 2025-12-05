@@ -1,7 +1,7 @@
 // app/api/crumb/route.ts
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
-import { eq, db, faculty, events, rooms } from "shared";
+import { eq, db, faculty, events, venues } from "shared";
 import { unstable_cacheTag as cacheTag } from "next/cache"; 
 import { revalidateTag } from "next/cache";
 
@@ -114,8 +114,8 @@ async function generateBreadcrumbs(
       return venueNameCache.get(id) ?? null;
     }
     try {
-      const record = await db.query.rooms.findFirst({
-        where: eq(rooms.id, id),
+      const record = await db.query.venues.findFirst({
+        where: eq(venues.id, id),
         columns: {
           name: true,
           spelling: true,
@@ -191,7 +191,7 @@ async function generateBreadcrumbs(
           if (resolvedName) {
             label = resolvedName;
           } else {
-            label = `Room ${venueId}`;
+            label = `Venue ${venueId}`;
           }
       }
     }

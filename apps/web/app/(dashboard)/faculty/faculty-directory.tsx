@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { FacultyAvatar } from "@/core/faculty/FacultyAvatar";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 function useDebounced<T>(value: T, ms = 250) {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -34,6 +35,8 @@ type Row = {
   cutoutImageUrl: string | null;
   imageUrl: string | null;
   rank?: number | null;
+  email?: string | null;
+  directoryUrl?: string | null;
 };
 
 export default function FacultySearch() {
@@ -179,20 +182,54 @@ export default function FacultySearch() {
           rows.map((row) => (
             <Link href={`/faculty/${row.id}`} key={row.id}>
               <Card key={row.id}>
-                <CardHeader className="flex flex-col gap-4 md:flex-row md:items-start">
-                  <FacultyAvatar
-                    imageUrl={row.imageUrl || ""}
-                    cutoutImageUrl={row.cutoutImageUrl || undefined}
-                    instructorName={row.name}
+                  <CardHeader className="flex flex-col gap-4 md:flex-row md:items-start">
+                    <FacultyAvatar
+                      imageUrl={row.imageUrl || ""}
+                      cutoutImageUrl={row.cutoutImageUrl || undefined}
+                      instructorName={row.name}
                  
-                    size="lg"
-                    className="mx-auto md:mx-0"
-                  />
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">{row.name}</CardTitle>
-                    <CardDescription>
+                      size="lg"
+                      className="mx-auto md:mx-0"
+                    />
+                    <div className="space-y-1">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <span className="break-words">{row.name}</span>
+                      {row.directoryUrl ? (
+                        <a
+                          href={row.directoryUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                          className="text-primary hover:underline inline-flex items-center gap-1 text-sm"
+                          title="Open directory profile"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      ) : null}
+                    </CardTitle>
+                    <CardDescription className="break-words">
                       {row.title || "No title listed"}
                     </CardDescription>
+                    {row.email ? (
+                      <a
+                        href={`mailto:${row.email}`}
+                        className="block text-sm text-primary hover:underline break-words"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        {row.email}
+                      </a>
+                    ) : null}
+                    {row.directoryUrl ? (
+                      <a
+                        href={row.directoryUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-sm text-primary hover:underline break-words"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        Directory
+                      </a>
+                    ) : null}
                   </div>
                 </CardHeader>
                 {row.bio && (

@@ -25,6 +25,7 @@ export type EventWithRelations = EventType & {
     instructions: string | null;
   }[];
   room?: Room | null;
+  venue?: Room | null;
   eventHybrids?: EventHybridRow[];
   eventAvConfigs?: EventAVConfigRow[];
   eventRecordings?: EventRecordingRow[];
@@ -48,9 +49,16 @@ type HydratedEvent = EventType & {
   series?: Series | null;
 };
 
+export type CalendarEventHydrated = EventType & {
+  faculty: FacultyMember[];
+  resources: CalendarEventResource[];
+  isFirstSession: boolean;
+  room?: Room | null;
+};
+
 export async function getEventsByDate(
   date: string
-): Promise<EventWithRelations[]> {
+): Promise<CalendarEventHydrated[]> {
   try {
     const matchingEvents = await db.query.events.findMany({
       where: eq(events.date, date),
@@ -65,11 +73,27 @@ export async function getEventsByDate(
             resourcesDict: true,
           },
         },
-        room: true,
+        venue: true,
       },
     });
 
-    return matchingEvents as EventWithRelations[];
+    return (matchingEvents as EventWithRelations[]).map(
+      ({ facultyEvents, resourceEvents, venue, ...event }) => ({
+        ...event,
+        faculty: (facultyEvents ?? []).map((relation) => relation.faculty),
+        resources: (resourceEvents ?? []).map((relation) => ({
+          id: relation.resourcesDict.id,
+          quantity: relation.quantity ?? 0,
+          instruction: relation.instructions ?? "",
+          displayName: relation.resourcesDict.name ?? relation.resourcesDict.id,
+          isAVResource: Boolean(relation.resourcesDict.isAv),
+          is_av: Boolean(relation.resourcesDict.isAv),
+          icon: relation.resourcesDict.icon ?? null,
+        })),
+        isFirstSession: false,
+        room: venue ?? null,
+      })
+    );
   } catch (error) {
     console.error("[db] getEventsByDate", { date, error });
     throw error;
@@ -77,7 +101,8 @@ export async function getEventsByDate(
 }
 
 function toFinalEvent(eventWithRelations: EventWithRelations): finalEvent {
-  const { facultyEvents, resourceEvents, eventHybrids, eventAvConfigs, eventRecordings, eventOtherHardwares, actions, series, ...event } = eventWithRelations;
+  const { facultyEvents, resourceEvents, eventHybrids, eventAvConfigs, eventRecordings, eventOtherHardwares, actions, series, venue, ...event } = eventWithRelations;
+  const roomFromVenue = venue ?? (event as any).room ?? null;
 
   const facultyMembers = (facultyEvents ?? [])
     .map((relation) => relation.faculty)
@@ -122,11 +147,18 @@ function toFinalEvent(eventWithRelations: EventWithRelations): finalEvent {
 
   // Map actions to ActionWithDict format
   const mappedActions: ActionWithDict[] = (actions ?? []).map((action: any) => {
-    const { profile_assignedTo, profile_completedBy, qcItems, ...actionData } = action;
+    const {
+      profile_assignedTo,
+      profile_assignedToManual,
+      profile_completedBy,
+      qcItems,
+      ...actionData
+    } = action;
     return {
       ...actionData,
       eventDetails: null, // Event details not needed in this context
       assignedToProfile: profile_assignedTo ?? null,
+      assignedToManualProfile: profile_assignedToManual ?? null,
       completedByProfile: profile_completedBy ?? null,
       qcItems: (qcItems ?? []).map((item: any) => ({
         ...item,
@@ -140,6 +172,7 @@ function toFinalEvent(eventWithRelations: EventWithRelations): finalEvent {
     faculty: facultyMembers,
     resources,
     isFirstSession: false,
+    room: roomFromVenue,
     hybrid,
     avConfig,
     recording,
@@ -183,6 +216,7 @@ export const getEventById = async (
       actions: {
         with: {
           profile_assignedTo: true,
+          profile_assignedToManual: true,
           profile_completedBy: true,
           qcItems: {
             with: {
@@ -192,7 +226,7 @@ export const getEventById = async (
         },
       },
       series: true,
-      room: true,
+      venue: true,
     },
   });
 
@@ -247,7 +281,7 @@ export const getEventsBySeries = async (
           },
         },
       },
-      room: true,
+      venue: true,
     },
   });
 

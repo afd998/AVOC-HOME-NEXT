@@ -11,11 +11,19 @@ import {
 } from "../../components/ui/tooltip";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
 import { X, Plus, Laptop, Tablet } from "lucide-react";
 import PanelModal from "./PanelModal";
 import DeviceSelectPopover from "./DeviceSelectPopover";
-import { PANEL_OPTIONS, getPanelImageSrc, BYOD_OPTIONS } from "./constants";
+import { PANEL_OPTIONS, getPanelImageSrc } from "./constants";
 import { useEventConfiguration } from "../event/EventDetails/EventConfigurationContext";
+
+type SourcePosition = "left" | "right" | "center";
+
+const SOURCE_TOGGLE_OPTIONS = [
+  { id: "No Source", label: "No Source", image: null as string | null },
+  ...PANEL_OPTIONS,
+];
 
 interface AvConfigurationProps {
   avConfig: EventAVConfigRow;
@@ -35,18 +43,48 @@ export default function AvConfiguration({
   // Modal state
   const [isPanelModalOpen, setIsPanelModalOpen] = useState(false);
   const [editingSource, setEditingSource] = useState<"left" | "right" | "center" | null>(null);
+  const [pendingSource, setPendingSource] = useState<SourcePosition | null>(null);
+
+  const buildAvConfigUpdate = (
+    position: SourcePosition,
+    sourceId: string | null
+  ) => {
+    const avConfig: {
+      leftSource?: string | null;
+      rightSource?: string | null;
+      centerSource?: string | null;
+    } = {};
+
+    if (position === "left") avConfig.leftSource = sourceId;
+    if (position === "right") avConfig.rightSource = sourceId;
+    if (position === "center") avConfig.centerSource = sourceId;
+
+    return avConfig;
+  };
 
   const handleSelectSource = async (sourceId: string | null) => {
     if (!editingSource) return;
-    
-    const avConfig: { leftSource?: string | null; rightSource?: string | null; centerSource?: string | null } = {};
-    if (editingSource === "left") avConfig.leftSource = sourceId;
-    if (editingSource === "right") avConfig.rightSource = sourceId;
-    if (editingSource === "center") avConfig.centerSource = sourceId;
-    
-    await onUpdate({ avConfig });
-    setIsPanelModalOpen(false);
-    setEditingSource(null);
+
+    setPendingSource(editingSource);
+    try {
+      await onUpdate({ avConfig: buildAvConfigUpdate(editingSource, sourceId) });
+      setIsPanelModalOpen(false);
+      setEditingSource(null);
+    } finally {
+      setPendingSource(null);
+    }
+  };
+
+  const handleQuickSelectSource = async (
+    position: SourcePosition,
+    sourceId: string
+  ) => {
+    setPendingSource(position);
+    try {
+      await onUpdate({ avConfig: buildAvConfigUpdate(position, sourceId) });
+    } finally {
+      setPendingSource(null);
+    }
   };
 
   const handleSelectDevice = async (deviceType: "left" | "right" | "center", deviceName: string) => {
@@ -86,6 +124,52 @@ export default function AvConfiguration({
     return <Laptop className="w-3.5 h-3.5" />;
   };
 
+  const renderQuickSourceSelector = (position: SourcePosition) => (
+    <div className="w-full rounded-lg border border-border bg-muted/20 p-2">
+      <div className="mb-2 text-xs font-medium text-muted-foreground">
+        Select a source
+      </div>
+      <ToggleGroup
+        type="single"
+        className="flex flex-wrap gap-2"
+        onValueChange={(value) => {
+          if (!value) return;
+          void handleQuickSelectSource(position, value);
+        }}
+      >
+        {SOURCE_TOGGLE_OPTIONS.map((option) => (
+          <ToggleGroupItem
+            key={option.id}
+            value={option.id}
+            variant="outline"
+            size="sm"
+            disabled={pendingSource === position}
+            className="flex min-w-[120px] flex-row items-center gap-2 px-2 py-2 text-xs"
+          >
+            {option.id === "No Source" ? (
+              <div className="flex h-8 w-8 items-center justify-center rounded-md border border-dashed border-border text-muted-foreground">
+                <X className="h-3.5 w-3.5" />
+              </div>
+            ) : (
+              <div className="relative h-8 w-8 shrink-0 flex items-center justify-center">
+                <Image
+                  src={option.image || getPanelImageSrc(option.id)}
+                  alt={option.label}
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
+              </div>
+            )}
+            <span className="text-left text-[11px] font-medium leading-tight leading-[1.2]">
+              {option.label}
+            </span>
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </div>
+  );
+
   return (
     <>
       {shouldShowLeftRightSources && (
@@ -95,26 +179,29 @@ export default function AvConfiguration({
               <div className="flex-1">
                 <ItemTitle className="mb-2">Left Source</ItemTitle>
                 {isEditable ? (
-                  <Button
-                    onClick={() => openPanelModal("left")}
-                    className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden hover:bg-accent hover:border-accent-foreground/20"
-                    variant="outline"
-                    title="Click to change source"
-                  >
-                    {avConfig.leftSource === "No Source" ? (
-                      <span className="text-muted-foreground">No Source</span>
-                    ) : avConfig.leftSource ? (
-                      <Image
-                        src={getPanelImageSrc(avConfig.leftSource)}
-                        alt="Left source"
-                        fill
-                        className="object-contain p-2"
-                        sizes="(max-width: 640px) 100vw, 33vw"
-                      />
-                    ) : (
-                      <span className="text-muted-foreground">Not Set</span>
-                    )}
-                  </Button>
+                  avConfig.leftSource ? (
+                    <Button
+                      onClick={() => openPanelModal("left")}
+                      className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden hover:bg-accent hover:border-accent-foreground/20"
+                      variant="outline"
+                      title="Click to change source"
+                      disabled={pendingSource === "left"}
+                    >
+                      {avConfig.leftSource === "No Source" ? (
+                        <span className="text-muted-foreground">No Source</span>
+                      ) : (
+                        <Image
+                          src={getPanelImageSrc(avConfig.leftSource)}
+                          alt="Left source"
+                          fill
+                          className="object-contain p-2"
+                          sizes="(max-width: 640px) 100vw, 33vw"
+                        />
+                      )}
+                    </Button>
+                  ) : (
+                    renderQuickSourceSelector("left")
+                  )
                 ) : (
                   <div className="w-full rounded-lg border border-border flex items-center justify-center min-h-[60px] p-2">
                     {avConfig.leftSource === "No Source" ? (
@@ -173,26 +260,29 @@ export default function AvConfiguration({
               <div className="flex-1">
                 <ItemTitle className="mb-2">Right Source</ItemTitle>
                 {isEditable ? (
-                  <Button
-                    onClick={() => openPanelModal("right")}
-                    className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden hover:bg-accent hover:border-accent-foreground/20"
-                    variant="outline"
-                    title="Click to change source"
-                  >
-                    {avConfig.rightSource === "No Source" ? (
-                      <span className="text-muted-foreground">No Source</span>
-                    ) : avConfig.rightSource ? (
-                      <Image
-                        src={getPanelImageSrc(avConfig.rightSource)}
-                        alt="Right source"
-                        fill
-                        className="object-contain p-2"
-                        sizes="(max-width: 640px) 100vw, 33vw"
-                      />
-                    ) : (
-                      <span className="text-muted-foreground">Not Set</span>
-                    )}
-                  </Button>
+                  avConfig.rightSource ? (
+                    <Button
+                      onClick={() => openPanelModal("right")}
+                      className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden hover:bg-accent hover:border-accent-foreground/20"
+                      variant="outline"
+                      title="Click to change source"
+                      disabled={pendingSource === "right"}
+                    >
+                      {avConfig.rightSource === "No Source" ? (
+                        <span className="text-muted-foreground">No Source</span>
+                      ) : (
+                        <Image
+                          src={getPanelImageSrc(avConfig.rightSource)}
+                          alt="Right source"
+                          fill
+                          className="object-contain p-2"
+                          sizes="(max-width: 640px) 100vw, 33vw"
+                        />
+                      )}
+                    </Button>
+                  ) : (
+                    renderQuickSourceSelector("right")
+                  )
                 ) : (
                   <div className="w-full rounded-lg border border-border flex items-center justify-center min-h-[60px] p-2">
                     {avConfig.rightSource === "No Source" ? (
@@ -259,26 +349,29 @@ export default function AvConfiguration({
             <ItemDescription>
               {isEditable ? (
                 <>
-                  <Button
-                    onClick={() => openPanelModal("center")}
-                    className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden hover:bg-accent hover:border-accent-foreground/20"
-                    variant="outline"
-                    title="Click to change source"
-                  >
-                    {avConfig.centerSource === "No Source" ? (
-                      <span className="text-muted-foreground">No Source</span>
-                    ) : avConfig.centerSource ? (
-                      <Image
-                        src={getPanelImageSrc(avConfig.centerSource)}
-                        alt="Center source"
-                        fill
-                        className="object-contain p-2"
-                        sizes="(max-width: 640px) 100vw, 33vw"
-                      />
-                    ) : (
-                      <span className="text-muted-foreground">Not Set</span>
-                    )}
-                  </Button>
+                  {avConfig.centerSource ? (
+                    <Button
+                      onClick={() => openPanelModal("center")}
+                      className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden hover:bg-accent hover:border-accent-foreground/20"
+                      variant="outline"
+                      title="Click to change source"
+                      disabled={pendingSource === "center"}
+                    >
+                      {avConfig.centerSource === "No Source" ? (
+                        <span className="text-muted-foreground">No Source</span>
+                      ) : (
+                        <Image
+                          src={getPanelImageSrc(avConfig.centerSource)}
+                          alt="Center source"
+                          fill
+                          className="object-contain p-2"
+                          sizes="(max-width: 640px) 100vw, 33vw"
+                        />
+                      )}
+                    </Button>
+                  ) : (
+                    renderQuickSourceSelector("center")
+                  )}
                   {avConfig.centerSource && avConfig.centerSource !== "DOC_CAM" && avConfig.centerSource !== "No Source" && (
                     <div className="mt-2 flex justify-center">
                       {avConfig.centerDevice ? (

@@ -5,7 +5,7 @@ import {
   shifts,
   shiftBlocks,
   profiles,
-  rooms,
+  venues,
   asc,
   type Shift,
   type ShiftBlock,
@@ -93,7 +93,7 @@ const toAssignments = (
 
   relations.forEach((rel) => {
     const profileObj = (rel as any).profile;
-    const roomObj = (rel as any).room;
+    const venueObj = (rel as any).venue ?? (rel as any).room;
     const profileId =
       typeof rel.profile === "string"
         ? rel.profile
@@ -104,9 +104,11 @@ const toAssignments = (
         ? profileObj?.name ?? null
         : (rel as any).profileName ?? null;
     const roomName =
-      typeof rel.room === "object"
-        ? roomObj?.name ?? null
-        : (rel as any).roomName ?? null;
+      typeof (rel as any).venue === "object"
+        ? (rel as any).venue?.name ?? null
+        : typeof (rel as any).room === "object"
+          ? venueObj?.name ?? null
+          : (rel as any).roomName ?? null;
 
       const entry =
         grouped.get(profileId) ??
@@ -164,7 +166,7 @@ export async function getShiftBlocks(
       orderBy: asc(shiftBlocks.startTime),
       with: {
         shiftBlockProfileRooms: {
-          with: { profile: true, room: true },
+          with: { profile: true, venue: true },
         },
         shiftBlockProfiles: {
           with: { profile: true },
@@ -193,7 +195,7 @@ export async function getAllShiftBlocks(): Promise<ShiftBlockWithAssignments[]> 
       orderBy: [asc(shiftBlocks.date), asc(shiftBlocks.startTime)],
       with: {
         shiftBlockProfileRooms: {
-          with: { profile: true, room: true },
+          with: { profile: true, venue: true },
         },
         shiftBlockProfiles: {
           with: { profile: true },
@@ -262,7 +264,7 @@ export async function assignRoomsToShiftBlock(
       blockDateForCache = blockMeta?.date ?? null;
 
       // Pull rooms once and match by normalized name to avoid casing/prefix issues
-      const allRooms = await tx.select().from(rooms);
+      const allRooms = await tx.select().from(venues);
       const normalize = (value: string | null | undefined) =>
         (value ?? "").trim().toLowerCase();
 
@@ -375,7 +377,7 @@ export async function assignRoomsToShiftBlock(
       const updated = await tx.query.shiftBlocks.findFirst({
         where: eq(shiftBlocks.id, shiftBlockId),
         with: {
-          shiftBlockProfileRooms: { with: { profile: true, room: true } },
+          shiftBlockProfileRooms: { with: { profile: true, venue: true } },
           shiftBlockProfiles: { with: { profile: true } },
         },
       });
@@ -443,7 +445,7 @@ export async function replaceShiftBlocksForDate(
         .returning();
 
       // map rooms by name for quick lookup
-      const allRooms = await tx.select().from(rooms);
+      const allRooms = await tx.select().from(venues);
       const roomByName = new Map<string, number>();
       allRooms.forEach((room) => {
         if (room.name) roomByName.set(room.name, room.id);
@@ -566,7 +568,7 @@ export async function copyShiftBlocksForDate(
             profile: rel.profile,
             room: rel.room,
             shiftBlock: newBlockId,
-            roomName: (rel as any).room?.name ?? null,
+            roomName: (rel as any).venue?.name ?? null,
             profileName: (rel as any).profile?.name ?? null,
           } as any);
         });
@@ -606,7 +608,7 @@ export async function getProfiles(): Promise<ProfileRow[]> {
  */
 export async function getRooms(): Promise<RoomRow[]> {
   try {
-    const result = await db.select().from(rooms).orderBy(asc(rooms.name));
+    const result = await db.select().from(venues).orderBy(asc(venues.name));
     return result;
   } catch (error) {
     console.error("[db] assignments.getRooms", { error });
@@ -894,16 +896,16 @@ export async function copyScheduleFromPreviousWeek(
             const newBlockId = inserted[idx]?.id;
             if (!newBlockId) return;
             (sourceBlock.shiftBlockProfileRooms ?? []).forEach((rel) => {
-              junctionRows.push({
-                createdAt: new Date().toISOString(),
-                profile: rel.profile,
-                room: rel.room,
-                shiftBlock: newBlockId,
-                roomName: (rel as any).room?.name ?? null,
-                profileName: (rel as any).profile?.name ?? null,
-              } as any);
-            });
-          });
+          junctionRows.push({
+            createdAt: new Date().toISOString(),
+            profile: rel.profile,
+            room: rel.room,
+            shiftBlock: newBlockId,
+            roomName: (rel as any).venue?.name ?? null,
+            profileName: (rel as any).profile?.name ?? null,
+          } as any);
+        });
+      });
 
           if (junctionRows.length > 0) {
             await tx.insert(shiftBlockProfileRoom).values(junctionRows);

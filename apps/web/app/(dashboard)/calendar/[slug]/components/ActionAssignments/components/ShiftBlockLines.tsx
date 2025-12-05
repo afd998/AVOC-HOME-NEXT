@@ -5,6 +5,15 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { useEventAssignmentsStore } from '@/lib/stores/event-assignments';
 
+const toMinutes = (t?: string | null) => {
+  if (!t) return null;
+  const [h, m] = t.split(':');
+  const hours = Number.parseInt(h, 10);
+  const minutes = Number.parseInt(m, 10);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+  return hours * 60 + minutes;
+};
+
 interface ShiftBlockLinesProps {
   date: string;
   className?: string;
@@ -25,11 +34,22 @@ const ShiftBlockLines: React.FC<ShiftBlockLinesProps> = ({ date, className = '',
     selectedShiftBlock,
     setSelectedShiftBlock,
     selectedShiftBlockIndex,
-    setSelectedShiftBlockIndex
+    setSelectedShiftBlockIndex,
+    resetShiftBlockSelection
   } = useEventAssignmentsStore();
 
   React.useEffect(() => {
-    if (!shiftBlocks || shiftBlocks.length === 0) return;
+    if (!shiftBlocks || shiftBlocks.length === 0) {
+      if (
+        selectedShiftBlockId !== null ||
+        selectedShiftBlock !== null ||
+        selectedShiftBlockIndex !== null
+      ) {
+        resetShiftBlockSelection();
+        if (onSelectRange) onSelectRange(null);
+      }
+      return;
+    }
 
     if (selectedShiftBlockIndex != null) {
       if (selectedShiftBlockIndex >= 0 && selectedShiftBlockIndex < shiftBlocks.length) {
@@ -79,7 +99,9 @@ const ShiftBlockLines: React.FC<ShiftBlockLinesProps> = ({ date, className = '',
     selectedShiftBlockIndex,
     setSelectedShiftBlockId,
     setSelectedShiftBlock,
-    setSelectedShiftBlockIndex
+    setSelectedShiftBlockIndex,
+    resetShiftBlockSelection,
+    onSelectRange
   ]);
 
   if (isLoading) {
@@ -124,9 +146,9 @@ const ShiftBlockLines: React.FC<ShiftBlockLinesProps> = ({ date, className = '',
         setSelectedShiftBlockIndex(sbIndex >= 0 ? sbIndex : null);
         if (!onSelectRange) return;
         if (!sb || !sb.startTime || !sb.endTime) { onSelectRange(null); return; }
-        const toMinutes = (t: string) => { const [h,m] = t.split(":"); return parseInt(h,10)*60 + parseInt(m,10); };
         const startMin = toMinutes(sb.startTime);
         const endMin = toMinutes(sb.endTime);
+        if (startMin == null || endMin == null) { onSelectRange(null); return; }
         const startOffsetMin = startMin - (startHour*60);
         const widthMin = Math.max(0, endMin - startMin);
         const leftPx = startOffsetMin * pixelsPerMinute;
@@ -136,26 +158,37 @@ const ShiftBlockLines: React.FC<ShiftBlockLinesProps> = ({ date, className = '',
       className={`w-full gap-4 ${className}`}
       style={{ width: `${contentWidth * pageZoom}px` }}
     >
-      <TabsList className="bg-background rounded-none border-b p-0">
-        {shiftBlocks.map((shiftBlock: ShiftBlock, index: number) => (
-          <React.Fragment key={shiftBlock.id}>
-            <TabsTrigger 
-              value={shiftBlock.id.toString()}
-              className=" w-auto px-0 mx-0 bg-background data-[state=active]:border-primary dark:data-[state=active]:border-primary h-full rounded-none border-0 border-b-2 border-transparent data-[state=active]:shadow-none "
-             
-            >
-              <ShiftBlockLine 
-                shiftBlock={shiftBlock}
-                pixelsPerMinute={pixelsPerMinute}
-                pageZoom={pageZoom}
-                allRoomsAssigned={!!allRoomsAssigned}
-              />
-            </TabsTrigger>
-            {index < shiftBlocks.length - 1 && (
-              <Separator orientation="vertical" className="h-8 " />
-            )}
-          </React.Fragment>
-        ))}
+      <TabsList className="relative bg-background rounded-none border-b p-0 flex-nowrap">
+        {(() => {
+          let previousEndMinutes = startHour * 60;
+          return shiftBlocks.map((shiftBlock: ShiftBlock, index: number) => {
+            const startMinutes = toMinutes(shiftBlock.startTime);
+            const endMinutes = toMinutes(shiftBlock.endTime) ?? startMinutes ?? previousEndMinutes;
+            const gapMinutes = startMinutes != null ? Math.max(0, startMinutes - previousEndMinutes) : 0;
+            const marginLeftPx = gapMinutes * pixelsPerMinute * pageZoom;
+            previousEndMinutes = endMinutes ?? previousEndMinutes;
+
+            return (
+              <React.Fragment key={shiftBlock.id}>
+                <TabsTrigger 
+                  value={shiftBlock.id.toString()}
+                  className="w-auto px-0 mx-0 bg-background data-[state=active]:border-primary dark:data-[state=active]:border-primary h-full rounded-none border-0 border-b-2 border-transparent data-[state=active]:shadow-none flex-none"
+                  style={{ marginLeft: `${marginLeftPx}px` }}
+                >
+                  <ShiftBlockLine 
+                    shiftBlock={shiftBlock}
+                    pixelsPerMinute={pixelsPerMinute}
+                    pageZoom={pageZoom}
+                    allRoomsAssigned={!!allRoomsAssigned}
+                  />
+                </TabsTrigger>
+                {index < shiftBlocks.length - 1 && (
+                  <Separator orientation="vertical" className="h-8 " />
+                )}
+              </React.Fragment>
+            );
+          });
+        })()}
       </TabsList>
 
      

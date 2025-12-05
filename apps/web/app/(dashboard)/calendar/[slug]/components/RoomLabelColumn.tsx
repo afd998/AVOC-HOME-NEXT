@@ -55,6 +55,7 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
     setSelectedShiftBlock,
     setSelectedShiftBlockId,
     setSelectedShiftBlockIndex,
+    resetShiftBlockSelection,
   } = useEventAssignmentsStore();
   const { data: shiftBlocks = [] } = useShiftBlocks(dateString);
   const assignRoomsToShiftBlock = useAssignRoomsToShiftBlock();
@@ -190,11 +191,23 @@ const RoomLabelColumn: React.FC<RoomLabelColumnProps> = ({
     }
   }, [showEventAssignments, clearSelection]);
 
-  const shiftAssignments: any[] = Array.isArray(
-    (selectedShiftBlock as any)?.assignments
-  )
-    ? (selectedShiftBlock as any).assignments
-    : [];
+  React.useEffect(() => {
+    const selectedDate = (selectedShiftBlock as any)?.date ?? null;
+    if (selectedShiftBlock && selectedDate !== dateString) {
+      resetShiftBlockSelection();
+      clearSelection();
+    }
+  }, [selectedShiftBlock, dateString, resetShiftBlockSelection, clearSelection]);
+
+  const selectedBlockMatchesDate =
+    selectedShiftBlock &&
+    ((selectedShiftBlock as any)?.date ?? null) === dateString;
+
+  const shiftAssignments: any[] =
+    selectedBlockMatchesDate &&
+    Array.isArray((selectedShiftBlock as any)?.assignments)
+      ? (selectedShiftBlock as any).assignments
+      : [];
 
   return (
     <div

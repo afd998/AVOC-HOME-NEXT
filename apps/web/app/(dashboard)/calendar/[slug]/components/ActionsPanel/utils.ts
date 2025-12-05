@@ -2,10 +2,15 @@ import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
 
 import type { EnhancedAction, ActionListItem } from "./types";
 
-const timeFormatter = new Intl.DateTimeFormat(undefined, {
+const timeFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
+  hour12: true,
 });
+
+export function formatDateToTimeLabel(date: Date) {
+  return timeFormatter.format(date);
+}
 
 export function formatTime(time?: string) {
   if (!time) return "No start time";
@@ -17,7 +22,7 @@ export function formatTime(time?: string) {
 
   const date = new Date();
   date.setHours(hour, minute, 0, 0);
-  return timeFormatter.format(date);
+  return formatDateToTimeLabel(date);
 }
 
 export function convertTimeToMinutes(time?: string) {

@@ -7,6 +7,7 @@ export {
   type ActionGroup,
 } from "./useActionsQuery";
 export { useActionMutations } from "./useActionMutations";
+export { useManualActionAssignee } from "./useManualActionAssignee";
 export { useEventQuery, eventQueryKey } from "./useEventQuery";
 export { useActionQuery, actionQueryKey } from "./useActionQuery";
 export {

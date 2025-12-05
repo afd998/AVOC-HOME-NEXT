@@ -1,4 +1,4 @@
-import { db, rooms, type ProcessedEvent } from "shared";
+import { db, venues, type ProcessedEvent } from "shared";
 import * as utils from "../events/index";
 import { parseEventResources } from "./parse-resourses";
 import { mergeAdjacentRoomEvents } from "./merge-adjacent-room-events";
@@ -32,11 +32,11 @@ const normalizeRoomName = (value: unknown): string | null => {
 const buildRoomLookup = async (): Promise<Map<string, number>> => {
   const roomRows = await db
     .select({
-      id: rooms.id,
-      name: rooms.name,
-      spelling: rooms.spelling,
+      id: venues.id,
+      name: venues.name,
+      spelling: venues.spelling,
     })
-    .from(rooms);
+    .from(venues);
 
   const lookup = new Map<string, number>();
 

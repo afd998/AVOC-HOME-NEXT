@@ -56,6 +56,29 @@ export default function RoomRow({
       ? `/venues/${venueId}`
       : null;
 
+  const labelBody = showLabel ? (
+    <div className="flex flex-col items-center gap-1">
+      <Badge
+        className={`${isSelected ? "ring-4 ring-blue-500" : ""}`}
+        style={{
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          MozUserSelect: "none",
+          msUserSelect: "none",
+        }}
+      >
+        {roomText}
+      </Badge>
+      {interactive && assignedUserId ? (
+        <UserAvatar
+          profile={{ id: assignedUserId, name: assignedUserName ?? assignedUserId } as any}
+          size="sm"
+          variant="solid"
+        />
+      ) : null}
+    </div>
+  ) : null;
+
   const labelContent = (
     <div
       data-room-label="true"
@@ -74,38 +97,20 @@ export default function RoomRow({
           : undefined
       }
     >
-      {showLabel ? (
-        <div className="flex flex-col items-center gap-1">
-          <Badge
-            className={`${isSelected ? "ring-4 ring-blue-500" : ""}`}
-            style={{
-              userSelect: "none",
-              WebkitUserSelect: "none",
-              MozUserSelect: "none",
-              msUserSelect: "none",
-            }}
-          >
-            {roomText}
-          </Badge>
-          {interactive && assignedUserId ? (
-            <UserAvatar
-              profile={{ id: assignedUserId, name: assignedUserName ?? assignedUserId } as any}
-              size="sm"
-              variant="solid"
-            />
-          ) : null}
-        </div>
-      ) : null}
+      {venueHref ? (
+        <Link
+          href={venueHref}
+          className="flex h-full w-full items-center justify-center focus-visible:outline-none"
+        >
+          {labelBody}
+        </Link>
+      ) : (
+        labelBody
+      )}
     </div>
   );
 
-  const label = venueHref ? (
-    <Link href={venueHref} className="block focus-visible:outline-none">
-      {labelContent}
-    </Link>
-  ) : (
-    labelContent
-  );
+  const label = labelContent;
 
   return (
     <div

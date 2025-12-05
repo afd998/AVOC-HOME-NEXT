@@ -24,6 +24,8 @@ export async function GET(req: Request) {
         kelloggdirectory_bio    AS bio,
         cutout_image as cutoutImageUrl,
         kelloggdirectory_image_url AS imageUrl,
+        email,
+        kelloggdirectory_bio_url AS directoryUrl,
         ts_rank(search, websearch_to_tsquery('english', ${qRaw})) AS rank
       FROM faculty
       WHERE search @@ websearch_to_tsquery('english', ${qRaw})
@@ -55,6 +57,8 @@ export async function GET(req: Request) {
         kelloggdirectory_bio    AS bio,
         cutout_image       AS cutoutImageUrl,
         kelloggdirectory_image_url AS imageUrl,
+        email,
+        kelloggdirectory_bio_url AS directoryUrl
       FROM faculty
       WHERE kelloggdirectory_name  ILIKE ${like}
          OR kelloggdirectory_title ILIKE ${like}

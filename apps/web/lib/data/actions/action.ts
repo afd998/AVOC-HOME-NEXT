@@ -32,6 +32,7 @@ export async function getActionById(
         },
       },
       profile_assignedTo: true,
+      profile_assignedToManual: true,
       profile_completedBy: true,
       qcItems: {
         with: {
@@ -45,7 +46,14 @@ export async function getActionById(
     return null;
   }
 
-  const { event, profile_assignedTo, profile_completedBy, qcItems, ...actionData } = action;
+  const {
+    event,
+    profile_assignedTo,
+    profile_assignedToManual,
+    profile_completedBy,
+    qcItems,
+    ...actionData
+  } = action;
 
   const eventWithResources = event as EventWithResourceDetails | null;
 
@@ -53,6 +61,7 @@ export async function getActionById(
     ...actionData,
     eventDetails: eventWithResources ?? null,
     assignedToProfile: profile_assignedTo ?? null,
+    assignedToManualProfile: profile_assignedToManual ?? null,
     completedByProfile: profile_completedBy ?? null,
     qcItems: (qcItems ?? []).map((item) => ({
       ...item,

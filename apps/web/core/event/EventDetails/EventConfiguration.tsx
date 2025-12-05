@@ -109,8 +109,8 @@ export default function EventConfiguration({
                 <Item size="sm" className="flex-1 items-start">
                   <ItemContent>
                     <ItemTitle>Other Hardware</ItemTitle>
-                    <ItemDescription>
-                      {event.otherHardware && event.otherHardware.length > 0 ? (
+                    {event.otherHardware && event.otherHardware.length > 0 ? (
+                      <ItemDescription asChild>
                         <div className="space-y-1">
                           {event.otherHardware.map((hw, index) => {
                             const hardwareName =
@@ -133,10 +133,12 @@ export default function EventConfiguration({
                             );
                           })}
                         </div>
-                      ) : (
+                      </ItemDescription>
+                    ) : (
+                      <ItemDescription>
                         <span className="text-muted-foreground">No other hardware</span>
-                      )}
-                    </ItemDescription>
+                      </ItemDescription>
+                    )}
                   </ItemContent>
                 </Item>
               </ItemGroup>

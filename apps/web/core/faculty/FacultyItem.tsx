@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { KeyboardEvent, MouseEvent } from "react";
 import {
   Item,
   ItemContent,
@@ -31,6 +33,7 @@ export function FacultyItem({
   className,
   compact = false,
 }: FacultyItemProps) {
+  const router = useRouter();
   const displayName = getFacultyDisplayName(faculty) || "View Faculty";
   const subtitle =
     showSubtitle &&
@@ -41,6 +44,35 @@ export function FacultyItem({
   if (compact) {
     // Compact inline version for headers
     const facultyLink = faculty.id ? `/faculty/${faculty.id}` : null;
+
+    const handleCompactClick = (event: MouseEvent<HTMLSpanElement>) => {
+      if (!facultyLink) {
+        return;
+      }
+
+      if (event.metaKey || event.ctrlKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        window.open(facultyLink, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      router.push(facultyLink);
+    };
+
+    const handleCompactKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
+      if (!facultyLink) {
+        return;
+      }
+
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        event.stopPropagation();
+        router.push(facultyLink);
+      }
+    };
     
     const content = (
       <div className="flex items-center gap-2 px-2 py-1 rounded-md border border-border bg-background transition-colors hover:border-primary/40 hover:bg-primary/5">
@@ -66,12 +98,15 @@ export function FacultyItem({
     }
 
     return (
-      <Link 
-        href={facultyLink} 
+      <span
+        role="link"
+        tabIndex={0}
+        onClick={handleCompactClick}
+        onKeyDown={handleCompactKeyDown}
         className={`inline-flex no-underline cursor-pointer ${className || ""}`}
       >
         {content}
-      </Link>
+      </span>
     );
   }
 
@@ -149,4 +184,3 @@ export function FacultyItem({
     </Item>
   );
 }
-

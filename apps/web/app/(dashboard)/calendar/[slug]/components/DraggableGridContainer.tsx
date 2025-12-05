@@ -45,6 +45,10 @@ const DraggableGridContainer = forwardRef<HTMLDivElement, DraggableGridContainer
   useImperativeHandle(ref, () => gridContainerRef.current!, []);
   
   const containerRef = gridContainerRef;
+  const lastNotifiedPosition = useRef<{ left: number; top: number }>({
+    left: 0,
+    top: 0,
+  });
   
   // Drag-to-scroll functionality
   const [isDragging, setIsDragging] = useState(false);
@@ -79,6 +83,31 @@ const DraggableGridContainer = forwardRef<HTMLDivElement, DraggableGridContainer
       scrollTop: Math.max(0, Math.min(scrollTop, maxScrollTop)) 
     };
   }, [endHour, startHour, pixelsPerMinute, actualRowCount, rowHeightPx, pageZoom]);
+
+  const notifyScrollPosition = useCallback(
+    (position?: { left: number; top: number }) => {
+      if (!onScrollPositionChange) return;
+
+      const nextPosition =
+        position ??
+        (containerRef.current
+          ? {
+              left: containerRef.current.scrollLeft,
+              top: containerRef.current.scrollTop,
+            }
+          : null);
+
+      if (!nextPosition) return;
+
+      const { left, top } = nextPosition;
+      const last = lastNotifiedPosition.current;
+      if (last.left === left && last.top === top) return;
+
+      lastNotifiedPosition.current = { left, top };
+      onScrollPositionChange({ left, top });
+    },
+    [onScrollPositionChange]
+  );
 
 
   // Drag-to-scroll handlers
@@ -140,13 +169,11 @@ const DraggableGridContainer = forwardRef<HTMLDivElement, DraggableGridContainer
     
     
     // Notify parent of scroll position change
-    if (onScrollPositionChange) {
-      onScrollPositionChange({
-        left: clampedPosition.scrollLeft,
-        top: clampedPosition.scrollTop
-      });
-    }
-  }, [isDragging, dragStart, clampScrollPosition, onScrollPositionChange]);
+    notifyScrollPosition({
+      left: clampedPosition.scrollLeft,
+      top: clampedPosition.scrollTop
+    });
+  }, [isDragging, dragStart, clampScrollPosition, notifyScrollPosition]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -194,13 +221,11 @@ const DraggableGridContainer = forwardRef<HTMLDivElement, DraggableGridContainer
     container.scrollTop = clampedPosition.scrollTop;
     
     // Notify parent of scroll position change
-    if (onScrollPositionChange) {
-      onScrollPositionChange({
-        left: clampedPosition.scrollLeft,
-        top: clampedPosition.scrollTop
-      });
-    }
-  }, [clampScrollPosition, onScrollPositionChange]);
+    notifyScrollPosition({
+      left: clampedPosition.scrollLeft,
+      top: clampedPosition.scrollTop
+    });
+  }, [clampScrollPosition, notifyScrollPosition]);
 
   // Touch support for mobile devices
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -266,13 +291,11 @@ const DraggableGridContainer = forwardRef<HTMLDivElement, DraggableGridContainer
     
     
     // Notify parent of scroll position change
-    if (onScrollPositionChange) {
-      onScrollPositionChange({
-        left: clampedPosition.scrollLeft,
-        top: clampedPosition.scrollTop
-      });
-    }
-  }, [isDragging, dragStart, clampScrollPosition, onScrollPositionChange]);
+    notifyScrollPosition({
+      left: clampedPosition.scrollLeft,
+      top: clampedPosition.scrollTop
+    });
+  }, [isDragging, dragStart, clampScrollPosition, notifyScrollPosition]);
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
@@ -306,6 +329,10 @@ const DraggableGridContainer = forwardRef<HTMLDivElement, DraggableGridContainer
     };
   }, []);
 
+  const handleScroll = useCallback(() => {
+    notifyScrollPosition();
+  }, [notifyScrollPosition]);
+
   // Add wheel event listener
   useEffect(() => {
     const container = containerRef.current;
@@ -329,6 +356,7 @@ const DraggableGridContainer = forwardRef<HTMLDivElement, DraggableGridContainer
           cursor: isDragEnabled ? 'grab' : 'default',
           ...style
         }}
+        onScroll={handleScroll}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

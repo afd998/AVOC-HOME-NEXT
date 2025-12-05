@@ -5,6 +5,8 @@ import React, { Suspense } from "react";
 import { SidebarShell } from "@/app/(dashboard)/components/sidebar/sidebar-shell";
 import HeaderBreadcrumb from "@/app/(dashboard)/components/sidebar/header-breadcrumb";
 import ChicagoTime from "@/app/(dashboard)/components/header/chicago-time";
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 
 export default async function DashboardLayout({
   children,
@@ -28,6 +30,15 @@ export default async function DashboardLayout({
             </div>
             <div className="flex-1" />
             <div className="flex items-center gap-2 px-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                aria-label="Search"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
               <React.Suspense fallback={null}>
                 <ChicagoTime />
               </React.Suspense>

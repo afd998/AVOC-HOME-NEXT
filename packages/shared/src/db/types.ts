@@ -6,11 +6,11 @@ import {
   qcItemDict,
   resourceEvents,
   facultyEvents,
-  roomFilters,
+  venueFilters,
   shiftBlocks,
   shifts,
   profiles,
-  rooms,
+  venues,
   eventHybrid,
   eventAvConfig,
   eventOtherHardware,
@@ -25,12 +25,12 @@ import {
   shiftBlockProfile,
 } from "./schema";
 
-export type RoomFilter = InferSelectModel<typeof roomFilters>;
+export type RoomFilter = InferSelectModel<typeof venueFilters>;
 export type Event = InferSelectModel<typeof events>;
 export type ShiftBlock = InferSelectModel<typeof shiftBlocks>;
 export type Shift = InferSelectModel<typeof shifts>;
 export type Profile = InferSelectModel<typeof profiles>;
-export type Room = InferSelectModel<typeof rooms>;
+export type Room = InferSelectModel<typeof venues>;
 export type ShiftBlockProfileRoom = InferSelectModel<typeof shiftBlockProfileRoom>;
 export type ShiftBlockProfile = InferSelectModel<typeof shiftBlockProfile>;
 export type ShiftBlockAssignment = {
