@@ -21,12 +21,15 @@
   },
   "dependencies": {
     "dotenv": "^17.2.3",
-    "drizzle-orm": "^0.44.6",
+    "drizzle-orm": "^0.44.6"
+  },
+  "peerDependencies": {
     "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/pg": "^8.15.5",
+    "pg": "^8.16.3",
     "drizzle-kit": "^0.31.5",
     "typescript": "^5"
   }

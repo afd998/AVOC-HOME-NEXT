@@ -13,5 +13,9 @@
     "db:migrate": "pnpm --filter shared db:migrate",
     "db:push": "pnpm --filter shared db:push",
     "db:studio": "pnpm --filter shared db:studio"
+  },
+  "dependencies": {
+    "@types/pg": "^8.15.6",
+    "pg": "^8.16.3"
   }
 }
