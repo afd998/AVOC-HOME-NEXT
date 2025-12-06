@@ -26,4 +26,4 @@ export {
   useVenuesQuery,
   venuesQueryKey,
 } from "./useVenuesQuery";
-
+export { useVenueQuery } from "./useVenueQuery";

@@ -56,7 +56,10 @@ export default function ActionRow({
     isSameDay &&
     startMinutesAbsolute !== null &&
     startMinutesAbsolute <= nowMinutes;
-  const subtitleParts = [action.eventDetails?.eventName?.trim()].filter(Boolean);
+  const seriesName = action.eventDetails?.series?.seriesName?.trim();
+  const subtitleParts = [
+    action.eventDetails?.eventName?.trim() || seriesName || "Linked Event",
+  ].filter(Boolean);
   const subtitle = subtitleParts.join(" | ");
 
   const iconColorOverride = isCompleted

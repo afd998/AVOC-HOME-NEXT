@@ -1,4 +1,4 @@
-import { eq, db, actions as actionsTable, type EventAVConfigRow } from "shared";
+import { eq, db, actions as actionsTable } from "shared";
 import type { ActionWithDict, EventWithResourceDetails } from "./actions";
 
 export async function getActionById(
@@ -29,6 +29,7 @@ export async function getActionById(
               otherHardwareDict: true,
             },
           },
+          series: true,
         },
       },
       profile_assignedTo: true,
@@ -69,4 +70,3 @@ export async function getActionById(
     })),
   } as unknown as ActionWithDict;
 }
-

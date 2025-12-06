@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Building2 } from "lucide-react";
-import { useVenueCalendarQuery } from "@/lib/query";
+import { useVenueQuery } from "@/lib/query";
 import {
   Card,
   CardContent,
@@ -23,33 +23,26 @@ import { Button } from "@/components/ui/button";
 
 type VenuePageContentProps = {
   venueId: string;
-  date: string;
-  filter: string;
-  autoHide: boolean;
 };
 
 export default function VenuePageContent({
   venueId,
-  date,
-  filter,
-  autoHide,
 }: VenuePageContentProps) {
-  const { data, isLoading, isError } = useVenueCalendarQuery({
-    venueId,
-    date,
-    filter,
-    autoHide,
-  });
+  const {
+    data: venue,
+    isLoading,
+    isError,
+  } = useVenueQuery({ venueId });
 
   if (isLoading) {
     return (
       <div className="p-6">
-        <p className="text-sm text-muted-foreground">Loading venue schedule...</p>
+        <p className="text-sm text-muted-foreground">Loading venue...</p>
       </div>
     );
   }
 
-  if (isError) {
+  if (isError || !venue) {
     return (
       <div className="p-6">
         <p className="text-sm text-destructive">
@@ -59,22 +52,13 @@ export default function VenuePageContent({
     );
   }
 
-  if (!data) {
-    return (
-      <div className="p-6 space-y-2">
-        <p className="text-lg font-semibold">No data available</p>
-        <p className="text-sm text-muted-foreground">This venue has no details to display right now.</p>
-      </div>
-    );
-  }
-
   const displayName =
-    data.room?.name ??
-    data.roomName.replace(/^GH\s+/i, "") ??
-    data.roomName;
-  const building = data.room?.building ?? "GLOBAL HUB";
-  const roomType = data.room?.type ?? null;
-  const roomSubType = data.room?.subType ?? null;
+    venue.name ??
+    venue.spelling ??
+    "Unknown room";
+  const building = venue.building ?? "GLOBAL HUB";
+  const roomType = venue.type ?? null;
+  const roomSubType = venue.subType ?? null;
   const devices: { name: string; type?: string | null; status?: string | null }[] =
     [];
 

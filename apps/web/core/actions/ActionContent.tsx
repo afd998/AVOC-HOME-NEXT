@@ -111,8 +111,11 @@ export default function ActionContent({
     } as finalEvent;
   }, [action.eventDetails]);
 
+  const seriesName = action.eventDetails?.series?.seriesName?.trim();
   const eventTitle =
-    eventForConfiguration?.eventName?.trim() || "Linked Event";
+    eventForConfiguration?.eventName?.trim() ||
+    seriesName ||
+    "Linked Event";
   const eventLink = eventForConfiguration?.id
     ? `/events/${eventForConfiguration.id}`
     : undefined;
