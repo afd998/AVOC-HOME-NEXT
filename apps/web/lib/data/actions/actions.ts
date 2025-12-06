@@ -15,6 +15,7 @@ import {
   type EventHybridRow,
   type EventRecordingRow,
   type EventOtherHardwareRow,
+  type Series,
 } from "shared";
 import type { CalendarEventResource } from "@/lib/data/calendar/event/utils/hydrate-event-resources";
 
@@ -36,6 +37,7 @@ export type EventWithResourceDetails = EventRow & {
   eventOtherHardwares?: (EventOtherHardwareRow & {
     otherHardwareDict?: { id: string } | null;
   })[];
+  series?: Series | null;
 };
 
 export type ActionWithDict = Omit<ActionRow, "event"> & {
@@ -93,6 +95,7 @@ export async function getActionsByDate(date: string): Promise<ActionWithDict[]> 
                 otherHardwareDict: true,
               },
             },
+            series: true,
           },
         },
         profile_assignedTo: true,
@@ -156,4 +159,3 @@ export async function getActionsByDate(date: string): Promise<ActionWithDict[]> 
     throw error;
   }
 }
-

@@ -1,5 +1,5 @@
 import { getFilters } from "../filters";
-import { type Room } from "shared";
+import { db, eq, venues, type Room } from "shared";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import {
   addDisplayColumns,
@@ -10,6 +10,7 @@ import {
   groupEventsByRoom,
   handleMergedRooms,
   type RoomGroup,
+  expandMergedRoomNames,
 } from "./utils/room-groups";
 import { filterEvents, resolveRoomList } from "./utils/room-filters";
 
@@ -137,5 +138,63 @@ export async function getVenueCalendarRow(
   }
 
   const rows = await getCalendar(date, filter, autoHide);
-  return rows.find((row) => row.venueId === numericVenueId) ?? null;
+  const directMatch =
+    rows.find((row) => row.venueId === numericVenueId) ?? null;
+  if (directMatch) {
+    return directMatch;
+  }
+
+  // Fallback: merged rooms (e.g., "GH 2420A&B") get collapsed into base rooms
+  // when building the calendar. If the merged room's ID isn't present in the
+  // grouped data, try matching by the venue's name or its expanded components.
+  try {
+    const venueRecord = await db.query.venues.findFirst({
+      where: eq(venues.id, numericVenueId),
+    });
+
+    if (!venueRecord) {
+      return null;
+    }
+
+    const candidateNames = new Set<string>();
+    [venueRecord.name, venueRecord.spelling].forEach((value) => {
+      if (typeof value !== "string") return;
+      const trimmed = value.trim();
+      if (!trimmed) return;
+      candidateNames.add(trimmed);
+      expandMergedRoomNames(trimmed).forEach((expanded) => {
+        const expandedTrimmed = expanded.trim();
+        if (expandedTrimmed) {
+          candidateNames.add(expandedTrimmed);
+        }
+      });
+    });
+
+    if (candidateNames.size === 0) {
+      return null;
+    }
+
+    const aliasMatch =
+      rows.find((row) => candidateNames.has(row.roomName)) ?? null;
+
+    if (!aliasMatch) {
+      return null;
+    }
+
+    return {
+      ...aliasMatch,
+      venueId: numericVenueId,
+      roomName:
+        venueRecord.name ??
+        venueRecord.spelling ??
+        aliasMatch.roomName,
+      room: aliasMatch.room ?? venueRecord,
+    };
+  } catch (error) {
+    console.error("[calendar.getVenueCalendarRow] fallback lookup failed", {
+      venueId: numericVenueId,
+      error,
+    });
+    return null;
+  }
 }
