@@ -41,6 +41,10 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
   }
 
   const firstEvent = events[0];
+  
+  // Get faculty from first event (faculty is at series level, same for all events)
+  const faculty = firstEvent.faculty ?? [];
+  const instructorNames = firstEvent.instructorNames;
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
@@ -62,6 +66,34 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
               {firstEvent.eventType || "Uncategorized"}
             </Badge>
           </div>
+          
+          {/* Faculty/Instructors - displayed at series level */}
+          {faculty.length > 0 ? (
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                Instructors
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                {faculty.map((member) => (
+                  <FacultyItem
+                    key={member.id}
+                    faculty={member}
+                    compact={false}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : instructorNames && Array.isArray(instructorNames) && instructorNames.length > 0 ? (
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                Instructors
+              </p>
+              <p className="text-sm text-foreground">
+                {formatInstructorSummary(instructorNames)}
+              </p>
+            </div>
+          ) : null}
+          
           <p className="mt-3 text-sm text-muted-foreground">
             {events.length} {events.length === 1 ? "event" : "events"}
           </p>
@@ -126,25 +158,6 @@ function SeriesEventCard({ event, index, total }: SeriesEventCardProps) {
                   label="Room"
                   value={event.roomName || "Unknown room"}
                 />
-                {event.faculty && event.faculty.length > 0 ? (
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground">Instructors:</p>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {event.faculty.map((member) => (
-                        <FacultyItem
-                          key={member.id}
-                          faculty={member}
-                          compact={true}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ) : event.instructorNames && Array.isArray(event.instructorNames) && event.instructorNames.length > 0 ? (
-                  <CardMeta
-                    label="Instructors"
-                    value={formatInstructorSummary(event.instructorNames)}
-                  />
-                ) : null}
                 {event.section && (
                   <CardMeta label="Section" value={event.section} />
                 )}

@@ -1,10 +1,24 @@
 "use server";
 import { unstable_cache } from "next/cache";
 import { createServerClient } from "@supabase/ssr";
-import { eq, db, faculty, facultySetup, facultyEvents, type InferSelectModel } from "shared";
+import {
+  eq,
+  db,
+  faculty,
+  facultySetup,
+  seriesFaculty,
+  events as eventsTable,
+  type InferSelectModel,
+} from "shared";
 
 const PAGE_SIZE = 50;
 import { revalidateTag, updateTag } from "next/cache";
+
+type FacultyEvent = InferSelectModel<typeof eventsTable> & {
+  eventName?: string | null;
+  eventType?: string | null;
+  itemId?: number | null;
+};
 
 async function fetchFacultyPage(page: number) {
   const from = page * PAGE_SIZE;
@@ -129,18 +143,76 @@ export async function deleteFacultySetup(setupId: string) {
 export const getFacultyEvents = unstable_cache(
   async (facultyId: number) => {
     try {
-      const data = await db.query.facultyEvents.findMany({
-        where: eq(facultyEvents.faculty, facultyId),
+      const assignments = await db.query.seriesFaculty.findMany({
+        where: eq(seriesFaculty.faculty, facultyId),
         with: {
-          event: true,
+          series: {
+            with: {
+              events: true,
+            },
+          },
         },
       });
-      return data.map((fe) => fe.event);
+
+      const seenEventIds = new Set<number>();
+      const events: FacultyEvent[] = [];
+
+      assignments.forEach(({ series }) => {
+        if (!series) {
+          return;
+        }
+
+        const seriesId = series.id ?? null;
+        const seriesName = series.seriesName ?? null;
+        const seriesType = series.seriesType ?? null;
+
+        (series.events ?? []).forEach((event) => {
+          const numericId = Number(event.id);
+          if (Number.isFinite(numericId)) {
+            if (seenEventIds.has(numericId)) {
+              return;
+            }
+            seenEventIds.add(numericId);
+          }
+
+          events.push({
+            ...event,
+            itemId: (event as FacultyEvent).itemId ?? seriesId,
+            eventName: (event as FacultyEvent).eventName ?? seriesName,
+            eventType: (event as FacultyEvent).eventType ?? seriesType,
+          });
+        });
+      });
+
+      return events;
     } catch (error) {
       console.error("[db] faculty.getFacultyEvents", { facultyId, error });
       throw error;
     }
   },
   ["facultyEvents"],
-  { tags: ["facultyEvents"] }
+  { tags: ["seriesFaculty", "events"] }
+);
+
+export const getFacultySeries = unstable_cache(
+  async (facultyId: number) => {
+    try {
+      const data = await db.query.seriesFaculty.findMany({
+        where: eq(seriesFaculty.faculty, facultyId),
+        with: {
+          series: {
+            with: {
+              events: true,
+            },
+          },
+        },
+      });
+      return data.map((sf) => sf.series);
+    } catch (error) {
+      console.error("[db] faculty.getFacultySeries", { facultyId, error });
+      throw error;
+    }
+  },
+  ["seriesFaculty"],
+  { tags: ["seriesFaculty"] }
 );

@@ -1,12 +1,6 @@
 // Helper functions to extract data from event objects
 export { generateDeterministicId } from "shared";
 
-export const composeEventIdInput = (
-  itemId: number,
-  itemId2: number,
-  subjectItemId: number,
-) => `${itemId}|${itemId2}|${subjectItemId}`;
-
 const getEventType = (data) => {
   const panels = data.itemDetails?.defn?.panel || [];
   for (const panel of panels) {
@@ -105,6 +99,12 @@ const getLectureTitle = (data) => {
 const parseRoomName = (subjectItemName) => {
   if (!subjectItemName) {
     return null;
+  }
+  // Handle combined rooms like "KGH2410A&B" by keeping the ampersand grouping intact
+  const combinedMatch = subjectItemName.match(/K(GH\d+[A-Z]?(?:&[A-Z])?)/);
+  if (combinedMatch) {
+    const combined = combinedMatch[1];
+    return combined.replace(/^GH(\d+)/, "GH $1");
   }
   // First try to match L-prefixed rooms (KGHL110 format)
   const lMatch = subjectItemName.match(/K(GHL\d+)/);

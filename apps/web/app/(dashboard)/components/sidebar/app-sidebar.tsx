@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { Users, Calendar as CalendarIcon, LayoutDashboard } from "lucide-react";
+import { Calendar as CalendarIcon, LayoutDashboard } from "lucide-react";
 
 import { NavUser } from "./nav-user";
 import {
@@ -36,6 +36,7 @@ import ThemeToggle from "@/components/theme/theme-toggle";
 import { LogoButton } from "./logo-button";
 import { Filters } from "./filters";
 import { CalendarOnly } from "./calendar-only"; 
+import { FacultyIcon } from "./faculty-icon";
 
 const RoomIcon = ({ className }: { className?: string }) => (
   <svg
@@ -70,7 +71,7 @@ export async function AppSidebar({
               className="group-data-[collapsible=icon]:flex hidden w-full h-8 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground flex items-center justify-center"
               aria-label="Faculty List"
             >
-              <Users className="h-4 w-4" />
+              <FacultyIcon className="h-4 w-4" />
             </button>
           </Link>
           {/* Session Assignments icon - only visible when collapsed */}
@@ -139,7 +140,7 @@ export async function AppSidebar({
               <SidebarMenuItem>
                 <Link href="/faculty">
                   <SidebarMenuButton className="w-full justify-start">
-                    <Users className="h-4 w-4" />
+                    <FacultyIcon className="h-4 w-4" />
                     <span>Faculty</span>
                   </SidebarMenuButton>
                 </Link>
@@ -160,6 +161,19 @@ export async function AppSidebar({
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
+
+        {/* Manager */}
+        <SidebarGroup className="px-0 group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Manager
+          </SidebarGroupLabel>
+          <SidebarGroupContent className="px-3">
+            <SidebarMenu>
               <SidebarMenuItem>
                 <Link href="/manager-dashboard">
                   <SidebarMenuButton className="w-full justify-start">
@@ -197,9 +211,9 @@ export async function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        {/* <Suspense fallback={null}>
+        <Suspense fallback={null}>
           <NavUser />
-        </Suspense> */}
+        </Suspense>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

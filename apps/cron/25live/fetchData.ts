@@ -2,7 +2,7 @@ import { type Browser } from "playwright";
 import config from "../config";
 import { type RawEvent, availabilityResponseSchema, rawEventSchema, eventDetailResponseSchema, type AvailabilitySubject } from "./schemas";
 
-export async function fetchEventsData(browser: Browser, startDate: string): Promise<RawEvent[]> {
+export async function fetchSeriesData(browser: Browser, startDate: string): Promise<RawEvent[]> {
   const activeBrowser = browser;
   const context = await activeBrowser.newContext();
   const page = await context.newPage();

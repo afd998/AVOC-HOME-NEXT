@@ -30,10 +30,19 @@ const eventDetailResourceSchema = z
   })
   .catchall(z.unknown());
 
+const eventDetailSpaceSchema = z
+  .object({
+    itemName: z.string().nullable().optional(),
+  })
+  .catchall(z.unknown());
+
 const eventDetailReservationSchema = z
   .object({
+    rsvId: z.coerce.number(),
     startDt: z.string().nullable().optional(),
+    endDt: z.string().nullable().optional(),
     res: z.array(eventDetailResourceSchema).optional(),
+    space: z.array(eventDetailSpaceSchema).optional(),
   })
   .catchall(z.unknown());
 
@@ -102,3 +111,4 @@ export type AvailabilitySubject = z.infer<typeof availabilitySubjectSchema>;
 export type AvailabilityResponse = z.infer<typeof availabilityResponseSchema>;
 export type EventDetail = z.infer<typeof eventDetailSchema>;
 export type RawEvent = z.infer<typeof rawEventSchema>;
+export type EventDetailReservation = z.infer<typeof eventDetailReservationSchema>;

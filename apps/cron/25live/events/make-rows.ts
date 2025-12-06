@@ -1,20 +1,58 @@
-import { db, venues, type ProcessedEvent } from "shared";
-import * as utils from "../events/index";
-import { parseEventResources } from "./parse-resourses";
+import { db, venues, type ProcessedEvent, type SeriesRow, generateDeterministicId } from "shared";
+import { parseRoomName } from "../events/index";
 import { mergeAdjacentRoomEvents } from "./merge-adjacent-room-events";
-import type { RawEvent } from "../schemas";
+import type { RawEvent, EventDetailReservation } from "../schemas";
 import { computeTransforms } from "./compute-transform";
 
-const {
-  composeEventIdInput,
-  generateDeterministicId,
-  getEventType,
-  getOrganization,
-  getInstructorNames,
-  getLectureTitle,
-  parseRoomName,
-  toTimeStrings,
-} = utils;
+/**
+ * Compose the input string for deterministic event ID generation.
+ * Uses seriesId + rsvId + space key.
+ */
+const composeEventIdInput = (
+  seriesId: number,
+  rsvId: number,
+  spaceKey: string
+): string => `${seriesId}:${rsvId}:${spaceKey}`;
+
+/**
+ * Parse ISO datetime string to time string (HH:MM:SS)
+ */
+const parseTimeFromDt = (dt: string | null | undefined): string | null => {
+  if (!dt) return null;
+  const timePart = dt.split("T")[1];
+  if (!timePart) return null;
+  // Handle "13:30" or "13:30:00" formats
+  const parts = timePart.split(":");
+  const hours = parts[0]?.padStart(2, "0") ?? "00";
+  const minutes = parts[1]?.padStart(2, "0") ?? "00";
+  const seconds = parts[2]?.padStart(2, "0") ?? "00";
+  return `${hours}:${minutes}:${seconds}`;
+};
+
+/**
+ * Parse ISO datetime string to date string (YYYY-MM-DD)
+ */
+const parseDateFromDt = (dt: string | null | undefined): string | null => {
+  if (!dt) return null;
+  return dt.split("T")[0] ?? null;
+};
+
+/**
+ * Parse resources from a reservation's res array
+ */
+const parseReservationResources = (
+  rsv: EventDetailReservation
+): ProcessedEvent["resources"] => {
+  if (!rsv.res || !Array.isArray(rsv.res)) {
+    return [];
+  }
+  return rsv.res.map((resource) => ({
+    itemName: resource.itemName,
+    quantity: typeof resource.quantity === "number" ? resource.quantity : null,
+    instruction:
+      typeof resource.instruction === "string" ? resource.instruction : null,
+  }));
+};
 
 const normalizeRoomName = (value: unknown): string | null => {
   if (typeof value !== "string") {
@@ -67,55 +105,79 @@ const resolveVenueId = (
   return roomLookup.get(normalized) ?? null;
 };
 
-function removeKECNoAcademicEvents(
-  eventsList: ProcessedEvent[]
-): ProcessedEvent[] {
-  return eventsList.filter((event) => {
-    if (event.eventType !== "KEC") {
-      return true;
-    }
+const getReservationCount = (series: RawEvent): number => {
+  const reservations = series.itemDetails?.occur?.prof?.[0]?.rsv ?? [];
+  return reservations.length;
+};
 
-    const raw = event.raw as
-      | {
-          itemDetails?: {
-            defn?: {
-              panel?: Array<{
-                item?: Array<{ itemName?: string }>;
-              }>;
-            };
-          };
-        }
-      | null
-      | undefined;
+const getRoomNameForSpace = (
+  series: RawEvent,
+  spaceName: string | null | undefined
+): string | null => {
+  const parsedSpace = parseRoomName(spaceName ?? "");
+  if (parsedSpace) {
+    return parsedSpace;
+  }
 
-    const itemName =
-      raw?.itemDetails?.defn?.panel?.[1]?.item?.[0]?.itemName ?? null;
+  const subjectName = series.subject_itemName ?? "";
+  return parseRoomName(subjectName ?? "");
+};
 
-    return (
-      itemName === "<p>Academic Session</p>" ||
-      itemName === "<p>Academic session</p>" ||
-      itemName === "<p>Class Session</p>" ||
-      itemName === "<p>Class session</p>"
-    );
-  });
-}
-
-export async function getEvents(
-  rawData: RawEvent[]
+export async function makeEventRows(
+  rawData: RawEvent[],
+  seriesRows: SeriesRow[]
 ): Promise<ProcessedEvent[]> {
   if (!rawData || !Array.isArray(rawData)) {
     return [];
   }
 
-  const filteredData = rawData.filter((event) => {
+  const allowedSeriesIds = new Set(
+    (Array.isArray(seriesRows) ? seriesRows : [])
+      .map((series) => series.id)
+      .filter((id): id is number => typeof id === "number")
+  );
+
+  if (allowedSeriesIds.size === 0) {
+    return [];
+  }
+
+  const allowedSeriesData = rawData.filter((series) =>
+    allowedSeriesIds.has(series.itemId)
+  );
+
+  const seriesById = new Map<number, RawEvent>();
+  for (const series of allowedSeriesData) {
+    const existing = seriesById.get(series.itemId);
+    if (!existing) {
+      seriesById.set(series.itemId, series);
+      continue;
+    }
+
+    const existingCount = getReservationCount(existing);
+    const currentCount = getReservationCount(series);
+    if (currentCount > existingCount) {
+      console.warn("Duplicate series in raw data; choosing series with more reservations", {
+        seriesId: series.itemId,
+        existingReservations: existingCount,
+        currentReservations: currentCount,
+        itemName: series.itemName,
+      });
+      seriesById.set(series.itemId, series);
+    }
+  }
+
+  const uniqueSeriesData = Array.from(seriesById.values());
+
+  // Filter out private events and invalid series
+  const filteredData = uniqueSeriesData.filter((series) => {
     const isPrivateEvent =
-      event.itemId === 0 &&
-      (event.itemName === "(Private)" || event.itemName === "Closed");
+      series.itemId === 0 &&
+      (series.itemName === "(Private)" || series.itemName === "Closed");
 
     return (
       !isPrivateEvent &&
-      event.itemId2 !== 0 &&
-      !event.subject_itemName?.includes("&")
+      series.itemId2 !== 0 &&
+      !series.subject_itemName?.includes("&")
     );
   });
 
@@ -124,43 +186,82 @@ export async function getEvents(
       ? await buildRoomLookup()
       : new Map<string, number>();
 
-  const processedEvents = filteredData.map<ProcessedEvent>((event) => {
-    const { startTimeStr, endTimeStr } = toTimeStrings(event.start, event.end);
+  // Explode each series into multiple events from its reservations
+  const processedEvents: ProcessedEvent[] = [];
+  const seenEventIds = new Set<string>();
+  const loggedDuplicateEventIds = new Set<string>();
 
-    const eventDate = event.subject_item_date
-      ? event.subject_item_date.split("T")[0]
-      : new Date().toISOString().split("T")[0];
-    const resources = parseEventResources(event);
-    const roomName = parseRoomName(event.subject_itemName ?? "") ?? "";
+  for (const series of filteredData) {
+    const seriesId = series.itemId;
+    const reservations = series.itemDetails?.occur?.prof?.[0]?.rsv ?? [];
 
-    return {
-      itemId: event.itemId,
-      itemId2: event.itemId2,
-      id: generateDeterministicId(
-        composeEventIdInput(event.itemId, event.itemId2, event.subject_itemId)
-      ),
-      date: eventDate,
-      startTime: startTimeStr,
-      endTime: endTimeStr,
-      eventName: event.itemName ?? "",
-      eventType: getEventType(event),
-      organization: getOrganization(event),
-      instructorNames: getInstructorNames(event),
-      lectureTitle: getLectureTitle(event),
-      roomName,
-      venue: resolveVenueId(roomName, roomLookup),
-      resources,
-      updatedAt: new Date().toISOString(),
-      raw: event,
-    };
-  });
+    for (const rsv of reservations) {
+      const rsvId = rsv.rsvId;
+      const eventDate = parseDateFromDt(rsv.startDt);
+      const startTime = parseTimeFromDt(rsv.startDt);
+      const endTime = parseTimeFromDt(rsv.endDt);
+
+      // Skip reservations without required time data
+      if (!eventDate || !startTime || !endTime) {
+        continue;
+      }
+
+      const resources = parseReservationResources(rsv);
+      const spaces =
+        Array.isArray(rsv.space) && rsv.space.length > 0
+          ? rsv.space
+          : [undefined];
+
+      for (const space of spaces) {
+        const spaceName = space?.itemName ?? null;
+        const roomName = getRoomNameForSpace(series, spaceName);
+        const spaceKey = normalizeRoomName(spaceName) ?? "NOSPACE";
+        const eventId = generateDeterministicId(
+          composeEventIdInput(seriesId, rsvId, spaceKey)
+        );
+        const eventKey = String(eventId);
+
+        if (seenEventIds.has(eventKey) && !loggedDuplicateEventIds.has(eventKey)) {
+          console.warn("Duplicate event detected in raw data", {
+            seriesId,
+            rsvId,
+            eventId,
+            date: eventDate,
+            startTime,
+            endTime,
+            itemName: series.itemName,
+            subjectItemName: series.subject_itemName,
+            spaceName,
+          });
+          loggedDuplicateEventIds.add(eventKey);
+        } else {
+          seenEventIds.add(eventKey);
+        }
+
+        const venueId = resolveVenueId(roomName, roomLookup);
+
+        processedEvents.push({
+          id: eventId,
+          series: seriesId,
+          itemId2: series.itemId2,
+          date: eventDate,
+          startTime,
+          endTime,
+          venue: venueId,
+          resources,
+          updatedAt: new Date().toISOString(),
+          // roomName needed for merging adjacent room events
+          roomName: roomName ?? "",
+        } as ProcessedEvent);
+      }
+    }
+  }
 
   const mergedEvents = mergeAdjacentRoomEvents(processedEvents);
-  const filteredEvents = removeKECNoAcademicEvents(mergedEvents);
 
-  const transformMap = computeTransforms(filteredEvents);
+  const transformMap = computeTransforms(mergedEvents);
 
-  const eventsWithTransform = filteredEvents.map((event) => ({
+  const eventsWithTransform = mergedEvents.map((event) => ({
     ...event,
     transform: transformMap.get(event.id) ?? null,
   }));
@@ -170,13 +271,8 @@ export async function getEvents(
 
 export {
   generateDeterministicId,
-  getEventType,
-  getOrganization,
-  getInstructorNames,
-  getLectureTitle,
   parseRoomName,
-  toTimeStrings,
-  removeKECNoAcademicEvents,
+  composeEventIdInput,
 };
 
 export { mergeAdjacentRoomEvents } from "./merge-adjacent-room-events";

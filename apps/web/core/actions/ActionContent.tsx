@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 import { CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import QcItem, { useQcItemForm } from "@/core/actions/QcItem";
 import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
 import ActionHeader from "./ActionHeader";
@@ -204,6 +206,22 @@ export default function ActionContent({
 
         {/* Always show QC items section for all actions */}
         <QcItem action={action} />
+
+        <section className="space-y-2">
+          <Label
+            htmlFor={`action-${action.id}-notes`}
+            className="text-sm font-semibold uppercase text-muted-foreground"
+          >
+            Notes
+          </Label>
+          <Textarea
+            id={`action-${action.id}-notes`}
+            name="notes"
+            defaultValue={action.notes ?? ""}
+            placeholder="Add any notes for this action"
+            className="min-h-[120px]"
+          />
+        </section>
       </CardContent>
 
       <ActionFooter

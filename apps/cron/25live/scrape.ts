@@ -1,14 +1,13 @@
 import { chromium, type Browser } from "playwright";
 import dayjs from "dayjs";
 import config from "../config";
-import { getEvents } from "./events/make-rows";
-import { type AvailabilitySubject, type RawEvent } from "./schemas";
+import { makeEventRows } from "./events/make-rows";
 import { makeResourceEventsRows } from "./resourse-events/make-rows";
 import { saveResourceEvents } from "./resourse-events/save-rows";
-import { saveEvents } from "./events/save-rows";
-import { makeFacultyEventsRows } from "./faculty-events/make-rows";
-import { saveFacultyEvents } from "./faculty-events/save-rows";
-import { fetchEventsData } from "./fetchData";
+import { saveEvents, updateEventSeriesPositions } from "./events/save-rows";
+import { makeSeriesFacultyRows } from "./series-faculty/make-rows";
+import { saveSeriesFaculty } from "./series-faculty/save-rows";
+import { fetchSeriesData } from "./fetchData";
 import { saveQcItemRows } from "./qc-items/save-rows";
 import { getActions } from "./actions/make-rows";
 import { enrichEvents } from "./events/enrich-events";
@@ -21,8 +20,8 @@ import { saveEventRecordingRows } from "./event-recording/save-rows";
 import { saveActions } from "./actions/save-rows";
 import { pgPool } from "shared";
 import { partitionEventsByStart } from "./utils/event-filters";
-import { ensureSeriesExist, updateSeriesFromDb, computeSeriesPositions } from "./series/save-rows";
-import { updateEventSeriesPositions } from "./events/save-rows";
+import { makeSeriesRows } from "./series/make-rows";
+import { saveSeries, computeSeriesPositions } from "./series/save-rows";
 // Validate configuration to ensure all required environment variables are present
 config.validate();
 
@@ -53,27 +52,28 @@ async function main(): Promise<void> {
   console.log(`\n🚀 Starting scrape for date: ${date}`);
 
   const browserInstance = await initBrowser();
-  console.log(`📥 Fetching raw events data...`);
-  const raw = await fetchEventsData(browserInstance, date);
-  console.log(`✅ Fetched ${raw.length} raw events`);
+  console.log(`📥 Fetching raw series data...`);
+  const raw = await fetchSeriesData(browserInstance, date);
+  console.log(`✅ Fetched ${raw.length} raw series`);
 
-  console.log(`🔄 Processing events...`);
-  const events = await getEvents(raw);
-  console.log(`📊 Processed ${events.length} events`);
+  // Create series rows from raw data (dedupe by id)
+  console.log(`🔄 Processing series...`);
+  const seriesRows = makeSeriesRows(raw);
+  console.log(`📊 Created ${seriesRows.length} series rows`);
 
-  // Set series FK on events (positions computed after save from DB)
-  events.forEach((event) => {
-    if (event.itemId != null) {
-      event.series = event.itemId;
-    }
-  });
+  // Create events by exploding reservations
+  console.log(`🔄 Processing events from reservations...`);
+  const events = await makeEventRows(raw, seriesRows);
+  console.log(`📊 Created ${events.length} events`);
+
+  // Create series-faculty rows (from series, not events)
+  const seriesFacultyRows = await makeSeriesFacultyRows(raw, seriesRows);
+  console.log(`👥 Created ${seriesFacultyRows.length} series-faculty rows`);
 
   // Collect unique series IDs for later processing
-  const seriesIds = [...new Set(
-    events
-      .map((e) => e.itemId)
-      .filter((id): id is number => id != null)
-  )];
+  const seriesIds = seriesRows
+    .map((s) => s.id)
+    .filter((id): id is number => id != null);
 
   const now = dayjs();
   const { futureEvents, startedEvents } = partitionEventsByStart(events, now);
@@ -90,18 +90,13 @@ async function main(): Promise<void> {
     console.log(`▶️ No already-started events found for ${date}`);
   }
 
-  console.log(
-    `🔗 Processing resource events, faculty events, and enriching events...`
-  );
+  console.log(`🔗 Processing resource events and enriching events...`);
+
+  // Process resource events (doesn't need enriched events)
+  const resourcesEvents = await makeResourceEventsRows(futureEvents);
 
   // Enrich events with extension data
   const enrichedEvents = enrichEvents(futureEvents);
-
-  // Process resource and faculty events in parallel (these don't need enriched events)
-  const [resourcesEvents, facultyEvents] = await Promise.all([
-    makeResourceEventsRows(futureEvents),
-    makeFacultyEventsRows(futureEvents),
-  ]);
 
   console.log(`🔍 Processing actions and QC items...`);
   const actions = await getActions(enrichedEvents);
@@ -114,7 +109,7 @@ async function main(): Promise<void> {
     events: futureEvents,
     enrichedEvents,
     resourcesEvents,
-    facultyEvents,
+    seriesFacultyRows,
     actions,
     qcItemsRows,
   };
@@ -129,8 +124,9 @@ async function main(): Promise<void> {
     eventRecordingRows,
   } = flattenEnrichedEvents(batch.enrichedEvents);
 
-  // Ensure series records exist first (for FK constraint)
-  await ensureSeriesExist(batch.events);
+  // Save series first (for FK constraint)
+  await saveSeries(seriesRows);
+  console.log(`📚 Saved ${seriesRows.length} series`);
 
   // Save events
   const startedEventIds = startedEvents
@@ -139,10 +135,6 @@ async function main(): Promise<void> {
 
   await saveEvents([...batch.events], date, startedEventIds);
 
-  // Now compute accurate series data from ALL events in DB
-  console.log(`📚 Computing series data from database...`);
-  await updateSeriesFromDb(seriesIds);
-  
   // Compute and update event positions based on all events in each series
   const positionMap = await computeSeriesPositions(seriesIds);
   await updateEventSeriesPositions(positionMap);
@@ -155,7 +147,7 @@ async function main(): Promise<void> {
     saveEventOtherHardwareRows(eventOtherHardwareRows, batch.enrichedEvents),
     saveEventRecordingRows(eventRecordingRows, batch.enrichedEvents),
     saveResourceEvents([...batch.resourcesEvents], batch.events, date),
-    saveFacultyEvents([...batch.facultyEvents], batch.events, date),
+    saveSeriesFaculty(batch.seriesFacultyRows, seriesRows),
   ]);
 
   // Save actions (QC items depend on these)

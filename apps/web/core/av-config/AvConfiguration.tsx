@@ -346,87 +346,89 @@ export default function AvConfiguration({
         <Item size="sm">
           <ItemContent>
             <ItemTitle>Center Source</ItemTitle>
-            <ItemDescription>
-              {isEditable ? (
-                <>
-                  {avConfig.centerSource ? (
-                    <Button
-                      onClick={() => openPanelModal("center")}
-                      className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden hover:bg-accent hover:border-accent-foreground/20"
-                      variant="outline"
-                      title="Click to change source"
-                      disabled={pendingSource === "center"}
-                    >
-                      {avConfig.centerSource === "No Source" ? (
-                        <span className="text-muted-foreground">No Source</span>
-                      ) : (
-                        <Image
-                          src={getPanelImageSrc(avConfig.centerSource)}
-                          alt="Center source"
-                          fill
-                          className="object-contain p-2"
-                          sizes="(max-width: 640px) 100vw, 33vw"
-                        />
-                      )}
-                    </Button>
-                  ) : (
-                    renderQuickSourceSelector("center")
-                  )}
-                  {avConfig.centerSource && avConfig.centerSource !== "DOC_CAM" && avConfig.centerSource !== "No Source" && (
-                    <div className="mt-2 flex justify-center">
-                      {avConfig.centerDevice ? (
-                        <Badge
-                          className="cursor-default flex items-center gap-1 pr-1"
-                          variant="outline"
-                          title={avConfig.centerDevice}
-                        >
-                          {renderByodIcon(avConfig.centerDevice)}
-                          <span>{avConfig.centerDevice}</span>
-                          {(avConfig.centerSource === "ROOM_PC" || avConfig.centerSource === "PC_EXT") && (
-                            <span className="text-muted-foreground text-xs ml-1">Mirror 360</span>
-                          )}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="ml-1 h-5 w-5 p-0 rounded hover:bg-black/10"
-                            title="Remove device"
-                            onClick={() => handleRemoveDevice("center")}
+            <ItemDescription asChild className="line-clamp-none">
+              <div className="flex flex-col gap-2">
+                {isEditable ? (
+                  <>
+                    {avConfig.centerSource ? (
+                      <Button
+                        onClick={() => openPanelModal("center")}
+                        className="w-full h-20 rounded-lg border border-border flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden hover:bg-accent hover:border-accent-foreground/20"
+                        variant="outline"
+                        title="Click to change source"
+                        disabled={pendingSource === "center"}
+                      >
+                        {avConfig.centerSource === "No Source" ? (
+                          <span className="text-muted-foreground">No Source</span>
+                        ) : (
+                          <Image
+                            src={getPanelImageSrc(avConfig.centerSource)}
+                            alt="Center source"
+                            fill
+                            className="object-contain p-2"
+                            sizes="(max-width: 640px) 100vw, 33vw"
+                          />
+                        )}
+                      </Button>
+                    ) : (
+                      renderQuickSourceSelector("center")
+                    )}
+                    {avConfig.centerSource && avConfig.centerSource !== "DOC_CAM" && avConfig.centerSource !== "No Source" && (
+                      <div className="mt-2 flex justify-center">
+                        {avConfig.centerDevice ? (
+                          <Badge
+                            className="cursor-default flex items-center gap-1 pr-1"
+                            variant="outline"
+                            title={avConfig.centerDevice}
                           >
-                            <X className="w-3.5 h-3.5" />
-                          </Button>
-                        </Badge>
-                      ) : (
-                        <DeviceSelectPopover
-                          targetDevice="center"
-                          onSelectDevice={(deviceName) => handleSelectDevice("center", deviceName)}
-                          trigger={
+                            {renderByodIcon(avConfig.centerDevice)}
+                            <span>{avConfig.centerDevice}</span>
+                            {(avConfig.centerSource === "ROOM_PC" || avConfig.centerSource === "PC_EXT") && (
+                              <span className="text-muted-foreground text-xs ml-1">Mirror 360</span>
+                            )}
                             <Button
                               type="button"
-                              variant="outline"
+                              variant="ghost"
                               size="icon"
-                              className="w-8 h-8 rounded-full border-2 border-dashed"
-                              title="Add device"
+                              className="ml-1 h-5 w-5 p-0 rounded hover:bg-black/10"
+                              title="Remove device"
+                              onClick={() => handleRemoveDevice("center")}
                             >
-                              <Plus className="w-4 h-4" />
+                              <X className="w-3.5 h-3.5" />
                             </Button>
-                          }
-                        />
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="w-full rounded-lg border border-border flex items-center justify-center min-h-[60px] p-2">
-                  {avConfig.centerSource === "No Source" ? (
-                    <span className="text-muted-foreground">No Source</span>
-                  ) : avConfig.centerSource ? (
-                    <span>{avConfig.centerSource.replace(/_/g, " ")}</span>
-                  ) : (
-                    <span className="text-muted-foreground">Not Set</span>
-                  )}
-                </div>
-              )}
+                          </Badge>
+                        ) : (
+                          <DeviceSelectPopover
+                            targetDevice="center"
+                            onSelectDevice={(deviceName) => handleSelectDevice("center", deviceName)}
+                            trigger={
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="w-8 h-8 rounded-full border-2 border-dashed"
+                                title="Add device"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            }
+                          />
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="w-full rounded-lg border border-border flex items-center justify-center min-h-[60px] p-2">
+                    {avConfig.centerSource === "No Source" ? (
+                      <span className="text-muted-foreground">No Source</span>
+                    ) : avConfig.centerSource ? (
+                      <span>{avConfig.centerSource.replace(/_/g, " ")}</span>
+                    ) : (
+                      <span className="text-muted-foreground">Not Set</span>
+                    )}
+                  </div>
+                )}
+              </div>
             </ItemDescription>
           </ItemContent>
         </Item>
@@ -555,4 +557,3 @@ export default function AvConfiguration({
     </>
   );
 }
-

@@ -5,7 +5,7 @@ import {
   qcItems,
   qcItemDict,
   resourceEvents,
-  facultyEvents,
+  seriesFaculty,
   venueFilters,
   shiftBlocks,
   shifts,
@@ -60,10 +60,12 @@ export type ProcessedEvent = Omit<
   "resources"
 > & {
   resources: EventResource[];
+  // roomName needed for merging adjacent room events during processing
+  roomName?: string;
 };
 
 export type ResourceEventRow = InferInsertModel<typeof resourceEvents>;
-export type FacultyEventRow = InferSelectModel<typeof facultyEvents>;
+export type SeriesFacultyRow = InferInsertModel<typeof seriesFaculty>;
 export type QcItemRow = InferInsertModel<typeof qcItems>;
 export type QcItemDictRow = InferSelectModel<typeof qcItemDict>;
 export type EventHybridRow = InferInsertModel<typeof eventHybrid>;

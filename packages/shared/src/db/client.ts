@@ -13,6 +13,10 @@ if (!process.env[ENV_FLAG]) {
     path.resolve(__dirname, ".env.local"),
     path.resolve(__dirname, "../../.env.local"),
     path.resolve(__dirname, "../../../.env.local"),
+    // Monorepo root (when consumers run from a workspace package)
+    path.resolve(__dirname, "../../../../.env.local"),
+    // Current working directory (e.g. Next.js app dir)
+    path.resolve(process.cwd(), ".env.local"),
   ];
   const foundPath = envPaths.find((p) => fs.existsSync(p));
   if (foundPath) {

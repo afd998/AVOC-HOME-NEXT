@@ -1,6 +1,9 @@
 import { asc, db, venues, type Room } from "shared";
 
-export type VenueRow = Pick<Room, "id" | "name" | "type" | "subType" | "spelling">;
+export type VenueRow = Pick<
+  Room,
+  "id" | "name" | "type" | "subType" | "spelling" | "building"
+>;
 
 export async function getVenues(): Promise<VenueRow[]> {
   try {
@@ -11,6 +14,7 @@ export async function getVenues(): Promise<VenueRow[]> {
         spelling: venues.spelling,
         type: venues.type,
         subType: venues.subType,
+        building: venues.building,
       })
       .from(venues)
       .orderBy(asc(venues.name));

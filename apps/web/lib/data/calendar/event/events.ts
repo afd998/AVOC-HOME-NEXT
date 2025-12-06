@@ -18,7 +18,6 @@ import type { FacultyMember } from "./utils/hyrdate-faculty";
 import type { ActionWithDict } from "@/lib/data/actions/actions";
 
 export type EventWithRelations = EventType & {
-  facultyEvents?: { faculty: FacultyMember | null }[];
   resourceEvents?: {
     resourcesDict: typeof resourcesDict.$inferSelect | null;
     quantity: number | null;
@@ -33,14 +32,24 @@ export type EventWithRelations = EventType & {
     otherHardwareDict?: { id: string } | null;
   })[];
   actions?: any[]; // Will be properly typed from Drizzle query result
-  series?: Series | null;
+  series?: (Series & {
+    seriesFaculties?: { faculty: FacultyMember | null }[];
+  }) | null;
 };
 
-type HydratedEvent = EventType & {
+type BaseEventFields = EventType & {
+  eventName?: string | null;
+  eventType?: string | null;
+  itemId?: number | null;
+  roomName?: string | null;
+};
+
+type HydratedEvent = BaseEventFields & {
   faculty: FacultyMember[];
   resources: CalendarEventResource[];
   isFirstSession: boolean;
   room?: Room | null;
+  roomName: string;
   hybrid?: EventHybridRow;
   avConfig?: EventAVConfigRow;
   recording?: EventRecordingRow;
@@ -49,11 +58,13 @@ type HydratedEvent = EventType & {
   series?: Series | null;
 };
 
-export type CalendarEventHydrated = EventType & {
+export type CalendarEventHydrated = BaseEventFields & {
   faculty: FacultyMember[];
   resources: CalendarEventResource[];
   isFirstSession: boolean;
   room?: Room | null;
+  roomName: string;
+  series?: Series | null;
 };
 
 export async function getEventsByDate(
@@ -63,9 +74,13 @@ export async function getEventsByDate(
     const matchingEvents = await db.query.events.findMany({
       where: eq(events.date, date),
       with: {
-        facultyEvents: {
+        series: {
           with: {
-            faculty: true,
+            seriesFaculties: {
+              with: {
+                faculty: true,
+              },
+            },
           },
         },
         resourceEvents: {
@@ -78,10 +93,25 @@ export async function getEventsByDate(
     });
 
     return (matchingEvents as EventWithRelations[]).map(
-      ({ facultyEvents, resourceEvents, venue, ...event }) => ({
-        ...event,
-        faculty: (facultyEvents ?? []).map((relation) => relation.faculty),
-        resources: (resourceEvents ?? []).map((relation) => ({
+      ({ series, resourceEvents, venue, ...event }) => {
+        const eventWithOptionalFields = event as BaseEventFields;
+        const facultyMembers = (series?.seriesFaculties ?? [])
+          .map((relation) => relation.faculty)
+          .filter((member): member is FacultyMember => Boolean(member));
+
+        const normalizedEventName =
+          eventWithOptionalFields.eventName ?? series?.seriesName ?? null;
+        const normalizedEventType =
+          eventWithOptionalFields.eventType ?? series?.seriesType ?? null;
+        const normalizedItemId =
+          eventWithOptionalFields.itemId ?? series?.id ?? null;
+        const normalizedRoomName =
+          eventWithOptionalFields.roomName ??
+          venue?.name ??
+          venue?.spelling ??
+          "Unknown room";
+
+        const resources = (resourceEvents ?? []).map((relation) => ({
           id: relation.resourcesDict.id,
           quantity: relation.quantity ?? 0,
           instruction: relation.instructions ?? "",
@@ -89,10 +119,23 @@ export async function getEventsByDate(
           isAVResource: Boolean(relation.resourcesDict.isAv),
           is_av: Boolean(relation.resourcesDict.isAv),
           icon: relation.resourcesDict.icon ?? null,
-        })),
-        isFirstSession: false,
-        room: venue ?? null,
-      })
+        }));
+
+        const hydrated: CalendarEventHydrated = {
+          ...event,
+          eventName: normalizedEventName,
+          eventType: normalizedEventType,
+          itemId: normalizedItemId,
+          roomName: normalizedRoomName,
+          faculty: facultyMembers,
+          resources,
+          isFirstSession: false,
+          room: venue ?? null,
+          series: series ?? null,
+        };
+
+        return hydrated;
+      }
     );
   } catch (error) {
     console.error("[db] getEventsByDate", { date, error });
@@ -101,10 +144,12 @@ export async function getEventsByDate(
 }
 
 function toFinalEvent(eventWithRelations: EventWithRelations): finalEvent {
-  const { facultyEvents, resourceEvents, eventHybrids, eventAvConfigs, eventRecordings, eventOtherHardwares, actions, series, venue, ...event } = eventWithRelations;
+  const { resourceEvents, eventHybrids, eventAvConfigs, eventRecordings, eventOtherHardwares, actions, series, venue, ...event } = eventWithRelations;
+  const eventWithOptionalFields = event as BaseEventFields;
   const roomFromVenue = venue ?? (event as any).room ?? null;
 
-  const facultyMembers = (facultyEvents ?? [])
+  // Faculty is now accessed through series -> seriesFaculties
+  const facultyMembers = (series?.seriesFaculties ?? [])
     .map((relation) => relation.faculty)
     .filter((member): member is FacultyMember => Boolean(member));
 
@@ -128,6 +173,18 @@ function toFinalEvent(eventWithRelations: EventWithRelations): finalEvent {
     .filter(
       (resource): resource is CalendarEventResource => resource !== null
     );
+
+  const normalizedEventName =
+    eventWithOptionalFields.eventName ?? series?.seriesName ?? null;
+  const normalizedEventType =
+    eventWithOptionalFields.eventType ?? series?.seriesType ?? null;
+  const normalizedItemId =
+    eventWithOptionalFields.itemId ?? series?.id ?? null;
+  const normalizedRoomName =
+    eventWithOptionalFields.roomName ??
+    roomFromVenue?.name ??
+    roomFromVenue?.spelling ??
+    "Unknown room";
 
   // Extract first item from each relation array (one-to-one relationships)
   const hybrid = eventHybrids && eventHybrids.length > 0 ? eventHybrids[0] : undefined;
@@ -169,6 +226,10 @@ function toFinalEvent(eventWithRelations: EventWithRelations): finalEvent {
 
   const hydratedEvent: HydratedEvent = {
     ...event,
+    eventName: normalizedEventName,
+    eventType: normalizedEventType,
+    itemId: normalizedItemId,
+    roomName: normalizedRoomName,
     faculty: facultyMembers,
     resources,
     isFirstSession: false,
@@ -195,9 +256,13 @@ export const getEventById = async (
   const eventWithRelations = await db.query.events.findFirst({
     where: eq(events.id, id),
     with: {
-      facultyEvents: {
+      series: {
         with: {
-          faculty: true,
+          seriesFaculties: {
+            with: {
+              faculty: true,
+            },
+          },
         },
       },
       resourceEvents: {
@@ -225,7 +290,6 @@ export const getEventById = async (
           },
         },
       },
-      series: true,
       venue: true,
     },
   });
@@ -240,21 +304,25 @@ export const getEventById = async (
 export const getEventsBySeries = async (
   seriesId: string
 ): Promise<finalEvent[]> => {
-  const itemId = Number.parseInt(seriesId, 10);
-  if (Number.isNaN(itemId)) {
+  const id = Number.parseInt(seriesId, 10);
+  if (Number.isNaN(id)) {
     return [];
   }
 
   const eventsWithRelations = await db.query.events.findMany({
-    where: eq(events.itemId, itemId),
+    where: eq(events.series, id),
     orderBy: (eventTable, { asc }) => [
       asc(eventTable.date),
       asc(eventTable.startTime),
     ],
     with: {
-      facultyEvents: {
+      series: {
         with: {
-          faculty: true,
+          seriesFaculties: {
+            with: {
+              faculty: true,
+            },
+          },
         },
       },
       resourceEvents: {

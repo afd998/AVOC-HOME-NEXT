@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, series, venues, panoptoChecks, shifts, facultyEvents, shiftBlockProfile, shiftBlocks, shiftBlockProfileRoom, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
+import { faculty, facultySetup, series, seriesClass, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, venues, shifts, shiftBlockProfile, shiftBlocks, seriesFaculty, shiftBlockProfileRoom, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -10,7 +10,20 @@ export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 
 export const facultyRelations = relations(faculty, ({many}) => ({
 	facultySetups: many(facultySetup),
-	facultyEvents: many(facultyEvents),
+	seriesFaculties: many(seriesFaculty),
+}));
+
+export const seriesClassRelations = relations(seriesClass, ({one}) => ({
+	series: one(series, {
+		fields: [seriesClass.series],
+		references: [series.id]
+	}),
+}));
+
+export const seriesRelations = relations(series, ({many}) => ({
+	seriesClasses: many(seriesClass),
+	events: many(events),
+	seriesFaculties: many(seriesFaculty),
 }));
 
 export const eventHybridRelations = relations(eventHybrid, ({one}) => ({
@@ -26,10 +39,6 @@ export const eventsRelations = relations(events, ({one, many}) => ({
 	eventRecordings: many(eventRecording),
 	actions: many(actions),
 	notifications: many(notifications),
-	profile: one(profiles, {
-		fields: [events.manOwner],
-		references: [profiles.id]
-	}),
 	series: one(series, {
 		fields: [events.series],
 		references: [series.id]
@@ -38,8 +47,6 @@ export const eventsRelations = relations(events, ({one, many}) => ({
 		fields: [events.venue],
 		references: [venues.id]
 	}),
-	panoptoChecks: many(panoptoChecks),
-	facultyEvents: many(facultyEvents),
 	resourceEvents: many(resourceEvents),
 	eventOtherHardwares: many(eventOtherHardware),
 }));
@@ -92,8 +99,6 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 		relationName: "actions_completedBy_profiles_id"
 	}),
 	notifications: many(notifications),
-	events: many(events),
-	panoptoChecks: many(panoptoChecks),
 	shifts: many(shifts),
 	shiftBlockProfiles: many(shiftBlockProfile),
 	shiftBlockProfileRooms: many(shiftBlockProfileRoom),
@@ -110,41 +115,15 @@ export const notificationsRelations = relations(notifications, ({one}) => ({
 	}),
 }));
 
-export const seriesRelations = relations(series, ({many}) => ({
-	events: many(events),
-}));
-
 export const venuesRelations = relations(venues, ({many}) => ({
 	events: many(events),
 	shiftBlockProfileRooms: many(shiftBlockProfileRoom),
-}));
-
-export const panoptoChecksRelations = relations(panoptoChecks, ({one}) => ({
-	profile: one(profiles, {
-		fields: [panoptoChecks.completedByUserId],
-		references: [profiles.id]
-	}),
-	event: one(events, {
-		fields: [panoptoChecks.eventId],
-		references: [events.id]
-	}),
 }));
 
 export const shiftsRelations = relations(shifts, ({one}) => ({
 	profile: one(profiles, {
 		fields: [shifts.profileId],
 		references: [profiles.id]
-	}),
-}));
-
-export const facultyEventsRelations = relations(facultyEvents, ({one}) => ({
-	event: one(events, {
-		fields: [facultyEvents.event],
-		references: [events.id]
-	}),
-	faculty: one(faculty, {
-		fields: [facultyEvents.faculty],
-		references: [faculty.id]
 	}),
 }));
 
@@ -162,6 +141,17 @@ export const shiftBlockProfileRelations = relations(shiftBlockProfile, ({one}) =
 export const shiftBlocksRelations = relations(shiftBlocks, ({many}) => ({
 	shiftBlockProfiles: many(shiftBlockProfile),
 	shiftBlockProfileRooms: many(shiftBlockProfileRoom),
+}));
+
+export const seriesFacultyRelations = relations(seriesFaculty, ({one}) => ({
+	faculty: one(faculty, {
+		fields: [seriesFaculty.faculty],
+		references: [faculty.id]
+	}),
+	series: one(series, {
+		fields: [seriesFaculty.series],
+		references: [series.id]
+	}),
 }));
 
 export const shiftBlockProfileRoomRelations = relations(shiftBlockProfileRoom, ({one}) => ({

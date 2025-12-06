@@ -63,30 +63,23 @@ export async function saveEvents(
   }
 
   // Insert new events or update existing ones (upsert operation)
+  // Only save fields that exist in the events table schema
   await db
     .insert(events)
     .values(processedEvents)
     .onConflictDoUpdate({
-      target: events.id, // Conflict resolution based on event ID
+      target: events.id,
       set: {
-        // Update all fields with new values from the scrape
         date: sql`excluded.date`,
-        eventType: sql`excluded.event_type`,
-        lectureTitle: sql`excluded.lecture_title`,
-        roomName: sql`excluded.room_name`,
-        resources: sql`excluded.resources`,
-        itemId: sql`excluded.item_id`,
         itemId2: sql`excluded.item_id2`,
         startTime: sql`excluded.start_time`,
         endTime: sql`excluded.end_time`,
-        raw: sql`excluded.raw`,
-        eventName: sql`excluded.event_name`,
+        resources: sql`excluded.resources`,
         updatedAt: sql`excluded.updated_at`,
-        organization: sql`excluded.organization`,
-        instructorNames: sql`excluded.instructor_names`,
         series: sql`excluded.series`,
         seriesPos: sql`excluded.series_pos`,
         venue: sql`excluded.venue`,
+        transform: sql`excluded.transform`,
       },
     });
 }

@@ -3,9 +3,11 @@ import type { ProcessedEvent } from "shared";
 export function mergeAdjacentRoomEvents(
   eventsList: ProcessedEvent[]
 ): ProcessedEvent[] {
+  // Group events by series ID, date, and start time to find events
+  // that happen at the same time in adjacent rooms
   const eventGroups = eventsList.reduce<Record<string, ProcessedEvent[]>>(
     (groups, event) => {
-      const key = `${event.date ?? ""}_${event.eventName ?? ""}_${
+      const key = `${event.series ?? ""}_${event.date ?? ""}_${
         event.startTime ?? ""
       }`;
       if (!groups[key]) {

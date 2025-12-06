@@ -1,9 +1,5 @@
-import {
-  ChevronsUpDown,
-  LogOut,
-  User,
-  Link,
-} from "lucide-react";
+import { ChevronsUpDown, LogOut, User } from "lucide-react";
+import Link from "next/link";
 
 import UserAvatar from "@/core/User/UserAvatar";
 import {
@@ -75,12 +71,12 @@ export async function NavUser() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <Link href="/account">
-                  <DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/account" className="flex items-center gap-2">
                     <User />
                     Profile Settings
-                  </DropdownMenuItem>
-                </Link>
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <form action={signOut}>
