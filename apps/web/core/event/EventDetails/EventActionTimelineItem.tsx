@@ -62,7 +62,6 @@ export default function EventActionTimelineItem({ action }: EventActionTimelineI
         <ActionIcon
           action={action}
           size="md"
-          variant="tinted"
           className="relative z-10 border-2 border-background"
         />
         {/* Vertical line extending down */}

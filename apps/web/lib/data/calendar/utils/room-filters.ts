@@ -15,11 +15,7 @@ export async function filterEvents<T extends EventType>(
 ): Promise<{ events: T[]; allowedRoomNames: string[] }> {
   const loadedFilters = roomFilters ?? (await getFilters());
   const filterObject = loadedFilters.find((f: RoomFilter) => f.name === filter);
-  const allowedRoomNames = uniqueRoomNames(
-    Array.isArray(filterObject?.display)
-      ? (filterObject.display as string[])
-      : []
-  );
+  const allowedRoomNames = deriveAllowedRoomNames(filterObject);
 
   if (filter === "All Rooms" || filter === "My Events") {
     return { events: eventsToFilter, allowedRoomNames };
@@ -80,6 +76,29 @@ async function getRoomsByName(roomNames: string[]): Promise<Map<string, Room>> {
     lookup.set(room.name, room);
   });
   return lookup;
+}
+
+export function deriveAllowedRoomNames(
+  filterObject?: RoomFilter
+): string[] {
+  if (!filterObject?.venueFilterVenues) {
+    return [];
+  }
+
+  const roomNames: string[] = [];
+
+  filterObject.venueFilterVenues.forEach((relation) => {
+    const venue = relation?.venue;
+    if (!venue) return;
+
+    const primaryName =
+      typeof venue.name === "string" ? venue.name.trim() : "";
+    if (primaryName) {
+      roomNames.push(primaryName);
+    }
+  });
+
+  return uniqueRoomNames(roomNames);
 }
 
 export function uniqueRoomNames(roomNames: string[]): string[] {

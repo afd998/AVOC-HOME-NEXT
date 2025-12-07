@@ -64,6 +64,10 @@ export type CalendarEventHydrated = BaseEventFields & {
   isFirstSession: boolean;
   room?: Room | null;
   roomName: string;
+  hybrid?: EventHybridRow;
+  avConfig?: EventAVConfigRow;
+  recording?: EventRecordingRow;
+  otherHardware?: EventOtherHardwareRow[];
   series?: Series | null;
 };
 
@@ -88,12 +92,29 @@ export async function getEventsByDate(
             resourcesDict: true,
           },
         },
+        eventHybrids: true,
+        eventAvConfigs: true,
+        eventRecordings: true,
+        eventOtherHardwares: {
+          with: {
+            otherHardwareDict: true,
+          },
+        },
         venue: true,
       },
     });
 
     return (matchingEvents as EventWithRelations[]).map(
-      ({ series, resourceEvents, venue, ...event }) => {
+      ({
+        series,
+        resourceEvents,
+        eventHybrids,
+        eventAvConfigs,
+        eventRecordings,
+        eventOtherHardwares,
+        venue,
+        ...event
+      }) => {
         const eventWithOptionalFields = event as BaseEventFields;
         const facultyMembers = (series?.seriesFaculties ?? [])
           .map((relation) => relation.faculty)
@@ -121,6 +142,30 @@ export async function getEventsByDate(
           icon: relation.resourcesDict.icon ?? null,
         }));
 
+        const hybrid =
+          eventHybrids && eventHybrids.length > 0
+            ? eventHybrids[0]
+            : undefined;
+        const avConfig =
+          eventAvConfigs && eventAvConfigs.length > 0
+            ? eventAvConfigs[0]
+            : undefined;
+        const recording =
+          eventRecordings && eventRecordings.length > 0
+            ? eventRecordings[0]
+            : undefined;
+        const otherHardware = (eventOtherHardwares ?? []).map((hw) => ({
+          event: hw.event,
+          createdAt: hw.createdAt,
+          quantity: hw.quantity,
+          instructions: hw.instructions,
+          otherHardwareDict:
+            typeof hw.otherHardwareDict === "object" &&
+            hw.otherHardwareDict !== null
+              ? (hw.otherHardwareDict as { id: string }).id
+              : (hw.otherHardwareDict as string),
+        })) as EventOtherHardwareRow[];
+
         const hydrated: CalendarEventHydrated = {
           ...event,
           eventName: normalizedEventName,
@@ -131,6 +176,10 @@ export async function getEventsByDate(
           resources,
           isFirstSession: false,
           room: venue ?? null,
+          hybrid,
+          avConfig,
+          recording,
+          otherHardware,
           series: series ?? null,
         };
 

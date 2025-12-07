@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useVenuesQuery } from "@/lib/query";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -47,6 +48,7 @@ function getBadgeDisplay(value?: string | null) {
 }
 
 export default function VenueTable() {
+  const router = useRouter();
   const { data, isLoading, isError } = useVenuesQuery();
   const [selectedBuilding, setSelectedBuilding] = React.useState(
     BUILDING_TABS[0]?.value ?? "GLOBAL HUB"
@@ -80,6 +82,23 @@ export default function VenueTable() {
       return matchesBuilding && matchesSearch;
     });
 
+    const handleRowClick =
+      (href: string) => (event: React.MouseEvent<HTMLTableRowElement>) => {
+        const target = event.target as HTMLElement | null;
+        if (target?.closest("a, button, input, textarea, select, option")) {
+          return;
+        }
+        router.push(href);
+      };
+
+    const handleRowKeyDown =
+      (href: string) => (event: React.KeyboardEvent<HTMLTableRowElement>) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          router.push(href);
+        }
+      };
+
     return (
       <div className="flex h-full flex-col overflow-hidden rounded-md border">
         <div className="flex-1 overflow-y-auto">
@@ -102,12 +121,20 @@ export default function VenueTable() {
                 filtered.map((venue) => {
                   const typeBadge = getBadgeDisplay(venue.type);
                   const subTypeBadge = getBadgeDisplay(venue.subType);
+                  const venueHref = `/venues/${venue.id}`;
 
                   return (
-                    <TableRow key={venue.id}>
+                    <TableRow
+                      key={venue.id}
+                      role="button"
+                      tabIndex={0}
+                      className="cursor-pointer"
+                      onClick={handleRowClick(venueHref)}
+                      onKeyDown={handleRowKeyDown(venueHref)}
+                    >
                       <TableCell>
                         <Link
-                          href={`/venues/${venue.id}`}
+                          href={venueHref}
                           className="text-primary hover:underline"
                         >
                           {venue.name}

@@ -89,6 +89,22 @@ export default function FilterRoomsModalContent({
     [pathname, router, searchParams, startTransition]
   );
 
+  const getRoomCount = useCallback((filter: RoomFilter) => {
+    const names = new Set<string>();
+    (filter.venueFilterVenues ?? []).forEach((relation) => {
+      const venueName =
+        typeof relation?.venue?.name === "string"
+          ? relation.venue.name.trim()
+          : "";
+
+      if (venueName) {
+        names.add(venueName);
+      }
+    });
+
+    return names.size;
+  }, []);
+
   return (
     <ItemGroup className="max-h-80 overflow-y-auto">
       {filters.map((filter, index) => {
@@ -116,7 +132,7 @@ export default function FilterRoomsModalContent({
                   <ItemContent>
                     <ItemTitle>{displayName}</ItemTitle>
                     <ItemDescription>
-                      {(filter.display?.length ?? 0)} rooms
+                      {getRoomCount(filter)} rooms
                     </ItemDescription>
                   </ItemContent>
                 </Link>

@@ -1,8 +1,7 @@
 // app/api/crumb/route.ts
 import { NextResponse } from "next/server";
-import { unstable_cache } from "next/cache";
 import { eq, db, faculty, events, venues } from "shared";
-import { unstable_cacheTag as cacheTag } from "next/cache"; 
+import { cacheTag } from 'next/cache'
 import { revalidateTag } from "next/cache";
 
 const LABEL_OVERRIDES: Record<string, string> = {

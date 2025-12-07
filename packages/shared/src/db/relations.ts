@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, series, seriesClass, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, venues, shifts, shiftBlockProfile, shiftBlocks, seriesFaculty, shiftBlockProfileRoom, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
+import { faculty, facultySetup, series, seriesClass, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, venues, shifts, venueFilters, venueFilterVenue, shiftBlockProfile, shiftBlocks, seriesFaculty, shiftBlockProfileRoom, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -117,6 +117,7 @@ export const notificationsRelations = relations(notifications, ({one}) => ({
 
 export const venuesRelations = relations(venues, ({many}) => ({
 	events: many(events),
+	venueFilterVenues: many(venueFilterVenue),
 	shiftBlockProfileRooms: many(shiftBlockProfileRoom),
 }));
 
@@ -125,6 +126,21 @@ export const shiftsRelations = relations(shifts, ({one}) => ({
 		fields: [shifts.profileId],
 		references: [profiles.id]
 	}),
+}));
+
+export const venueFilterVenueRelations = relations(venueFilterVenue, ({one}) => ({
+	venueFilter: one(venueFilters, {
+		fields: [venueFilterVenue.venueFilter],
+		references: [venueFilters.id]
+	}),
+	venue: one(venues, {
+		fields: [venueFilterVenue.venue],
+		references: [venues.id]
+	}),
+}));
+
+export const venueFiltersRelations = relations(venueFilters, ({many}) => ({
+	venueFilterVenues: many(venueFilterVenue),
 }));
 
 export const shiftBlockProfileRelations = relations(shiftBlockProfile, ({one}) => ({

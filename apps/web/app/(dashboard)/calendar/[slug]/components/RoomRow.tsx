@@ -100,7 +100,9 @@ export default function RoomRow({
       {venueHref ? (
         <Link
           href={venueHref}
-          className="flex h-full w-full items-center justify-center focus-visible:outline-none"
+          className={`flex h-full w-full items-center justify-center focus-visible:outline-none transition-colors ${
+            isLastRow ? "rounded-bl-md" : ""
+          } hover:bg-primary/15 focus-visible:bg-primary/20 dark:hover:bg-primary/20 dark:focus-visible:bg-primary/25`}
         >
           {labelBody}
         </Link>

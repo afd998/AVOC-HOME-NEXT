@@ -90,7 +90,9 @@ export async function getCalendar(
   }
   const finalRoomGroups = handleMergedRooms(roomGroups);
   const visibleRoomGroups = autoHide
-    ? finalRoomGroups.filter((group) => group.events.length > 0)
+    ? finalRoomGroups.filter(
+        (group) => group.events.length > 0 || group.forceVisible
+      )
     : finalRoomGroups;
   console.log("[calendar.getCalendar] final groups ready", {
     totalGroups: finalRoomGroups.length,

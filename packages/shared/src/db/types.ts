@@ -7,6 +7,7 @@ import {
   resourceEvents,
   seriesFaculty,
   venueFilters,
+  venueFilterVenue,
   shiftBlocks,
   shifts,
   profiles,
@@ -25,7 +26,13 @@ import {
   shiftBlockProfile,
 } from "./schema";
 
-export type RoomFilter = InferSelectModel<typeof venueFilters>;
+export type RoomFilter = InferSelectModel<typeof venueFilters> & {
+  venueFilterVenues?: Array<
+    InferSelectModel<typeof venueFilterVenue> & {
+      venue?: InferSelectModel<typeof venues> | null;
+    }
+  >;
+};
 export type Event = InferSelectModel<typeof events>;
 export type ShiftBlock = InferSelectModel<typeof shiftBlocks>;
 export type Shift = InferSelectModel<typeof shifts>;

@@ -3,6 +3,7 @@ import { type RoomFilter } from "shared";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { getActionsByDate, type ActionWithDict } from "../actions/actions";
 import { addDisplayColumns, type HydratedAction } from "./actionUtils";
+import { deriveAllowedRoomNames } from "./utils/room-filters";
 
 type ActionRow = ActionWithDict;
 
@@ -213,7 +214,7 @@ async function filterActions(
     return actionsToFilter;
   }
 
-  const allowedRooms = new Set(filterObject.display as string[]);
+  const allowedRooms = new Set(deriveAllowedRoomNames(filterObject));
   return actionsToFilter.filter((action) => {
     const venue =
       action.eventDetails &&

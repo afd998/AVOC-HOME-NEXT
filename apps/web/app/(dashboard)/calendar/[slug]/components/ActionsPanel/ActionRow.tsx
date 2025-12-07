@@ -62,12 +62,6 @@ export default function ActionRow({
   ].filter(Boolean);
   const subtitle = subtitleParts.join(" | ");
 
-  const iconColorOverride = isCompleted
-    ? "text-emerald-600"
-    : isOverdue
-      ? "text-rose-600"
-      : undefined;
-
   return (
     <Item
       variant="outline"
@@ -101,8 +95,6 @@ export default function ActionRow({
           <ActionIcon
             action={action}
             size="sm"
-            variant="muted"
-            colorClassName={iconColorOverride}
           />
         </ItemMedia>
         <ItemContent className="flex-1 gap-1">

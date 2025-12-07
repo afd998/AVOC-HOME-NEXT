@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, Circle } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import type { EventRecordingRow } from "shared/db/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { RecordingIcon } from "../event-configuration/icons";
 
 interface RecordingConfigurationProps {
   recording?: EventRecordingRow | null;
@@ -19,11 +20,7 @@ export default function RecordingConfiguration({
     <Card className="flex-1">
       <CardHeader className="flex flex-row items-center gap-3 pb-3">
         <div className="flex items-center justify-center rounded-sm bg-muted size-8">
-          <Circle
-            className={`size-4 fill-red-500 text-red-500 ${
-              !hasRecording ? "opacity-40 grayscale" : ""
-            }`}
-          />
+          <RecordingIcon muted={!hasRecording} />
         </div>
         <div className="flex w-full items-center justify-between gap-3">
           <CardTitle className="text-sm font-semibold leading-tight">

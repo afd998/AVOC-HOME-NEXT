@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toggle } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
 import { useEventConfiguration } from "./EventConfigurationContext";
+import { ZoomIcon } from "../event-configuration/icons";
 
 interface HybridConfigurationProps {
   hybrid?: EventHybridRow | null;
@@ -92,11 +93,7 @@ export default function HybridConfiguration({
             )}
             aria-label={isHybridOn ? "Disable hybrid" : "Enable hybrid"}
           >
-            <img
-              src="/images/zoomicon.png"
-              alt="Zoom"
-              className={`size-4 transition-all ${!isHybridOn ? "opacity-40 grayscale" : ""}`}
-            />
+            <ZoomIcon muted={!isHybridOn} />
             <span className="text-sm font-semibold leading-tight">Hybrid</span>
           </Toggle>
         </div>

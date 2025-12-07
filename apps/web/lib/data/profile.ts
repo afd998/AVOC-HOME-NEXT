@@ -2,8 +2,8 @@
 import { eq, db, profiles } from "shared";
 import { requireUserId } from "@/lib/auth/requireUser";
 import { revalidateTag } from "next/cache";
-import { unstable_cacheTag as cacheTag } from "next/cache";
-export const getProfile = async (userId: string) => {
+import { cacheTag } from 'next/cache'
+ export const getProfile = async (userId: string) => {
   "use cache";
   cacheTag(`profile:${userId}`);
   try {

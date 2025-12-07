@@ -5,6 +5,11 @@ export type RoomGroup<T> = {
   events: T[];
   venueId: number | null;
   room?: Room | null;
+  /**
+   * Some rows (e.g., split rooms from a merged "A&B" event) should remain
+   * visible even when auto-hide is enabled.
+   */
+  forceVisible?: boolean;
 };
 
 type RoomishEvent = {
@@ -54,8 +59,9 @@ export function handleMergedRooms<T>(
       const emptyGroup: RoomGroup<T> = {
         roomName: name,
         events: [],
-        venueId: null,
-        room: null,
+        venueId: group.venueId ?? null,
+        room: group.room ?? null,
+        forceVisible: true,
       };
       roomGroups.push(emptyGroup);
       existingRoomNames.add(name);

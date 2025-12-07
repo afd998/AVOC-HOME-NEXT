@@ -85,9 +85,9 @@ export default function Event({ event, rowHeightPx = 90 }: EventProps) {
         data-event="true"
       >
         <CardContent className="flex flex-col justify-center items-centers h-full p-0">
-          {/* <Suspense >
+          <Suspense>
             <EventHeader event={event} />
-          </Suspense> */}
+          </Suspense>
           <div className="">
             <EventContent event={event} />
           </div>

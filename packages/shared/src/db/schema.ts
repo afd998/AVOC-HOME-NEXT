@@ -319,6 +319,13 @@ export const events = pgTable("events", {
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
 
+export const venueFilters = pgTable("venue_filters", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "venue_filters_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	name: text(),
+});
+
 export const shiftBlocks = pgTable("shift_blocks", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "shift_blocks_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
@@ -330,14 +337,6 @@ export const shiftBlocks = pgTable("shift_blocks", {
 }, (table) => [
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
-
-export const venueFilters = pgTable("venue_filters", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "venue_filters_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	name: text(),
-	display: jsonb(),
-});
 
 export const shifts = pgTable("shifts", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
@@ -361,6 +360,26 @@ export const otherHardwareDict = pgTable("other_hardware_dict", {
 	id: text().primaryKey().notNull(),
 }, (table) => [
 	unique("other_hardware_dict_id_key").on(table.id),
+]);
+
+export const venueFilterVenue = pgTable("venue_filter_venue", {
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	venue: bigint({ mode: "number" }).notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	venueFilter: bigint("venue_filter", { mode: "number" }).notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.venueFilter],
+			foreignColumns: [venueFilters.id],
+			name: "veune_filter_venue_venue_filter_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.venue],
+			foreignColumns: [venues.id],
+			name: "veune_filter_venue_venue_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.venue, table.venueFilter], name: "venue_filter_venue_pkey"}),
 ]);
 
 export const shiftBlockProfile = pgTable("shift_block_profile", {
