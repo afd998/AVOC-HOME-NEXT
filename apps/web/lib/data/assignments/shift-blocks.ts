@@ -127,6 +127,17 @@ export async function assignRoomsToShiftBlock(
     console.log("[assignRoomsToShiftBlock] candidateList", candidateList);
 
     const updatedBlock = await db.transaction(async (tx) => {
+      if (targetProfileId) {
+        const profileExists = await tx.query.profiles.findFirst({
+          where: eq(profiles.id, targetProfileId),
+          columns: { id: true },
+        });
+
+        if (!profileExists) {
+          throw new Error(`PROFILE_NOT_FOUND:${targetProfileId}`);
+        }
+      }
+
       const blockMeta = await tx.query.shiftBlocks.findFirst({
         where: eq(shiftBlocks.id, shiftBlockId),
       });

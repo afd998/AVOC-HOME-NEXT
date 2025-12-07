@@ -86,6 +86,12 @@ export async function PATCH(
         { status: 400 }
       );
     }
+    if (message.startsWith("PROFILE_NOT_FOUND")) {
+      return NextResponse.json(
+        { error: "Profile not found for provided id", details: message },
+        { status: 404 }
+      );
+    }
     console.error(
       "[api] PATCH /api/assignments/shift-blocks/[id]/assignments",
       {
@@ -96,7 +102,7 @@ export async function PATCH(
       }
     );
     return NextResponse.json(
-      { error: "Failed to assign rooms" },
+      { error: "Failed to assign rooms", details: message },
       { status: 500 }
     );
   }

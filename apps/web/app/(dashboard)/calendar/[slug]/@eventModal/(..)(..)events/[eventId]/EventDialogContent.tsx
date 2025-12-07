@@ -17,8 +17,6 @@ export default function EventDialogContent({ eventId }: EventDialogContentProps)
             <div className="w-full flex-1">
               <EventDetailHeader eventId={eventId} />
               <EventActionsSection eventId={eventId} />
-              {/* Panopto Recording Checks Timeline - Show if event has recording resources */}
-              {/* {hasRecordingResource && <Panopto event={event} />} */}
             </div>
           </div>
         </div>
@@ -26,4 +24,3 @@ export default function EventDialogContent({ eventId }: EventDialogContentProps)
     </div>
   );
 }
-

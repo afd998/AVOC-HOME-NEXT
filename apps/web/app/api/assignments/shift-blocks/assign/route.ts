@@ -65,6 +65,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    if (message.startsWith("PROFILE_NOT_FOUND")) {
+      return NextResponse.json(
+        { error: "Profile not found for provided id", details: message },
+        { status: 404 }
+      );
+    }
     console.error("[api] POST /api/assignments/shift-blocks/assign", {
       shiftBlockId,
       roomNames,
@@ -72,7 +78,7 @@ export async function POST(request: NextRequest) {
       error,
     });
     return NextResponse.json(
-      { error: "Failed to assign rooms" },
+      { error: "Failed to assign rooms", details: message },
       { status: 500 }
     );
   }
