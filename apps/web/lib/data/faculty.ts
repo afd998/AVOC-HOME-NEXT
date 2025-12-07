@@ -1,5 +1,5 @@
 "use server";
-import { unstable_cache } from "next/cache";
+import { unstable_cache, revalidateTag, updateTag, cacheTag } from "next/cache";
 import { createServerClient } from "@supabase/ssr";
 import {
   eq,
@@ -12,7 +12,6 @@ import {
 } from "shared";
 
 const PAGE_SIZE = 50;
-import { revalidateTag, updateTag } from "next/cache";
 
 type FacultyEvent = InferSelectModel<typeof eventsTable> & {
   eventName?: string | null;
@@ -36,6 +35,17 @@ async function fetchFacultyPage(page: number) {
     throw error;
   }
 }
+
+export const getAllFaculty = async () => {
+  "use cache";
+  cacheTag("faculty");
+  try {
+    return await db.query.faculty.findMany();
+  } catch (error) {
+    console.error("[db] faculty.getAllFaculty", { error });
+    throw error;
+  }
+};
 
 export const getFacultyPage = async (page: number) =>
   unstable_cache(() => fetchFacultyPage(page), ["faculty", `page:${page}`], {

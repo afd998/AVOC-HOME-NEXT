@@ -4,7 +4,7 @@ import React from "react";
 
 export default async function EventsPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <div className="border-b bg-background/80">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
           <header className="space-y-2">

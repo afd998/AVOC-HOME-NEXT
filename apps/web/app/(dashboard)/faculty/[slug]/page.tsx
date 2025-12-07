@@ -10,7 +10,7 @@ export default async function FacultyProfilePage(props: { params: Promise<{ slug
 
   if (!facultyMember) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="bg-background flex items-center justify-center py-10">
         <div className="text-center">
           <h1 className="text-2xl font-semibold mb-2">Faculty Member Not Found</h1>
           <p className="text-muted-foreground">The faculty member you're looking for doesn't exist.</p>
@@ -20,7 +20,7 @@ export default async function FacultyProfilePage(props: { params: Promise<{ slug
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Content */}
       <div className="md:py-3 lg:px-6 px-0 xl:px-20">
         <Suspense>

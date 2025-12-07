@@ -1,7 +1,7 @@
 // import FacultyStatusBars from './FacultyStatusBars';
 import { FacultyAvatar } from "./FacultyAvatar";
 
-import { ExternalLink, Calendar, Mail } from "lucide-react";
+import { Calendar, Mail, ExternalLink } from "lucide-react";
 import {
   Item,
   ItemActions,
@@ -88,18 +88,18 @@ export default async function FacultyProfile({
                   return `Dr. ${fullName}`;
                 })()}
               </span>
-              {facultyMember?.kelloggdirectoryBioUrl && (
+              {facultyMember?.kelloggdirectoryBioUrl ? (
                 <a
                   href={facultyMember.kelloggdirectoryBioUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline"
+                  className="text-primary hover:underline inline-flex items-center gap-1"
                   title="Open directory profile"
-                  aria-label="Open directory profile"
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only">Open directory profile</span>
                 </a>
-              )}
+              ) : null}
             </ItemTitle>
             {facultyMember?.kelloggdirectoryTitle && (
               <ItemDescription className="truncate">
@@ -118,6 +118,14 @@ export default async function FacultyProfile({
                 </a>
               </ItemDescription>
             )}
+            {facultyMember?.kelloggdirectorySubtitle ? (
+              <p className="text-sm text-foreground">
+                {facultyMember.kelloggdirectorySubtitle}
+              </p>
+            ) : null}
+            <p className="mt-3 text-sm leading-relaxed whitespace-pre-line text-muted-foreground line-clamp-8">
+              {facultyMember?.kelloggdirectoryBio || "No biography available."}
+            </p>
           </ItemContent>
           <ItemActions></ItemActions>
         </Item>

@@ -79,17 +79,29 @@ export function useCopyShifts() {
 
       return [];
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (_data, variables) => {
+      // Shifts
       queryClient.invalidateQueries({ queryKey: ['shifts', variables.sourceDate] });
       queryClient.invalidateQueries({ queryKey: ['shifts', variables.targetDate] });
-      // Also invalidate array-based queries
-      queryClient.invalidateQueries({ 
-        queryKey: ['shifts'], 
-        predicate: (query) => {
-          const queryKey = query.queryKey;
-          return queryKey[0] === 'shifts' && Array.isArray(queryKey[1]);
-        }
+      queryClient.invalidateQueries({
+        queryKey: ['shifts'],
+        predicate: (query) => Array.isArray(query.queryKey[1]),
       });
+
+      // Shift blocks and ownership-dependent queries
+      queryClient.invalidateQueries({ queryKey: ['shift_blocks', variables.sourceDate] });
+      queryClient.invalidateQueries({ queryKey: ['shift_blocks', variables.targetDate] });
+      queryClient.invalidateQueries({
+        queryKey: ['shift_blocks'],
+        predicate: (query) => Array.isArray(query.queryKey[1]),
+      });
+      // Ensure currently mounted consumers pick up the fresh data immediately
+      await queryClient.refetchQueries({ queryKey: ['shift_blocks', variables.targetDate] });
+      await queryClient.refetchQueries({ queryKey: ['shift_blocks', variables.sourceDate] });
+
+      queryClient.invalidateQueries({ queryKey: ['eventOwnership'] });
+      queryClient.invalidateQueries({ queryKey: ['actionpanel'] });
+      queryClient.invalidateQueries({ queryKey: ['allRoomsAssigned'] });
     },
   });
 }
