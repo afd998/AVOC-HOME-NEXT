@@ -37,6 +37,13 @@ export type ShiftBlockWithAssignments = ShiftBlockRow & {
   assignments: ShiftBlockAssignment[];
 };
 
+type ShiftBlockRoomRelationForCopy = {
+  shiftBlock: number;
+  profile: string;
+  room: number;
+  roomName?: string | null;
+};
+
 // API-facing inputs use camelCase payloads for the REST routes
 export type ShiftBlockInput = {
   id?: number;
@@ -419,6 +426,191 @@ export async function assignRoomsToShiftBlock(
   }
 }
 
+function buildRoomNameCandidates(roomNames: string[]): string[] {
+  const candidateNames = new Set<string>();
+  roomNames.forEach((n) => {
+    if (typeof n !== "string") return;
+    const trimmed = n.trim();
+    if (!trimmed) return;
+    candidateNames.add(trimmed);
+    const withoutGh = trimmed.replace(/^GH\s+/i, "");
+    if (withoutGh !== trimmed) {
+      candidateNames.add(withoutGh);
+    } else {
+      candidateNames.add(`GH ${trimmed}`);
+    }
+  });
+  return Array.from(candidateNames);
+}
+
+async function copyShiftBlocksWithRelations(
+  tx: typeof db,
+  sourceDate: string,
+  targetDate: string
+): Promise<{
+  blocks: ShiftBlockRow[];
+  roomRelations: ShiftBlockRoomRelationForCopy[];
+}> {
+  const sourceBlocks = await tx.query.shiftBlocks.findMany({
+    where: eq(shiftBlocks.date, sourceDate),
+    orderBy: asc(shiftBlocks.startTime),
+    with: {
+      shiftBlockProfileRooms: { with: { venue: true } },
+      shiftBlockProfiles: true,
+    },
+  });
+
+  await tx.delete(shiftBlocks).where(eq(shiftBlocks.date, targetDate));
+
+  if (sourceBlocks.length === 0) {
+    return { blocks: [], roomRelations: [] };
+  }
+
+  const blocksToInsert = sourceBlocks.map(
+    ({
+      id: _id,
+      createdAt: _createdAt,
+      shiftBlockProfileRooms: _rel,
+      shiftBlockProfiles: _profiles,
+      assignments: _assign,
+      ...rest
+    }) => ({
+      ...rest,
+      date: targetDate,
+      assignments: null,
+    })
+  );
+
+  const inserted = await tx.insert(shiftBlocks).values(blocksToInsert).returning();
+
+  const profileRows: ShiftBlockProfile[] = [];
+  const roomRelations: ShiftBlockRoomRelationForCopy[] = [];
+  const timestamp = new Date().toISOString();
+
+  sourceBlocks.forEach((sourceBlock, idx) => {
+    const newBlockId = inserted[idx]?.id;
+    if (!newBlockId) return;
+
+    (sourceBlock.shiftBlockProfiles ?? []).forEach((rel) => {
+      if (!rel?.profile) return;
+      profileRows.push({
+        createdAt: timestamp,
+        profile: rel.profile,
+        shiftBlock: newBlockId,
+      } as any);
+    });
+
+    (sourceBlock.shiftBlockProfileRooms ?? []).forEach((rel) => {
+      const profileId = rel?.profile;
+      const roomId = rel?.room;
+      if (!profileId || !roomId) return;
+      roomRelations.push({
+        shiftBlock: newBlockId,
+        profile: profileId as any,
+        room: roomId,
+        roomName: (rel as any)?.venue?.name ?? (rel as any)?.roomName ?? null,
+      });
+    });
+  });
+
+  if (profileRows.length > 0) {
+    await tx.insert(shiftBlockProfile).values(profileRows).onConflictDoNothing();
+  }
+
+  if (roomRelations.length > 0) {
+    await tx
+      .insert(shiftBlockProfileRoom)
+      .values(
+        roomRelations.map((rel) => ({
+          createdAt: timestamp,
+          profile: rel.profile,
+          room: rel.room,
+          shiftBlock: rel.shiftBlock,
+        })) as any
+      )
+      .onConflictDoNothing();
+  }
+
+  return { blocks: inserted, roomRelations };
+}
+
+async function updateActionsForCopiedBlocks(
+  tx: typeof db,
+  blocks: ShiftBlockRow[],
+  roomRelations: ShiftBlockRoomRelationForCopy[]
+) {
+  if (blocks.length === 0) return;
+
+  const roomIdToName = new Map<number, string | null>();
+  roomRelations.forEach((rel) => {
+    if (rel.roomName) {
+      roomIdToName.set(rel.room, rel.roomName);
+    }
+  });
+
+  const missingRoomIds = Array.from(
+    new Set(
+      roomRelations
+        .map((rel) => rel.room)
+        .filter((roomId) => !roomIdToName.has(roomId))
+    )
+  );
+
+  if (missingRoomIds.length > 0) {
+    const venueRows = await tx
+      .select({ id: venues.id, name: venues.name })
+      .from(venues)
+      .where(inArray(venues.id, missingRoomIds));
+    venueRows.forEach((venue) => {
+      roomIdToName.set(venue.id, venue.name ?? null);
+    });
+  }
+
+  const relationsByBlock = new Map<number, Map<string, string[]>>();
+  roomRelations.forEach((rel) => {
+    const roomName = roomIdToName.get(rel.room);
+    if (!roomName) return;
+    const blockMap = relationsByBlock.get(rel.shiftBlock) ?? new Map();
+    const rooms = blockMap.get(rel.profile) ?? [];
+    rooms.push(roomName);
+    blockMap.set(rel.profile, rooms);
+    relationsByBlock.set(rel.shiftBlock, blockMap);
+  });
+
+  for (const block of blocks) {
+    if (!block.id || !block.date || !block.startTime || !block.endTime) continue;
+    const profileRooms = relationsByBlock.get(block.id);
+    if (!profileRooms) continue;
+
+    for (const [profileId, roomNames] of profileRooms.entries()) {
+      const candidateList = buildRoomNameCandidates(roomNames);
+      if (candidateList.length === 0) continue;
+
+      const eventsForRooms = await tx
+        .select({ id: events.id })
+        .from(events)
+        .where(and(eq(events.date, block.date), inArray(events.roomName, candidateList)));
+
+      const eventIds = eventsForRooms
+        .map((e) => e.id)
+        .filter((id): id is number => typeof id === "number");
+
+      if (eventIds.length === 0) continue;
+
+      await tx
+        .update(actions)
+        .set({ assignedTo: profileId })
+        .where(
+          and(
+            inArray(actions.event, eventIds),
+            gte(actions.startTime, block.startTime),
+            lt(actions.startTime, block.endTime)
+          )
+        );
+    }
+  }
+}
+
 /**
  * Replace all shift blocks for a date with a new set (delete + insert)
  */
@@ -537,46 +729,12 @@ export async function copyShiftBlocksForDate(
 ): Promise<void> {
   try {
     await db.transaction(async (tx) => {
-      const sourceBlocks = await tx.query.shiftBlocks.findMany({
-        where: eq(shiftBlocks.date, sourceDate),
-        with: { shiftBlockProfileRooms: true },
-      });
-
-      if (sourceBlocks.length === 0) {
-        await tx.delete(shiftBlocks).where(eq(shiftBlocks.date, targetDate));
-        return;
-      }
-
-      const blocksToInsert = sourceBlocks.map(
-        ({ id: _id, createdAt: _createdAt, shiftBlockProfileRooms: _rel, assignments: _assign, ...rest }) => ({
-          ...rest,
-          date: targetDate,
-          assignments: null,
-        })
+      const { blocks, roomRelations } = await copyShiftBlocksWithRelations(
+        tx,
+        sourceDate,
+        targetDate
       );
-
-      await tx.delete(shiftBlocks).where(eq(shiftBlocks.date, targetDate));
-      const inserted = await tx.insert(shiftBlocks).values(blocksToInsert).returning();
-
-      const junctionRows: ShiftBlockProfileRoom[] = [];
-      sourceBlocks.forEach((sourceBlock, idx) => {
-        const newBlockId = inserted[idx]?.id;
-        if (!newBlockId) return;
-        (sourceBlock.shiftBlockProfileRooms ?? []).forEach((rel) => {
-          junctionRows.push({
-            createdAt: new Date().toISOString(),
-            profile: rel.profile,
-            room: rel.room,
-            shiftBlock: newBlockId,
-            roomName: (rel as any).venue?.name ?? null,
-            profileName: (rel as any).profile?.name ?? null,
-          } as any);
-        });
-      });
-
-      if (junctionRows.length > 0) {
-        await tx.insert(shiftBlockProfileRoom).values(junctionRows);
-      }
+      await updateActionsForCopiedBlocks(tx, blocks, roomRelations);
     });
   } catch (error) {
     console.error("[db] assignments.copyShiftBlocksForDate", {
@@ -650,6 +808,7 @@ export async function copyShiftsForDate(
 ): Promise<void> {
   try {
     await db.transaction(async (tx) => {
+      // Copy shifts
       const sourceShifts = await tx
         .select()
         .from(shifts)
@@ -669,6 +828,14 @@ export async function copyShiftsForDate(
 
       await tx.delete(shifts).where(eq(shifts.date, targetDate));
       await tx.insert(shifts).values(shiftsToInsert);
+
+      // Copy shift blocks (with junction tables) and update action assignments
+      const { blocks, roomRelations } = await copyShiftBlocksWithRelations(
+        tx,
+        sourceDate,
+        targetDate
+      );
+      await updateActionsForCopiedBlocks(tx, blocks, roomRelations);
     });
   } catch (error) {
     console.error("[db] assignments.copyShiftsForDate", {
@@ -876,41 +1043,13 @@ export async function copyScheduleFromPreviousWeek(
         sourceDate.setDate(sourceDate.getDate() + index);
         const sourceDateString = sourceDate.toISOString().split("T")[0];
 
-        // Shift blocks with junction rows
-        const sourceBlocks = await tx.query.shiftBlocks.findMany({
-          where: eq(shiftBlocks.date, sourceDateString),
-          with: { shiftBlockProfileRooms: true },
-        });
-
-        if (sourceBlocks.length > 0) {
-          const blocksToInsert = sourceBlocks.map(
-            ({ id: _id, createdAt: _createdAt, shiftBlockProfileRooms: _rel, ...rest }) => ({
-              ...rest,
-              date: targetDate,
-            })
-          );
-          const inserted = await tx.insert(shiftBlocks).values(blocksToInsert).returning();
-
-          const junctionRows: ShiftBlockProfileRoom[] = [];
-          sourceBlocks.forEach((sourceBlock, idx) => {
-            const newBlockId = inserted[idx]?.id;
-            if (!newBlockId) return;
-            (sourceBlock.shiftBlockProfileRooms ?? []).forEach((rel) => {
-          junctionRows.push({
-            createdAt: new Date().toISOString(),
-            profile: rel.profile,
-            room: rel.room,
-            shiftBlock: newBlockId,
-            roomName: (rel as any).venue?.name ?? null,
-            profileName: (rel as any).profile?.name ?? null,
-          } as any);
-        });
-      });
-
-          if (junctionRows.length > 0) {
-            await tx.insert(shiftBlockProfileRoom).values(junctionRows);
-          }
-        }
+        // Shift blocks with junction rows + action assignments
+        const { blocks, roomRelations } = await copyShiftBlocksWithRelations(
+          tx,
+          sourceDateString,
+          targetDate
+        );
+        await updateActionsForCopiedBlocks(tx, blocks, roomRelations);
 
         // Shifts
         const sourceShifts = await tx
