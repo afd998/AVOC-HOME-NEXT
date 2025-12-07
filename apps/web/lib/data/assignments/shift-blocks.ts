@@ -100,7 +100,7 @@ export async function getAllShiftBlocks(): Promise<ShiftBlockWithAssignments[]> 
 
 /**
  * Reassign a set of rooms within a shift block to a target profile (or unassign).
- * This operates on the junction table rather than the JSON assignments column.
+ * This operates entirely on the junction tables that store assignments.
  */
 export async function assignRoomsToShiftBlock(
   shiftBlockId: number,
@@ -277,7 +277,6 @@ export async function replaceShiftBlocksForDate(
         date: block.date,
         startTime: block.startTime,
         endTime: block.endTime,
-        assignments: null, // assignments now live in junction table
       }));
 
       const inserted = await tx
@@ -401,12 +400,10 @@ export async function copyShiftBlocksWithRelations(
       createdAt: _createdAt,
       shiftBlockProfileRooms: _rel,
       shiftBlockProfiles: _profiles,
-      assignments: _assign,
       ...rest
     }) => ({
       ...rest,
       date: targetDate,
-      assignments: null,
     })
   );
 
@@ -661,7 +658,6 @@ export async function rebuildShiftBlocksForDate(
             date: b.date,
             startTime: b.startTime,
             endTime: b.endTime,
-            assignments: null,
           }))
         )
         .returning();

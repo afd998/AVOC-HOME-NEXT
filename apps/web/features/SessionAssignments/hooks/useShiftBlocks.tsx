@@ -24,7 +24,7 @@ type ShiftBlockApiRow = {
   date: string;
   startTime: string | null;
   endTime: string | null;
-  assignments?: unknown;
+  assignments?: ShiftBlockAssignment[];
   createdAt?: string | null;
   shiftBlockProfileRooms?: Array<{
     profile?: { id: string; name?: string | null } | null;
@@ -38,24 +38,7 @@ type ShiftBlockResponse = {
 };
 
 const normalizeAssignments = (block: ShiftBlockApiRow): ShiftBlockAssignment[] => {
-  // Prefer assignments array if provided by the API
-  if (Array.isArray((block as any).assignments)) {
-    return (block as any).assignments.map((a: any) => ({
-      user: a.user,
-      name: a.name ?? a.user,
-      rooms: Array.isArray(a.rooms) ? a.rooms : [],
-      profile:
-        a.profile ??
-        (a.user
-          ? {
-              id: a.user,
-              name: a.name ?? a.user,
-            }
-          : null),
-    }));
-  }
-
-  // Fallback to relations
+  // Build assignments from relations when the API response doesn't include them directly
   if (Array.isArray(block.shiftBlockProfileRooms)) {
     const grouped = new Map<string, ShiftBlockAssignment>();
     block.shiftBlockProfileRooms.forEach((rel) => {
@@ -87,8 +70,8 @@ const mapShiftBlock = (block: ShiftBlockApiRow): ShiftBlock => ({
   date: block.date,
   startTime: block.startTime,
   endTime: block.endTime,
-  assignments: Array.isArray((block as any).assignments)
-    ? (block as any).assignments
+  assignments: Array.isArray(block.assignments)
+    ? block.assignments
     : normalizeAssignments(block),
   createdAt: block.createdAt ?? null,
 });

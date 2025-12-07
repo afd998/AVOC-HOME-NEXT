@@ -98,26 +98,6 @@ export const toAssignments = (
     grouped.set(profileId, entry);
   });
 
-  // Fallback to any JSON assignments blob if provided
-  if (Array.isArray((block as any).assignments)) {
-    (block as any).assignments.forEach((a: any) => {
-      const profileId =
-        typeof a?.user === "string"
-          ? a.user
-          : typeof a?.profile?.id === "string"
-            ? a.profile.id
-            : null;
-      if (!profileId) return;
-      const rooms = Array.isArray(a.rooms) ? a.rooms.filter(Boolean) : [];
-      grouped.set(profileId, {
-        user: profileId,
-        name: a.name ?? profileId,
-        rooms,
-        profile: a.profile ?? { id: profileId, name: a.name ?? profileId },
-      });
-    });
-  }
-
   return {
     ...block,
     assignments: Array.from(grouped.values()),
