@@ -13,8 +13,15 @@ export function getActionIconConfig(action: {
   type?: string | null;
   subType?: string | null;
 }): ActionIconConfig {
-  const type = action.type?.toUpperCase() || "";
-  const subType = action.subType?.toUpperCase() || "";
+  const type = (action.type ?? "").toString().toUpperCase().trim();
+  const subType = (action.subType ?? "").toString().toUpperCase().trim();
+
+  if (type === "CONFIG" && subType === "SET") {
+    return { icon: "gg:row-first", colorClass: "text-green-600" };
+  }
+  if (subType === "STRIKE") {
+    return { icon: "gg:row-last", colorClass: "text-green-600" };
+  }
 
   if (type.includes("CAPTURE QC") || subType.includes("CAPTURE QC")) {
     return { icon: "jam:eye-f", colorClass: "text-purple-600" };

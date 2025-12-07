@@ -7,6 +7,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
+import { useCalendarLayoutStore } from "@/lib/stores/calendar-layout";
 
 type CalendarTaskSplitProps = {
   children: ReactNode;
@@ -28,6 +29,24 @@ export default function CalendarTaskSplit({
   className,
 }: CalendarTaskSplitProps) {
   const [calendarPanel, taskPanel] = extractPanels(children);
+  const showActionPanel = useCalendarLayoutStore(
+    (state) => state.actionPanelVisible
+  );
+
+  if (!showActionPanel) {
+    return (
+      <div
+        className={cn(
+          "flex h-full rounded-md border bg-background",
+          className
+        )}
+      >
+        <div className="flex h-full flex-1 flex-col overflow-hidden">
+          {calendarPanel}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ResizablePanelGroup

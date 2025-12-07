@@ -7,6 +7,7 @@ import HeaderBreadcrumb from "@/app/(dashboard)/components/sidebar/header-breadc
 import ChicagoTime from "@/app/(dashboard)/components/header/chicago-time";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import { CalendarFocusToggle } from "@/app/(dashboard)/components/sidebar/calendar-focus-toggle";
 
 export default async function DashboardLayout({
   children,
@@ -23,6 +24,9 @@ export default async function DashboardLayout({
           <header className="flex h-12 shrink-0 items-center transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b border-sidebar-border bg-background">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1 h-8 w-8" />
+             <React.Suspense fallback={null}>
+              <CalendarFocusToggle className="h-8 w-8" />
+              </React.Suspense>
               <React.Suspense>
                 <HeaderBreadcrumb />
               </React.Suspense>

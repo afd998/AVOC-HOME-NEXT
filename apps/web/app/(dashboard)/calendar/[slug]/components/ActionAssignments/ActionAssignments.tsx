@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useUserProfiles } from '@/core/User/useUserProfiles';
-import { useShifts, Shift } from '@/features/SessionAssignments/hooks/useShifts';
+import { useShifts, Shift, useCopyShifts } from '@/features/SessionAssignments/hooks/useShifts';
 import { useUpdateShift } from '@/features/SessionAssignments/hooks/useUpdateShift';
 import {
   Table,
@@ -13,6 +13,8 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Copy, Loader2, ClipboardList } from 'lucide-react';
 import ShiftBlockLines from './components/ShiftBlockLines';
 
@@ -61,6 +63,21 @@ function formatShortDay(dateString: string): string {
   return date.toLocaleDateString(undefined, { weekday: 'short' });
 }
 
+function toDateFromYMD(dateString?: string): Date | undefined {
+  if (!dateString) return undefined;
+  const [year, month, day] = dateString.split('-').map(Number);
+  if (!year || !month || !day) return undefined;
+  return new Date(year, month - 1, day);
+}
+
+function toYMD(date?: Date): string {
+  if (!date) return '';
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 const ActionAssignments: React.FC<ActionAssignmentsProps> = ({
   dates,
   selectedDate,
@@ -81,6 +98,7 @@ const ActionAssignments: React.FC<ActionAssignmentsProps> = ({
 }) => {
   const { profiles, isLoading: profilesLoading, error: profilesError } = useUserProfiles();
   const { data: shifts, isLoading: shiftsLoading, error: shiftsError } = useShifts(dates);
+  const copyShifts = useCopyShifts();
   const updateShift = useUpdateShift();
 
   // Dialog state
@@ -92,6 +110,9 @@ const ActionAssignments: React.FC<ActionAssignmentsProps> = ({
   const [editingCell, setEditingCell] = useState<{ profileId: string, date: string } | null>(null);
   const [modalStart, setModalStart] = useState<string>('06:00');
   const [modalEnd, setModalEnd] = useState<string>('07:00');
+  const [copyFromOpen, setCopyFromOpen] = useState(false);
+  const [copySourceDate, setCopySourceDate] = useState<string>('');
+  const [copyError, setCopyError] = useState<string | null>(null);
 
   // Time options (30-min increments from 6:00 to 23:00)
   const timeOptions: string[] = [];
@@ -199,6 +220,36 @@ const ActionAssignments: React.FC<ActionAssignmentsProps> = ({
     startHour != null &&
     dates.length > 0;
 
+  const targetDate = selectedDate ?? dates[0] ?? null;
+
+  const handleCopyFromOtherDate = () => {
+    if (!targetDate) {
+      setCopyError('Select a target date first.');
+      return;
+    }
+
+    if (!copySourceDate) {
+      setCopyError('Choose a source date to copy from.');
+      return;
+    }
+
+    copyShifts.mutate(
+      { sourceDate: copySourceDate, targetDate },
+      {
+        onSuccess: () => {
+          setCopyError(null);
+          setCopyFromOpen(false);
+        },
+        onError: (error) => {
+          const message =
+            (error as Error)?.message ||
+            'Failed to copy from the selected date. Please try again.';
+          setCopyError(message);
+        },
+      }
+    );
+  };
+
   return (
     <>
       {/* Button to open dialog (optional) */}
@@ -231,8 +282,62 @@ const ActionAssignments: React.FC<ActionAssignmentsProps> = ({
       {/* Dialog with the table */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+          <DialogHeader className="sm:flex-row sm:items-center sm:justify-between">
             <DialogTitle>Action Assignments</DialogTitle>
+            <Popover open={copyFromOpen} onOpenChange={(open) => {
+              setCopyError(null);
+              setCopyFromOpen(open);
+            }}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!targetDate}
+                >
+                  {copyShifts.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Copying...
+                    </>
+                  ) : (
+                    'Copy from other date'
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[360px] space-y-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Copy from other date</p>
+                  <p className="text-xs text-muted-foreground">
+                    Choose a source date to copy into {targetDate ? formatShortDate(targetDate) : 'this day'}.
+                  </p>
+                </div>
+                <Calendar
+                  mode="single"
+                  selected={toDateFromYMD(copySourceDate)}
+                  defaultMonth={toDateFromYMD(copySourceDate) ?? toDateFromYMD(targetDate ?? undefined)}
+                  onSelect={(date) => {
+                    setCopyError(null);
+                    setCopySourceDate(toYMD(date ?? undefined));
+                  }}
+                  className="w-full min-w-[320px] rounded-md border p-2 [--cell-size:2.4rem]"
+                />
+                {copyError && (
+                  <p className="text-xs text-destructive">{copyError}</p>
+                )}
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setCopyFromOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleCopyFromOtherDate}
+                    disabled={!copySourceDate || !targetDate || copyShifts.isPending}
+                  >
+                    {copyShifts.isPending ? 'Copying...' : 'Copy'}
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </DialogHeader>
 
           {/* Schedule Table */}

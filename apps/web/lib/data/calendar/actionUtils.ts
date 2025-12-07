@@ -17,6 +17,23 @@ export type HydratedAction = ActionRow & {
   room: string; // Derived from eventDetails.roomName
 };
 
+function getActionRoom(action: ActionRow): string {
+  const eventDetails = action.eventDetails ?? null;
+  if (!eventDetails) return "";
+
+  const venue =
+    typeof eventDetails.venue === "object" && eventDetails.venue !== null
+      ? eventDetails.venue
+      : null;
+
+  return (
+    eventDetails.roomName ??
+    venue?.name ??
+    venue?.spelling ??
+    ""
+  );
+}
+
 /**
  * Adds display columns (derived metrics) to actions for calendar rendering
  * @param actions - Array of actions to hydrate
@@ -28,8 +45,8 @@ export function addDisplayColumns(actions: ActionRow[]): HydratedAction[] {
     const actionStartMinutes = startHour * 60 + startMin;
     const startMinutesRelative = actionStartMinutes - TIMELINE_START_HOUR * 60;
     
-    // Get room name from event details (events table has roomName field)
-    const room = action.eventDetails?.roomName ?? "";
+    // Get room name from event details or venue relation
+    const room = getActionRoom(action);
     
     return {
       ...action,
@@ -45,4 +62,3 @@ export function addDisplayColumns(actions: ActionRow[]): HydratedAction[] {
     } as HydratedAction;
   });
 }
-

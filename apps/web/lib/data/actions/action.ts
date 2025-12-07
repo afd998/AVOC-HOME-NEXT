@@ -1,5 +1,9 @@
 import { eq, db, actions as actionsTable } from "shared";
-import type { ActionWithDict, EventWithResourceDetails } from "./actions";
+import {
+  hydrateEventDetails,
+  type ActionWithDict,
+  type EventWithResourceDetails,
+} from "./actions";
 
 export async function getActionById(
   actionId: string
@@ -30,6 +34,7 @@ export async function getActionById(
             },
           },
           series: true,
+          venue: true,
         },
       },
       profile_assignedTo: true,
@@ -56,7 +61,9 @@ export async function getActionById(
     ...actionData
   } = action;
 
-  const eventWithResources = event as EventWithResourceDetails | null;
+  const eventWithResources = hydrateEventDetails(
+    event as EventWithResourceDetails | null
+  );
 
   return {
     ...actionData,

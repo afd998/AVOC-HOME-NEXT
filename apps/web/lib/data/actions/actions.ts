@@ -16,6 +16,7 @@ import {
   type EventRecordingRow,
   type EventOtherHardwareRow,
   type Series,
+  type Room,
 } from "shared";
 import type { CalendarEventResource } from "@/lib/data/calendar/event/utils/hydrate-event-resources";
 
@@ -27,7 +28,9 @@ export type ProfileRow = InferSelectModel<typeof profilesTable>;
 export type QcItemRow = InferSelectModel<typeof qcItemsTable>;
 export type QcItemDictRow = InferSelectModel<typeof qcItemDictTable>;
 
-export type EventWithResourceDetails = EventRow & {
+export type EventWithResourceDetails = Omit<EventRow, "venue"> & {
+  venue: Room | number | null;
+  roomName?: string | null;
   resourceEvents: (ResourceEventRow & {
     resourcesDict: ResourceDictRow | null;
   })[];
@@ -49,6 +52,20 @@ export type ActionWithDict = Omit<ActionRow, "event"> & {
     qcItemDict: QcItemDictRow | null;
   })[];
 };
+
+export function hydrateEventDetails(
+  event: EventWithResourceDetails | null
+): EventWithResourceDetails | null {
+  if (!event) return null;
+
+  const venue =
+    typeof event.venue === "object" && event.venue !== null ? event.venue : null;
+
+  return {
+    ...event,
+    roomName: event.roomName ?? venue?.name ?? venue?.spelling ?? null,
+  };
+}
 
 export async function getActionsByDate(date: string): Promise<ActionWithDict[]> {
   try {
@@ -96,6 +113,7 @@ export async function getActionsByDate(date: string): Promise<ActionWithDict[]> 
               },
             },
             series: true,
+            venue: true,
           },
         },
         profile_assignedTo: true,
@@ -118,7 +136,9 @@ export async function getActionsByDate(date: string): Promise<ActionWithDict[]> 
         qcItems,
         ...actionData
       }) => {
-        const eventWithResources = event as EventWithResourceDetails | null;
+        const eventWithResources = hydrateEventDetails(
+          event as EventWithResourceDetails | null
+        );
 
         return {
           ...actionData,

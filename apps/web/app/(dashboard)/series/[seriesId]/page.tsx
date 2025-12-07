@@ -23,9 +23,6 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
       <div className="flex h-[calc(100vh-4rem)] flex-col">
         <header className="flex-shrink-0 border-b border-border bg-background px-4 py-6">
           <div className="container mx-auto">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              Series
-            </p>
             <h1 className="text-2xl font-semibold leading-snug sm:text-3xl">
               Series Not Found
             </h1>
@@ -52,9 +49,6 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
         <div className="container mx-auto">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                Series
-              </p>
               <h1 className="text-2xl font-semibold leading-snug sm:text-3xl">
                 {firstEvent.eventName}
               </h1>

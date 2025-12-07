@@ -215,7 +215,17 @@ async function filterActions(
 
   const allowedRooms = new Set(filterObject.display as string[]);
   return actionsToFilter.filter((action) => {
-    const roomName = action.eventDetails?.roomName ?? "";
+    const venue =
+      action.eventDetails &&
+      typeof action.eventDetails.venue === "object" &&
+      action.eventDetails.venue !== null
+        ? action.eventDetails.venue
+        : null;
+    const roomName =
+      action.eventDetails?.roomName ??
+      venue?.name ??
+      venue?.spelling ??
+      "";
     return allowedRooms.has(roomName);
   });
 }
@@ -223,4 +233,3 @@ async function filterActions(
 // Re-export types and functions for backward compatibility
 export type { HydratedAction, DerivedActionMetrics } from "./actionUtils";
 export { addDisplayColumns } from "./actionUtils";
-

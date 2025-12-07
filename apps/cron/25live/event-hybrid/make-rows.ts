@@ -23,6 +23,7 @@ export function computeEventHybrid(
     meetingId: meetingId,
     meetingLink: meetingLink,
     instructions,
+    source: "25Live",
   };
 }
 

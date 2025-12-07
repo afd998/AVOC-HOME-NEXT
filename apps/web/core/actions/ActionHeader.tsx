@@ -36,15 +36,25 @@ interface ActionHeaderProps {
 }
 
 export default function ActionHeader({ action, errorMessage }: ActionHeaderProps) {
-  const typeUpper = action.type?.toUpperCase() || "";
-  const subTypeUpper = action.subType?.toUpperCase() || "";
+  const rawSubType = typeof action.subType === "string" ? action.subType.trim() : "";
+  const rawType = typeof action.type === "string" ? action.type.trim() : "";
+  const typeUpper = rawType.toUpperCase();
+  const subTypeUpper = rawSubType.toUpperCase();
+  const isPrepareVenue = typeUpper === "CONFIG" && subTypeUpper === "SET";
+  const isStrikeVenue = subTypeUpper === "STRIKE";
+  const isStaffAssistance =
+    typeUpper === "STAFF ASSISTANCE" || subTypeUpper === "STAFF ASSISTANCE";
   const isConfigAction =
     typeUpper.includes("CONFIG") || subTypeUpper.includes("CONFIG");
-  const rawSubType = action.subType?.trim() || "";
-  const rawType = action.type?.trim() || "";
-  const displayName = isConfigAction
-    ? "Configure Space"
-    : rawSubType || rawType || "Action";
+  const displayName = isPrepareVenue
+    ? "Prepare Venue"
+    : isStrikeVenue
+      ? "Strike Venue"
+      : isStaffAssistance
+        ? "Staff Assistance"
+        : isConfigAction
+          ? "Configure Space"
+          : rawSubType || rawType || "Action";
   const actionDate = action.eventDetails?.date ?? "";
   const formattedDate = formatActionDate(actionDate);
   const formattedTime = formatActionTime(action.startTime);
@@ -56,11 +66,21 @@ export default function ActionHeader({ action, errorMessage }: ActionHeaderProps
     startDateTime && !Number.isNaN(startDateTime.getTime())
       ? formatDistanceToNow(startDateTime, { addSuffix: true })
       : null;
+  const venueRelation =
+    action.eventDetails &&
+    typeof action.eventDetails.venue === "object" &&
+    action.eventDetails.venue !== null
+      ? action.eventDetails.venue
+      : null;
+  const venueId =
+    venueRelation?.id ??
+    (typeof action.eventDetails?.venue === "number"
+      ? action.eventDetails.venue
+      : null);
   const venue =
     (action.eventDetails?.roomName ?? action.room ?? "").replace(/^GH\s+/i, "") ||
     "No venue";
-  const venueHref =
-    action.eventDetails?.venue != null ? `/venues/${action.eventDetails.venue}` : null;
+  const venueHref = venueId != null ? `/venues/${venueId}` : null;
   const autoAssignedProfile = action.assignedToProfile;
   const manualAssignedProfile = action.assignedToManualProfile;
   const displayedAssignee = manualAssignedProfile ?? autoAssignedProfile ?? null;

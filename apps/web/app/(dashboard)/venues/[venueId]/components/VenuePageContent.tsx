@@ -59,7 +59,7 @@ export default function VenuePageContent({
   const building = venue.building ?? "GLOBAL HUB";
   const roomType = venue.type ?? null;
   const roomSubType = venue.subType ?? null;
-  const devices: { name: string; type?: string | null; status?: string | null }[] =
+  const devices: { name: string; ip?: string | null; status?: string | null }[] =
     [];
 
   return (
@@ -115,30 +115,35 @@ export default function VenuePageContent({
             <CardDescription>Inventory of devices in this venue.</CardDescription>
           </CardHeader>
           <CardContent>
-            {devices.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {devices.map((device) => (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>IP</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {devices.length > 0 ? (
+                  devices.map((device) => (
                     <TableRow key={device.name}>
                       <TableCell className="font-medium">{device.name}</TableCell>
-                      <TableCell>{device.type ?? "—"}</TableCell>
+                      <TableCell>{device.ip ?? "—"}</TableCell>
                       <TableCell>{device.status ?? "—"}</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="flex h-32 items-center justify-center rounded-md border border-dashed bg-muted/20 text-sm text-muted-foreground">
-                No devices recorded for this venue yet.
-              </div>
-            )}
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="h-24 text-center text-sm text-muted-foreground"
+                    >
+                      No devices recorded for this venue yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

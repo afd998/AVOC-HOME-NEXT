@@ -37,9 +37,24 @@ export function convertTimeToMinutes(time?: string) {
 export function getActionDisplayName(action: HydratedAction) {
   const type = typeof action.type === "string" ? action.type.trim() : "";
   const subType = typeof action.subType === "string" ? action.subType.trim() : "";
-  const isConfig =
-    type.toUpperCase().includes("CONFIG") ||
-    subType.toUpperCase().includes("CONFIG");
+  const typeUpper = type.toUpperCase();
+  const subTypeUpper = subType.toUpperCase();
+  const isPrepareVenue = typeUpper === "CONFIG" && subTypeUpper === "SET";
+  const isStrikeVenue = subTypeUpper === "STRIKE";
+  const isStaffAssistance = typeUpper === "STAFF ASSISTANCE" || subTypeUpper === "STAFF ASSISTANCE";
+  const isConfig = typeUpper.includes("CONFIG") || subTypeUpper.includes("CONFIG");
+
+  if (isPrepareVenue) {
+    return "Prepare Venue";
+  }
+
+  if (isStrikeVenue) {
+    return "Strike Venue";
+  }
+
+  if (isStaffAssistance) {
+    return "Staff Assistance";
+  }
 
   if (isConfig) {
     return "Configure Space";

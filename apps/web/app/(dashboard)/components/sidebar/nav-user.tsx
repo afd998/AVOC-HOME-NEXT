@@ -36,7 +36,7 @@ export async function NavUser() {
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <UserAvatar
-                  userId={profile?.id || "unknown"}
+                  profile={profile}
                   size="md"
                   className="h-8 w-8 rounded-lg"
                 />
@@ -57,7 +57,7 @@ export async function NavUser() {
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <UserAvatar
-                    userId={profile?.id || "unknown"}
+                    profile={profile}
                     size="md"
                     className="h-8 w-8 rounded-lg"
                   />
