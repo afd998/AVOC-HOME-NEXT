@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,7 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FacultyAvatar } from "@/core/faculty/FacultyAvatar";
-import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 
 type Row = {
@@ -41,6 +41,7 @@ type FacultyRecord = {
 };
 
 export default function FacultySearch({ faculty }: { faculty: FacultyRecord[] }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const normalizedQuery = query.trim().toLocaleLowerCase("en-US");
 
@@ -76,6 +77,9 @@ export default function FacultySearch({ faculty }: { faculty: FacultyRecord[] })
   const rows = filteredRows;
   const hasQuery = Boolean(normalizedQuery.length);
   const totalLabel = hasQuery ? total : faculty.length;
+  const navigateToFaculty = (id: number) => {
+    router.push(`/faculty/${id}`);
+  };
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4">
@@ -112,8 +116,20 @@ export default function FacultySearch({ faculty }: { faculty: FacultyRecord[] })
       <div className="grid gap-4 w-full max-h-[40rem] overflow-y-auto pr-1 mt-2 pt-2">
         {rows.length > 0 ? (
           rows.map((row) => (
-            <Link href={`/faculty/${row.id}`} key={row.id} className="block w-full">
-              <Card key={row.id} className="w-full">
+            <div
+              key={row.id}
+              className="block w-full cursor-pointer"
+              role="link"
+              tabIndex={0}
+              onClick={() => navigateToFaculty(row.id)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  navigateToFaculty(row.id);
+                }
+              }}
+            >
+              <Card className="w-full cursor-pointer">
                   <CardHeader className="flex flex-col gap-4 md:flex-row md:items-start">
                     <FacultyAvatar
                       imageUrl={row.imageUrl || ""}
@@ -159,7 +175,7 @@ export default function FacultySearch({ faculty }: { faculty: FacultyRecord[] })
                   </CardFooter>
                 )}
               </Card>
-            </Link>
+            </div>
           ))
         ) : hasQuery ? (
           <Card>
