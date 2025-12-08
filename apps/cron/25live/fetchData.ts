@@ -1,6 +1,6 @@
 import { type Browser } from "playwright";
 import config from "../config";
-import { type RawEvent, availabilityResponseSchema, rawEventSchema, eventDetailResponseSchema, type AvailabilitySubject } from "./schemas";
+import { type RawEvent, availabilityResponseSchema, rawEventSchema, eventsResponseSchema, type AvailabilitySubject, type Reservation } from "./schemas";
 
 export async function fetchSeriesData(browser: Browser, startDate: string): Promise<RawEvent[]> {
   const activeBrowser = browser;
@@ -124,11 +124,21 @@ export async function fetchSeriesData(browser: Browser, startDate: string): Prom
 
       // Fetch detailed event information using the event's itemId
       const detailResponse = await fetch(
-        `https://25live.collegenet.com/25live/data/northwestern/run/event/detail/evdetail.json?event_id=${item.itemId}&caller=pro-EvdetailDao.get`,
+        `https://25live.collegenet.com/25live/data/northwestern/run/events.json?request_method=get&caller=pro-EventService.getEventsInclude`,
         {
+          method: "POST",
           headers: {
             Cookie: cookieString, // Use same authentication cookies
+            "Content-Type": "application/json",
+            Accept: "application/json",
           },
+          body: JSON.stringify({
+            mapxml: {
+              event_id: String(item.itemId),
+              scope: "extended",
+              include: "workflow+relationships+reservations",
+            },
+          }),
         }
       );
 
@@ -143,12 +153,66 @@ export async function fetchSeriesData(browser: Browser, startDate: string): Prom
 
       // Parse and validate the detailed event information
       const detailJson = await detailResponse.json();
-      const detailData = eventDetailResponseSchema.parse(detailJson).evdetail;
+      const eventsData = eventsResponseSchema.parse(detailJson);
+      const event = eventsData.events?.event;
+
+      if (!event) {
+        return {
+          ...item,
+          itemDetails: undefined,
+          error: "No event data in response",
+        };
+      }
+
+      // Flatten all profile reservations into a single array
+      // profile can be a single object or an array of objects
+      // Some profiles have single reservation, others have array of reservations
+      const allReservations: Reservation[] = [];
+      if (event.profile) {
+        const profiles = Array.isArray(event.profile) ? event.profile : [event.profile];
+        for (const profile of profiles) {
+          if (profile.reservation) {
+            if (Array.isArray(profile.reservation)) {
+              allReservations.push(...profile.reservation);
+            } else {
+              allReservations.push(profile.reservation);
+            }
+          }
+        }
+      }
+
+      // Transform to match the structure expected by downstream code
+      // Store flattened reservations and event data for extraction functions
+      const detailData = {
+        itemId: event.event_id,
+        // Store event data for getEventType and other extraction functions
+        event_type_name: event.event_type_name,
+        event_type_id: event.event_type_id,
+        event_name: event.event_name,
+        event_title: event.event_title,
+        event_locator: event.event_locator,
+        cabinet_name: event.cabinet_name,
+        // Store profile comments for instructor extraction
+        profile_comments: (() => {
+          if (!event.profile) return [];
+          const profiles = Array.isArray(event.profile) ? event.profile : [event.profile];
+          return profiles
+            .map((p) => p.profile_comments)
+            .filter((c): c is string => typeof c === "string" && c.length > 0);
+        })(),
+        occur: {
+          prof: [
+            {
+              rsv: allReservations,
+            },
+          ],
+        },
+      };
 
       // Return the original event data combined with detailed information
       return {
         ...item,
-        itemDetails: detailData, // Extract the actual detail data
+        itemDetails: detailData,
       };
     });
 

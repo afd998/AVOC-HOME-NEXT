@@ -21,8 +21,13 @@ const parseTimeFromDt = (dt: string | null | undefined): string | null => {
   if (!dt) return null;
   const timePart = dt.split("T")[1];
   if (!timePart) return null;
+  
+  // Remove timezone offset (e.g., "-06:00", "+05:00", "-0600", "+0500")
+  // Match timezone patterns: + or - followed by 4 digits (with or without colon)
+  const timeWithoutTz = timePart.replace(/[+-]\d{2}:?\d{2}$/, "");
+  
   // Handle "13:30" or "13:30:00" formats
-  const parts = timePart.split(":");
+  const parts = timeWithoutTz.split(":");
   const hours = parts[0]?.padStart(2, "0") ?? "00";
   const minutes = parts[1]?.padStart(2, "0") ?? "00";
   const seconds = parts[2]?.padStart(2, "0") ?? "00";
@@ -38,20 +43,39 @@ const parseDateFromDt = (dt: string | null | undefined): string | null => {
 };
 
 /**
- * Parse resources from a reservation's res array
+ * Parse resources from a reservation's resource_reservation (can be object or array)
  */
 const parseReservationResources = (
   rsv: EventDetailReservation
 ): ProcessedEvent["resources"] => {
-  if (!rsv.res || !Array.isArray(rsv.res)) {
+  if (!rsv.resource_reservation) {
     return [];
   }
-  return rsv.res.map((resource) => ({
-    itemName: resource.itemName,
-    quantity: typeof resource.quantity === "number" ? resource.quantity : null,
-    instruction:
-      typeof resource.instruction === "string" ? resource.instruction : null,
-  }));
+  
+  // Handle both single object and array of objects
+  const resourceReservations = Array.isArray(rsv.resource_reservation)
+    ? rsv.resource_reservation
+    : [rsv.resource_reservation];
+  
+  return resourceReservations
+    .map((resourceReservation) => {
+      const resource = resourceReservation.resource;
+      if (!resource || !resource.resource_name) {
+        return null;
+      }
+      return {
+        itemName: resource.resource_name,
+        quantity:
+          typeof resourceReservation.quantity === "number"
+            ? resourceReservation.quantity
+            : null,
+        instruction:
+          typeof resourceReservation.resource_instructions === "string"
+            ? resourceReservation.resource_instructions
+            : null,
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
 };
 
 const normalizeRoomName = (value: unknown): string | null => {
@@ -91,6 +115,18 @@ const buildRoomLookup = async (): Promise<Map<string, number>> => {
   });
 
   return lookup;
+};
+
+const isSeriesCandidateValid = (series: RawEvent): boolean => {
+  const isPrivateEvent =
+    series.itemId === 0 &&
+    (series.itemName === "(Private)" || series.itemName === "Closed");
+
+  return (
+    !isPrivateEvent &&
+    series.itemId2 !== 0 &&
+    !series.subject_itemName?.includes("&")
+  );
 };
 
 const resolveVenueId = (
@@ -153,15 +189,29 @@ export async function makeEventRows(
       continue;
     }
 
+    const existingValid = isSeriesCandidateValid(existing);
+    const currentValid = isSeriesCandidateValid(series);
+
     const existingCount = getReservationCount(existing);
     const currentCount = getReservationCount(series);
-    if (currentCount > existingCount) {
-      console.warn("Duplicate series in raw data; choosing series with more reservations", {
-        seriesId: series.itemId,
-        existingReservations: existingCount,
-        currentReservations: currentCount,
-        itemName: series.itemName,
-      });
+
+    const shouldReplace =
+      (!existingValid && currentValid) ||
+      (existingValid === currentValid && currentCount > existingCount);
+
+    if (shouldReplace) {
+      console.warn(
+        "Duplicate series in raw data; choosing preferred candidate",
+        {
+          seriesId: series.itemId,
+          existingReservations: existingCount,
+          currentReservations: currentCount,
+          existingValid,
+          currentValid,
+          itemName: series.itemName,
+          subjectItemName: series.subject_itemName,
+        }
+      );
       seriesById.set(series.itemId, series);
     }
   }
@@ -196,24 +246,26 @@ export async function makeEventRows(
     const reservations = series.itemDetails?.occur?.prof?.[0]?.rsv ?? [];
 
     for (const rsv of reservations) {
-      const rsvId = rsv.rsvId;
-      const eventDate = parseDateFromDt(rsv.startDt);
-      const startTime = parseTimeFromDt(rsv.startDt);
-      const endTime = parseTimeFromDt(rsv.endDt);
+      const rsvId = rsv.reservation_id;
+      const eventDate = parseDateFromDt(rsv.reservation_start_dt);
+      const startTime = parseTimeFromDt(rsv.reservation_start_dt);
+      const endTime = parseTimeFromDt(rsv.reservation_end_dt);
 
       // Skip reservations without required time data
-      if (!eventDate || !startTime || !endTime) {
+      if (!eventDate || !startTime || !endTime || !rsvId) {
         continue;
       }
 
       const resources = parseReservationResources(rsv);
+      // Convert space_reservation.space (object) to array format
+      const spaceReservation = rsv.space_reservation;
       const spaces =
-        Array.isArray(rsv.space) && rsv.space.length > 0
-          ? rsv.space
+        spaceReservation && spaceReservation.space
+          ? [spaceReservation.space]
           : [undefined];
 
       for (const space of spaces) {
-        const spaceName = space?.itemName ?? null;
+        const spaceName = space?.space_name ?? null;
         const roomName = getRoomNameForSpace(series, spaceName);
         const spaceKey = normalizeRoomName(spaceName) ?? "NOSPACE";
         const eventId = generateDeterministicId(

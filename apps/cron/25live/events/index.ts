@@ -2,49 +2,31 @@
 export { generateDeterministicId } from "shared";
 
 const getEventType = (data) => {
-  const panels = data.itemDetails?.defn?.panel || [];
-  for (const panel of panels) {
-    if (panel.typeId === 11) {
-      // Check if this is a Kellogg Executive Education Program
-      const kelloggProgram = panel.item?.[6]?.item?.[0]?.itemName;
-      if (kelloggProgram === "Kellogg Executive Education Programs" || kelloggProgram === "Kellogg Executive MBA Program") {
-        return "KEC";
-      }
-      
-      // Check if this is a CMC program
-      const cmcProgram = panel.item?.[8]?.item?.[0]?.itemName;
-      if (cmcProgram === "RES CMC, KSM") {
-        return "CMC";
-      }
-      
-      // Original logic for other event types
-      const eventType = panel.item?.[2]?.itemName;
-      if (eventType) return eventType;
+  if (data.itemDetails?.event_type_name) {
+    const eventTypeName = data.itemDetails.event_type_name;
+    // Check for special program types
+    if (eventTypeName === "Kellogg Executive Education Programs" || eventTypeName === "Kellogg Executive MBA Program") {
+      return "KEC";
     }
+    if (eventTypeName === "RES CMC, KSM") {
+      return "CMC";
+    }
+    return eventTypeName;
   }
   return null;
 };
 
 const getOrganization = (data) => {
-  const panels = data.itemDetails?.defn?.panel || [];
-  for (const panel of panels) {
-    if (panel.typeId === 11) {
-      const organization = panel.item?.[6]?.item?.[0]?.itemName;
-      if (organization) {
-        return organization;
-      }
-    }
-  }
-  return null;
+  return data.itemDetails?.cabinet_name ?? null;
 };
 
 const getInstructorNames = (data) => {
-  const panels = data.itemDetails?.defn?.panel || [];
-  for (const panel of panels) {
-    if (panel.typeId === 12) {
-      const instructor = panel.item?.[0]?.itemName;
-      if (instructor) {
-        const cleanName = instructor.replace(/^Instructors:\s*/, '').trim();
+  const profileComments = data.itemDetails?.profile_comments;
+  if (Array.isArray(profileComments) && profileComments.length > 0) {
+    // Use the first profile comment that contains instructor info
+    for (const comment of profileComments) {
+      if (typeof comment === "string" && comment.includes("Instructors:")) {
+        const cleanName = comment.replace(/^Instructors:\s*/, '').trim();
         if (cleanName &&
             !cleanName.startsWith('<') &&
             cleanName.length > 2 &&
@@ -55,25 +37,9 @@ const getInstructorNames = (data) => {
           const instructors = cleanName.split('; ')
             .map(name => name.trim())
             .filter(name => name.length > 0);
-          return instructors.length > 0 ? instructors : null;
-        }
-      }
-    }
-    if (panel.typeId === 13) {
-      const instructor = panel.item?.[0]?.item?.[0]?.itemName;
-      if (instructor) {
-        const cleanName = instructor.replace(/^Instructors:\s*/, '').trim();
-        if (cleanName &&
-            !cleanName.startsWith('<') &&
-            cleanName.length > 2 &&
-            cleanName.length < 100 &&
-            !cleanName.includes('{') &&
-            !cleanName.includes('}')) {
-          // Split on semicolon and space, filter out empty strings, and trim whitespace
-          const instructors = cleanName.split('; ')
-            .map(name => name.trim())
-            .filter(name => name.length > 0);
-          return instructors.length > 0 ? instructors : null;
+          if (instructors.length > 0) {
+            return instructors;
+          }
         }
       }
     }
@@ -82,13 +48,7 @@ const getInstructorNames = (data) => {
 };
 
 const getLectureTitle = (data) => {
-  const panels = data.itemDetails?.defn?.panel || [];
-  for (const panel of panels) {
-    if (panel.typeId === 11 && panel.item?.[1]?.itemName) {
-      return panel.item[1].itemName;
-    }
-  }
-  return null;
+  return data.itemDetails?.event_title ?? null;
 };
 
 /**

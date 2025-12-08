@@ -29,7 +29,7 @@ export function makeSeriesRows(rawData: RawEvent[]): SeriesRow[] {
 
     const rsv = item.itemDetails?.occur?.prof?.[0]?.rsv ?? [];
     const dates = rsv
-      .map((r) => r.startDt?.split("T")[0])
+      .map((r) => r.reservation_start_dt?.split("T")[0])
       .filter((d): d is string => d != null && d.length > 0);
 
     return rsv.length > 0 && dates.length > 0;
@@ -46,7 +46,7 @@ export function makeSeriesRows(rawData: RawEvent[]): SeriesRow[] {
 
     // Extract and sort dates from reservations
     const dates = rsv
-      .map((r) => r.startDt?.split("T")[0])
+      .map((r) => r.reservation_start_dt?.split("T")[0])
       .filter((d): d is string => d != null && d.length > 0)
       .sort();
 

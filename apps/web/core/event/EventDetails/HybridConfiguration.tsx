@@ -80,7 +80,7 @@ export default function HybridConfiguration({
       variant="outline"
       size="sm"
       className={cn(
-        "flex-1 items-start",
+        "flex-1 items-start bg-muted/50",
         isHybridOn && "border-blue-300 dark:border-blue-700"
       )}
     >

@@ -22,6 +22,7 @@ import { pgPool } from "shared";
 import { partitionEventsByStart } from "./utils/event-filters";
 import { makeSeriesRows } from "./series/make-rows";
 import { saveSeries, computeSeriesPositions } from "./series/save-rows";
+import type { RawEvent } from "./schemas";
 // Validate configuration to ensure all required environment variables are present
 config.validate();
 
@@ -65,6 +66,54 @@ async function main(): Promise<void> {
   console.log(`🔄 Processing events from reservations...`);
   const events = await makeEventRows(raw, seriesRows);
   console.log(`📊 Created ${events.length} events`);
+
+  // Diagnostics: find series that report events but produced none
+  const countsBySeries = new Map<number, number>();
+  events.forEach((event) => {
+    if (typeof event.series === "number") {
+      countsBySeries.set(
+        event.series,
+        (countsBySeries.get(event.series) ?? 0) + 1
+      );
+    }
+  });
+  const rawById = new Map<number, RawEvent>();
+  raw.forEach((series) => {
+    if (typeof series.itemId === "number") {
+      rawById.set(series.itemId, series);
+    }
+  });
+  const zeroEventSeries = seriesRows.filter(
+    (series) =>
+      (series.totalEvents ?? 0) > 0 &&
+      (countsBySeries.get(series.id) ?? 0) === 0
+  );
+  if (zeroEventSeries.length > 0) {
+    console.warn(
+      `[diagnostic] ${zeroEventSeries.length} series reported events but none were built`
+    );
+    zeroEventSeries.slice(0, 10).forEach((series) => {
+      const rawSeries = rawById.get(series.id);
+      const rsvCount =
+        rawSeries?.itemDetails?.occur?.prof?.[0]?.rsv?.length ?? 0;
+      console.warn(
+        "[diagnostic] series missing events",
+        JSON.stringify(
+          {
+            id: series.id,
+            name: series.seriesName,
+            totalEvents: series.totalEvents,
+            firstDate: series.firstDate,
+            lastDate: series.lastDate,
+            subjectItemName: rawSeries?.subject_itemName ?? null,
+            rawReservationCount: rsvCount,
+          },
+          null,
+          2
+        )
+      );
+    });
+  }
 
   // Create series-faculty rows (from series, not events)
   const seriesFacultyRows = await makeSeriesFacultyRows(raw, seriesRows);

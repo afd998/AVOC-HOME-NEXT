@@ -44,7 +44,10 @@ export default function EventActionTimelineItem({ action }: EventActionTimelineI
   const assignedProfile = action.assignedToProfile;
 
   return (
-    <Link href={actionLink} className="relative flex items-start gap-4 hover:opacity-80 transition-opacity cursor-pointer">
+    <Link
+      href={actionLink}
+      className="relative flex items-start gap-4 rounded-lg border border-border/70 bg-card/40 px-4 py-3 hover:bg-muted/60 transition-colors cursor-pointer"
+    >
       {/* Source */}
       {action.source && (
         <>

@@ -24,7 +24,11 @@ export default function RecordingConfiguration({
   const hasRecording = Boolean(recording);
 
   return (
-    <Item variant="outline" size="sm" className="flex-1 items-start">
+    <Item
+      variant="outline"
+      size="sm"
+      className="flex-1 items-start bg-muted/50"
+    >
       <ItemMedia variant="icon">
         <RecordingIcon muted={!hasRecording} />
       </ItemMedia>

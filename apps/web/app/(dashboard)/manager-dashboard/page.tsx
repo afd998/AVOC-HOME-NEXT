@@ -5,9 +5,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDateNumeric, formatTime } from "@/app/utils/dateTime";
 import { getFailedQcItemsForDate, type FailedQcItem } from "@/lib/data/manager-dashboard/failures";
-import { getDailyEventCounts, type DailyEventCounts } from "@/lib/data/manager-dashboard/summary";
+import {
+  getDailyEventCounts,
+  getHybridEventsForDate,
+  type DailyEventCounts,
+  type HybridEventSummary,
+} from "@/lib/data/manager-dashboard/summary";
+import { EventList } from "@/core/event/components/EventList";
 import { DailyReportAreaChart } from "./components/daily-report-area-chart";
 import { DailyReportChart } from "./components/daily-report-chart";
+
+const DEFAULT_TIME_ZONE = "America/Chicago";
+const DATE_PARAM_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+const weekdayFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
 
 const tabs = [
   { value: "daily-report", label: "Daily Report" },
@@ -15,12 +31,49 @@ const tabs = [
   { value: "monthly-report", label: "Monthly Report" },
 ] as const;
 
-export default async function ManagerDashboardPage() {
-  // TODO: wire this to a date picker or query param; fixed for now per request
-  const selectedDate = "2025-12-07";
+type ManagerDashboardPageProps = {
+  searchParams?:
+    | Promise<{
+        date?: string | string[];
+      }>
+    | {
+        date?: string | string[];
+      };
+};
+
+function getTodayIsoDate(timeZone = DEFAULT_TIME_ZONE) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+async function resolveSelectedDate(searchParams: ManagerDashboardPageProps["searchParams"]) {
+  const params = await searchParams;
+  const candidateRaw = params?.date;
+  const candidate = Array.isArray(candidateRaw) ? candidateRaw[0] : candidateRaw;
+  if (candidate && DATE_PARAM_REGEX.test(candidate)) {
+    return candidate;
+  }
+  return getTodayIsoDate();
+}
+
+function formatDateWithWeekday(value: string) {
+  if (!value) return "Selected date";
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return weekdayFormatter.format(date);
+}
+
+export default async function ManagerDashboardPage({ searchParams }: ManagerDashboardPageProps) {
+  // Default to today's date in the Chicago time zone; allow ?date=YYYY-MM-DD override
+  const selectedDate = await resolveSelectedDate(searchParams);
 
   let failedQcItems: FailedQcItem[] = [];
   let dailyCounts: DailyEventCounts = { events: 0, eventRecordings: 0, eventHybrids: 0 };
+  let hybridEvents: HybridEventSummary[] = [];
   try {
     failedQcItems = await getFailedQcItemsForDate(selectedDate);
   } catch (error) {
@@ -30,6 +83,11 @@ export default async function ManagerDashboardPage() {
     dailyCounts = await getDailyEventCounts(selectedDate);
   } catch (error) {
     console.error("[manager-dashboard] Failed to load event counts", error);
+  }
+  try {
+    hybridEvents = await getHybridEventsForDate(selectedDate);
+  } catch (error) {
+    console.error("[manager-dashboard] Failed to load hybrid events", error);
   }
 
   return (
@@ -45,14 +103,8 @@ export default async function ManagerDashboardPage() {
 
         <TabsContent value="daily-report" className="mt-0">
           <Card>
-            <CardHeader>
-              <CardTitle>Daily Report</CardTitle>
-              <CardDescription>
-                Pull today&apos;s operational snapshot and surface key actions.
-              </CardDescription>
-            </CardHeader>
             <CardContent className="space-y-6">
-              <DailySummary counts={dailyCounts} displayDate={selectedDate} />
+              <DailySummary counts={dailyCounts} displayDate={selectedDate} hybridEvents={hybridEvents} />
               <DailyReportAreaChart />
               <FailedQcItemsTable items={failedQcItems} displayDate={selectedDate} />
             </CardContent>
@@ -101,10 +153,12 @@ type FailedQcItemsTableProps = {
 type DailySummaryProps = {
   counts: DailyEventCounts;
   displayDate: string;
+  hybridEvents: HybridEventSummary[];
 };
 
-function DailySummary({ counts, displayDate }: DailySummaryProps) {
+function DailySummary({ counts, displayDate, hybridEvents }: DailySummaryProps) {
   const formattedDate = displayDate ? formatDateNumeric(displayDate) : "Selected date";
+  const formattedWithWeekday = displayDate ? formatDateWithWeekday(displayDate) : "Selected date";
   const summary = [
     { label: "Events", value: counts.events },
     { label: "Recordings", value: counts.eventRecordings },
@@ -113,21 +167,33 @@ function DailySummary({ counts, displayDate }: DailySummaryProps) {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Snapshot</p>
-          <h3 className="text-sm font-semibold leading-none">Daily counts</h3>
-          <p className="text-xs text-muted-foreground">Activity for {formattedDate}.</p>
-        </div>
+      <div className="pt-4 pb-3">
+        <h3 className="text-xl sm:text-2xl font-semibold leading-tight">{formattedWithWeekday}</h3>
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="grid gap-3 sm:grid-cols-3">
-          {summary.map((item) => (
-            <div key={item.label} className="rounded-md border bg-muted/30 px-3 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</p>
-              <div className="mt-1 text-2xl font-semibold leading-none">{item.value}</div>
-            </div>
-          ))}
+          {summary.map((item) => {
+            const isHybrid = item.label === "Hybrid sessions";
+
+            return (
+              <div
+                key={item.label}
+                className="rounded-md border bg-muted/30 px-3 py-3"
+              >
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</p>
+                <div className="mt-1 text-2xl font-semibold leading-none">{item.value}</div>
+                {isHybrid && (
+                  <div className="mt-3">
+                    <EventList
+                      events={hybridEvents}
+                      emptyMessage={`No hybrid sessions for ${formattedDate}.`}
+                      badgeLabel="Hybrid"
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
         <DailyReportChart />
       </div>

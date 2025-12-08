@@ -20,17 +20,10 @@ export function filterNonAcademicKECSeries(
       return true;
     }
 
-    // Check series-level definition for academic session marker
-    const itemName =
-      series.itemDetails?.defn?.panel?.[1]?.item?.[0]?.itemName ?? null;
-
-    // Only include KEC series that are academic/class sessions
-    return (
-      itemName === "<p>Academic Session</p>" ||
-      itemName === "<p>Academic session</p>" ||
-      itemName === "<p>Class Session</p>" ||
-      itemName === "<p>Class session</p>"
-    );
+    // Note: Academic session marker check removed as it's not available in new API structure
+    // All KEC series will pass through for now
+    // TODO: If academic session filtering is needed, find where this data exists in new API
+    return true;
   });
 }
 

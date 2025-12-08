@@ -20,7 +20,10 @@ export const parseEventResources = (event: RawEvent) => {
 
   const eventDateOnly = event.subject_item_date.split("T")[0];
   const matchingReservation = allRsv.find((rsv) => {
-    const startDt = typeof rsv.startDt === "string" ? rsv.startDt : null;
+    const startDt =
+      typeof rsv.reservation_start_dt === "string"
+        ? rsv.reservation_start_dt
+        : null;
     if (!startDt) {
       return false;
     }
@@ -28,14 +31,32 @@ export const parseEventResources = (event: RawEvent) => {
     return reservationDate === eventDateOnly;
   });
 
-  if (!matchingReservation || !Array.isArray(matchingReservation.res)) {
+  if (!matchingReservation || !matchingReservation.resource_reservation) {
     return [];
   }
 
-  return matchingReservation.res.map((resource) => ({
-    itemName: resource.itemName,
-    quantity: typeof resource.quantity === "number" ? resource.quantity : null,   
-    instruction:
-      typeof resource.instruction === "string" ? resource.instruction : null,
-  }));
+  // Handle both single object and array of objects
+  const resourceReservations = Array.isArray(matchingReservation.resource_reservation)
+    ? matchingReservation.resource_reservation
+    : [matchingReservation.resource_reservation];
+
+  return resourceReservations
+    .map((resourceReservation) => {
+      const resource = resourceReservation.resource;
+      if (!resource || !resource.resource_name) {
+        return null;
+      }
+      return {
+        itemName: resource.resource_name,
+        quantity:
+          typeof resourceReservation.quantity === "number"
+            ? resourceReservation.quantity
+            : null,
+        instruction:
+          typeof resourceReservation.resource_instructions === "string"
+            ? resourceReservation.resource_instructions
+            : null,
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
 };
