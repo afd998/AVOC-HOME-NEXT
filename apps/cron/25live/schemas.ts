@@ -79,7 +79,8 @@ const reservationSchema = z
     reservation_state: z.coerce.number().optional(),
     attendee_count: z.string().nullable().optional(),
     rsrv_comments: z.string().nullable().optional(),
-    rsrv_comment_id: z.string().nullable().optional(),
+    // rsrv_comment_id can be a string or a number (coerce number to string)
+    rsrv_comment_id: z.coerce.string().nullable().optional(),
     status: z.string().optional(),
     crc: z.string().optional(),
   })
