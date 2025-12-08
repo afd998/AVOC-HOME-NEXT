@@ -257,12 +257,26 @@ export async function makeEventRows(
       }
 
       const resources = parseReservationResources(rsv);
-      // Convert space_reservation.space (object) to array format
-      const spaceReservation = rsv.space_reservation;
-      const spaces =
-        spaceReservation && spaceReservation.space
-          ? [spaceReservation.space]
-          : [undefined];
+      // Handle space_reservation (can be object or array)
+      // Extract all spaces from space_reservation(s)
+      const spaces: Array<{ space_name?: string; formal_name?: string; building_name?: string | null; partition_name?: string; max_capacity?: number } | undefined> = [];
+      
+      if (rsv.space_reservation) {
+        const spaceReservations = Array.isArray(rsv.space_reservation)
+          ? rsv.space_reservation
+          : [rsv.space_reservation];
+        
+        for (const spaceReservation of spaceReservations) {
+          if (spaceReservation && spaceReservation.space) {
+            spaces.push(spaceReservation.space);
+          }
+        }
+      }
+      
+      // If no spaces found, add undefined to ensure at least one iteration
+      if (spaces.length === 0) {
+        spaces.push(undefined);
+      }
 
       for (const space of spaces) {
         const spaceName = space?.space_name ?? null;

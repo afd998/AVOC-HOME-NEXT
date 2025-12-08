@@ -74,7 +74,8 @@ const reservationSchema = z
     post_event_dt: z.string().nullable().optional(),
     // resource_reservation can be a single object or an array of objects
     resource_reservation: z.union([resourceReservationSchema, z.array(resourceReservationSchema)]).optional(),
-    space_reservation: spaceReservationSchema.optional(),
+    // space_reservation can be a single object or an array of objects
+    space_reservation: z.union([spaceReservationSchema, z.array(spaceReservationSchema)]).optional(),
     reservation_state: z.coerce.number().optional(),
     attendee_count: z.string().nullable().optional(),
     rsrv_comments: z.string().nullable().optional(),
