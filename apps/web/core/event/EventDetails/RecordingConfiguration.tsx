@@ -3,8 +3,15 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import type { EventRecordingRow } from "shared/db/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
 import { RecordingIcon } from "../event-configuration/icons";
 
 interface RecordingConfigurationProps {
@@ -17,61 +24,65 @@ export default function RecordingConfiguration({
   const hasRecording = Boolean(recording);
 
   return (
-    <Card className="flex-1">
-      <CardHeader className="flex flex-row items-center gap-3 pb-3">
-        <div className="flex items-center justify-center rounded-sm bg-muted size-8">
-          <RecordingIcon muted={!hasRecording} />
-        </div>
+    <Item variant="outline" size="sm" className="flex-1 items-start">
+      <ItemMedia variant="icon">
+        <RecordingIcon muted={!hasRecording} />
+      </ItemMedia>
+      <ItemContent className="gap-2">
         <div className="flex w-full items-center justify-between gap-3">
-          <CardTitle className="text-sm font-semibold leading-tight">
+          <ItemTitle className="text-sm font-semibold leading-tight">
             Recording
-          </CardTitle>
+          </ItemTitle>
           {hasRecording && (
-            <Button
-              variant="secondary"
-              size="sm"
-              asChild
-              className="flex items-center gap-2 uppercase tracking-wide"
-            >
-              <Link
-                href="https://kellogg-northwestern.hosted.panopto.com/Panopto/Pages/Sessions/List.aspx#status=%5B2%2C5%5D"
-                target="_blank"
-                rel="noopener noreferrer"
+            <ItemActions>
+              <Button
+                variant="secondary"
+                size="sm"
+                asChild
+                className="flex items-center gap-2 uppercase tracking-wide"
               >
-                Panopto
-                <ExternalLink className="size-4" aria-hidden="true" />
-              </Link>
-            </Button>
+                <Link
+                  href="https://kellogg-northwestern.hosted.panopto.com/Panopto/Pages/Sessions/List.aspx#status=%5B2%2C5%5D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Panopto
+                  <ExternalLink className="size-4" aria-hidden="true" />
+                </Link>
+              </Button>
+            </ItemActions>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-2 text-sm leading-normal">
-        {recording ? (
-          <>
-            {recording.type && (
-              <div>
-                <span className="font-medium">Type: </span>
-                {recording.type}
-              </div>
+        <ItemDescription asChild>
+          <div className="space-y-2 text-sm leading-normal">
+            {recording ? (
+              <>
+                {recording.type && (
+                  <div>
+                    <span className="font-medium">Type: </span>
+                    {recording.type}
+                  </div>
+                )}
+                {recording.instructions && (
+                  <div>
+                    <span className="font-medium">Instructions: </span>
+                    <span className="whitespace-pre-line">
+                      {recording.instructions}
+                    </span>
+                  </div>
+                )}
+                {!recording.type && !recording.instructions && (
+                  <span className="text-muted-foreground">
+                    No recording details provided
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-muted-foreground">No recording</span>
             )}
-            {recording.instructions && (
-              <div>
-                <span className="font-medium">Instructions: </span>
-                <span className="whitespace-pre-line">
-                  {recording.instructions}
-                </span>
-              </div>
-            )}
-            {!recording.type && !recording.instructions && (
-              <span className="text-muted-foreground">
-                No recording details provided
-              </span>
-            )}
-          </>
-        ) : (
-          <span className="text-muted-foreground">No recording</span>
-        )}
-      </CardContent>
-    </Card>
+          </div>
+        </ItemDescription>
+      </ItemContent>
+    </Item>
   );
 }

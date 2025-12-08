@@ -94,7 +94,7 @@ export default function EventDetailHeader({ eventId }: EventDetailHeaderProps) {
                   {/* Second Column - Event Name, Lecture Title, Full Event Name */}
                   <div className="space-y-2">
                     {event.eventName && (
-                      <h1 className="text-2xl sm:text-4xl font-bold mb-0.5 uppercase break-words">
+                      <h1 className="text-2xl sm:text-4xl font-bold mb-0.5 break-words">
                         {truncateEventName(event)}
                       </h1>
                     )}

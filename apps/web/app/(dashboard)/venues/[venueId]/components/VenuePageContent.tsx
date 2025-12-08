@@ -57,6 +57,9 @@ export default function VenuePageContent({
     venue.spelling ??
     "Unknown room";
   const building = venue.building ?? "GLOBAL HUB";
+  const crestronUrl = venue.crestron?.trim();
+  const xpanelButtonClasses =
+    "flex items-center gap-2 bg-blue-100 text-blue-900 hover:bg-blue-200 border border-blue-200";
   const roomType = venue.type ?? null;
   const roomSubType = venue.subType ?? null;
   const devices: { name: string; ip?: string | null; status?: string | null }[] =
@@ -84,16 +87,35 @@ export default function VenuePageContent({
             ) : null}
           </div>
         </div>
-        <Button className="flex items-center gap-2 bg-blue-100 text-blue-900 hover:bg-blue-200 border border-blue-200">
-          <Image
-            src="/images/crestron_swirl_blue_cmyk.png"
-            alt="Crestron"
-            width={24}
-            height={24}
-            className="h-6 w-6 rounded-sm object-contain"
-          />
-          <span>XPanel</span>
-        </Button>
+        {crestronUrl ? (
+          <Button asChild className={xpanelButtonClasses}>
+            <a href={crestronUrl} target="_blank" rel="noreferrer noopener">
+              <Image
+                src="/images/crestron_swirl_blue_cmyk.png"
+                alt="Crestron"
+                width={24}
+                height={24}
+                className="h-6 w-6 rounded-sm object-contain"
+              />
+              <span>XPanel</span>
+            </a>
+          </Button>
+        ) : (
+          <Button
+            className={xpanelButtonClasses}
+            disabled
+            title="No Crestron link available for this venue"
+          >
+            <Image
+              src="/images/crestron_swirl_blue_cmyk.png"
+              alt="Crestron"
+              width={24}
+              height={24}
+              className="h-6 w-6 rounded-sm object-contain"
+            />
+            <span>XPanel</span>
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

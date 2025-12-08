@@ -110,7 +110,7 @@ export default function FacultySearch({ faculty }: { faculty: FacultyRecord[] })
                     ? `${totalLabel.toLocaleString()} match${
                         totalLabel === 1 ? "" : "es"
                       }`
-                    : `${faculty.length.toLocaleString()} total`}
+                    : faculty.length.toLocaleString()}
                 </Badge>
               </div>
             </div>

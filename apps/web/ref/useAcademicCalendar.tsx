@@ -1,25 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../../lib/supabase';
-import { Database } from '../../../types/supabase';
+import { supabase } from '@/lib/supabase';
 
-type AcademicCalendarItem = Database['public']['Tables']['academic_calendar']['Row'];
+type AcademicCalendarItem = {
+  id: string | number;
+  label?: string | null;
+  date?: string | null;
+};
 
 const fetchAcademicCalendar = async (date: Date): Promise<AcademicCalendarItem[]> => {
-  const formattedDate = date.toISOString().split('T')[0];
-  
   // Create start and end of day in UTC to match database storage
   const startOfDay = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
   const endOfDay = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999));
-  
-  
+
   const { data, error } = await supabase
     .from('academic_calendar')
     .select('*')
     .gte('date', startOfDay.toISOString())
     .lte('date', endOfDay.toISOString());
-
-  console.log('  Query Result:', { data, error });
-  console.log('  Data length:', data?.length || 0);
 
   if (error) {
     throw error;

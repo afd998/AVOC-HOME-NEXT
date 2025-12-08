@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/item"; 
 import NotificationsModal from "@/features/notifications/NotificationsModal";
 import FilterRoomsModal from "@/app/(dashboard)/calendar/[slug]/components/FilterRoomsModal";
-import QuarterCount from "@/features/QuarterCount/QuarterCount";
 import { Calendar } from "@/components/ui/calendar"; 
 import Link from "next/link";
 // Navigation data for the sidebar
@@ -36,6 +35,7 @@ import { Filters } from "./filters";
 import { CalendarOnly } from "./calendar-only"; 
 import { FacultyIcon } from "./faculty-icon";
 import { EventSeriesIcon } from "./event-series-icon";
+import AcademicCalendarInfo from "@/app/(dashboard)/calendar/[slug]/components/AcademicCalendarInfo";
 
 const RoomIcon = ({ className }: { className?: string }) => (
   <svg
@@ -92,10 +92,8 @@ export async function AppSidebar({
               </Suspense>
             </div>
 
-            {/* Quarter Count and Academic Calendar Info */}
             <div className="mt-2 flex justify-center gap-2">
-              {/* <QuarterCount />
-                  <AcademicCalendarInfo /> */}
+              <AcademicCalendarInfo />
             </div>
           </SidebarGroupContent>
         </SidebarGroup>

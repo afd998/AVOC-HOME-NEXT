@@ -10,8 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toggle } from "@/components/ui/toggle";
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+} from "@/components/ui/item";
 import { cn } from "@/lib/utils";
 import { useEventConfiguration } from "./EventConfigurationContext";
 import { ZoomIcon } from "../event-configuration/icons";
@@ -72,12 +76,16 @@ export default function HybridConfiguration({
   const isHybridOn = Boolean(hybrid);
 
   return (
-    <Card className={cn(
-      "flex-1",
-      isHybridOn && "border-blue-300 dark:border-blue-700"
-    )}>
-      <CardHeader className="pb-3 flex flex-row items-center justify-between">
-        <div className="w-fit">
+    <Item
+      variant="outline"
+      size="sm"
+      className={cn(
+        "flex-1 items-start",
+        isHybridOn && "border-blue-300 dark:border-blue-700"
+      )}
+    >
+      <ItemContent className="w-full gap-3">
+        <div className="flex w-full items-start justify-between gap-3">
           <Toggle
             variant="outline"
             pressed={isHybridOn}
@@ -96,80 +104,80 @@ export default function HybridConfiguration({
             <ZoomIcon muted={!isHybridOn} />
             <span className="text-sm font-semibold leading-tight">Hybrid</span>
           </Toggle>
+          {isHybridOn ? (
+            <div className="text-sm">
+              <span className="font-medium">Meeting ID: </span>
+              {hybrid?.meetingId ? (
+                (() => {
+                  const meetingHref =
+                    hybrid.meetingLink ??
+                    (hybrid.meetingId
+                      ? `https://northwestern.zoom.us/j/${hybrid.meetingId}`
+                      : undefined);
+                  return meetingHref ? (
+                    <a
+                      href={meetingHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {hybrid.meetingId}
+                    </a>
+                  ) : (
+                    hybrid.meetingId
+                  );
+                })()
+              ) : (
+                <span className="text-muted-foreground">None</span>
+              )}
+            </div>
+          ) : null}
         </div>
-        {isHybridOn ? (
-          <div className="text-sm">
-            <span className="font-medium">Meeting ID: </span>
-            {hybrid?.meetingId ? (
-              (() => {
-                const meetingHref =
-                  hybrid.meetingLink ??
-                  (hybrid.meetingId
-                    ? `https://northwestern.zoom.us/j/${hybrid.meetingId}`
-                    : undefined);
-                return meetingHref ? (
-                  <a
-                    href={meetingHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    {hybrid.meetingId}
-                  </a>
-                ) : (
-                  hybrid.meetingId
-                );
-              })()
-            ) : (
-              <span className="text-muted-foreground">None</span>
-            )}
-          </div>
-        ) : null}
-      </CardHeader>
-      <CardContent className="space-y-2 text-sm leading-normal">
         {hybrid ? (
-          <>
-            <div className="space-y-1">
-              <Select
-                value={configValue ?? undefined}
-                disabled={!isEditable || isUpdating}
-                onValueChange={handleConfigChange}
-              >
-                <SelectTrigger className="w-full sm:w-56">
-                  <SelectValue placeholder="Not set" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="presenter">
-                    <div className="flex items-center gap-2">
-                      <Icon icon="streamline-ultimate:meeting-remote" width={16} height={16} />
-                      <span>Remote Presenter</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="audience">
-                    <div className="flex items-center gap-2">
-                      <Icon icon="streamline-ultimate:work-from-home-laptop-meeting-bold" width={16} height={16} />
-                      <span>Remote Audience</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="both">
-                    <div className="flex items-center gap-2">
-                      <Icon icon="streamline-ultimate:work-from-home-laptop-meeting-bold" width={16} height={16} />
-                      <Icon icon="streamline-ultimate:meeting-remote" width={16} height={16} />
-                      <span>Remote Audience + Presenter</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+          <ItemDescription asChild>
+            <div className="space-y-2 text-sm leading-normal">
+              <div className="space-y-1">
+                <Select
+                  value={configValue ?? undefined}
+                  disabled={!isEditable || isUpdating}
+                  onValueChange={handleConfigChange}
+                >
+                  <SelectTrigger className="w-full sm:w-56">
+                    <SelectValue placeholder="Not set" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="presenter">
+                      <div className="flex items-center gap-2">
+                        <Icon icon="streamline-ultimate:meeting-remote" width={16} height={16} />
+                        <span>Remote Presenter</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="audience">
+                      <div className="flex items-center gap-2">
+                        <Icon icon="streamline-ultimate:work-from-home-laptop-meeting-bold" width={16} height={16} />
+                        <span>Remote Audience</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="both">
+                      <div className="flex items-center gap-2">
+                        <Icon icon="streamline-ultimate:work-from-home-laptop-meeting-bold" width={16} height={16} />
+                        <Icon icon="streamline-ultimate:meeting-remote" width={16} height={16} />
+                        <span>Remote Audience + Presenter</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <span className="font-medium">Instructions: </span>
+                <span className="whitespace-pre-line">
+                  {hybrid.instructions ?? "None"}
+                </span>
+              </div>
             </div>
-            <div>
-              <span className="font-medium">Instructions: </span>
-              <span className="whitespace-pre-line">
-                {hybrid.instructions ?? "None"}
-              </span>
-            </div>
-          </>
+          </ItemDescription>
         ) : null}
-      </CardContent>
-    </Card>
+      </ItemContent>
+    </Item>
   );
 }

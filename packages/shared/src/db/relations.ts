@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { faculty, facultySetup, series, seriesClass, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, venues, shifts, venueFilters, venueFilterVenue, shiftBlockProfile, shiftBlocks, seriesFaculty, shiftBlockProfileRoom, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
+import { faculty, facultySetup, series, seriesClass, events, eventHybrid, eventAvConfig, eventRecording, profiles, actions, notifications, venues, shifts, venueFilters, venueFilterVenue, seriesFaculty, shiftBlockProfile, shiftBlocks, shiftBlockProfileRoom, resourceEvents, resourcesDict, eventOtherHardware, otherHardwareDict, qcItemDict, qcItems } from "./schema";
 
 export const facultySetupRelations = relations(facultySetup, ({one}) => ({
 	faculty: one(faculty, {
@@ -143,6 +143,17 @@ export const venueFiltersRelations = relations(venueFilters, ({many}) => ({
 	venueFilterVenues: many(venueFilterVenue),
 }));
 
+export const seriesFacultyRelations = relations(seriesFaculty, ({one}) => ({
+	faculty: one(faculty, {
+		fields: [seriesFaculty.faculty],
+		references: [faculty.id]
+	}),
+	series: one(series, {
+		fields: [seriesFaculty.series],
+		references: [series.id]
+	}),
+}));
+
 export const shiftBlockProfileRelations = relations(shiftBlockProfile, ({one}) => ({
 	profile: one(profiles, {
 		fields: [shiftBlockProfile.profile],
@@ -157,17 +168,6 @@ export const shiftBlockProfileRelations = relations(shiftBlockProfile, ({one}) =
 export const shiftBlocksRelations = relations(shiftBlocks, ({many}) => ({
 	shiftBlockProfiles: many(shiftBlockProfile),
 	shiftBlockProfileRooms: many(shiftBlockProfileRoom),
-}));
-
-export const seriesFacultyRelations = relations(seriesFaculty, ({one}) => ({
-	faculty: one(faculty, {
-		fields: [seriesFaculty.faculty],
-		references: [faculty.id]
-	}),
-	series: one(series, {
-		fields: [seriesFaculty.series],
-		references: [series.id]
-	}),
 }));
 
 export const shiftBlockProfileRoomRelations = relations(shiftBlockProfileRoom, ({one}) => ({

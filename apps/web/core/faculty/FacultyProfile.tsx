@@ -3,15 +3,12 @@ import { FacultyAvatar } from "./FacultyAvatar";
 
 import { Calendar, Mail, ExternalLink } from "lucide-react";
 import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import Link from "next/link";
 
 interface ResourceItem {
@@ -54,10 +51,10 @@ export default async function FacultyProfile({
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-6 overflow-hidden bg-background text-foreground border border-white/20 dark:border-white/10 p-3 sm:p-6 md:flex-row">
       <div className="w-full flex-shrink-0 md:basis-[40%] md:max-w-[40%]">
-        <Item variant="outline" className="w-full flex-shrink-0">
-          <ItemMedia>
-            {facultyMember?.kelloggdirectoryImageUrl ? (
-              <div>
+        <Card className="w-full flex-shrink-0 h-full">
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div className="flex-shrink-0">
+              {facultyMember?.kelloggdirectoryImageUrl ? (
                 <FacultyAvatar
                   imageUrl={facultyMember.kelloggdirectoryImageUrl}
                   cutoutImageUrl={facultyMember.cutoutImage}
@@ -65,70 +62,71 @@ export default async function FacultyProfile({
                   size="lg"
                   priority
                 />
-              </div>
-            ) : (
-              <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                <span className="text-gray-600 dark:text-gray-400 text-lg sm:text-xl">
-                  DY
+              ) : (
+                <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                  <span className="text-gray-600 dark:text-gray-400 text-lg sm:text-xl">
+                    DY
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 space-y-2 min-w-0">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg leading-tight">
+                <span className="truncate">
+                  {(() => {
+                    const fullName = facultyMember?.kelloggdirectoryName || "";
+                    const nameParts = fullName.split(" ");
+                    if (nameParts.length >= 2) {
+                      const firstName = nameParts[0];
+                      const lastName = nameParts.slice(1).join(" ");
+                      return `Dr. ${firstName} ${lastName}`;
+                    }
+                    return `Dr. ${fullName}`;
+                  })()}
                 </span>
-              </div>
-            )}
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle className="flex items-center gap-2">
-              <span className="text-base sm:text-lg font-medium truncate">
-                {(() => {
-                  const fullName = facultyMember?.kelloggdirectoryName || "";
-                  const nameParts = fullName.split(" ");
-                  if (nameParts.length >= 2) {
-                    const firstName = nameParts[0];
-                    const lastName = nameParts.slice(1).join(" ");
-                    return `Dr. ${firstName} ${lastName}`;
-                  }
-                  return `Dr. ${fullName}`;
-                })()}
-              </span>
-              {facultyMember?.kelloggdirectoryBioUrl ? (
-                <a
-                  href={facultyMember.kelloggdirectoryBioUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline inline-flex items-center gap-1"
-                  title="Open directory profile"
-                >
-                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">Open directory profile</span>
-                </a>
+                {facultyMember?.kelloggdirectoryBioUrl ? (
+                  <a
+                    href={facultyMember.kelloggdirectoryBioUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline inline-flex items-center gap-1"
+                    title="Open directory profile"
+                  >
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">Open directory profile</span>
+                  </a>
+                ) : null}
+              </CardTitle>
+              {facultyMember?.kelloggdirectoryTitle && (
+                <CardDescription className="truncate">
+                  {facultyMember.kelloggdirectoryTitle}
+                </CardDescription>
+              )}
+              {facultyMember?.email && (
+                <div className="flex items-start gap-2 text-sm text-primary break-words">
+                  <Mail className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <a
+                    href={`mailto:${facultyMember.email}`}
+                    className="hover:underline break-words"
+                    title={`Email ${facultyMember.kelloggdirectoryName ?? ""}`}
+                  >
+                    {facultyMember.email}
+                  </a>
+                </div>
+              )}
+              {facultyMember?.kelloggdirectorySubtitle ? (
+                <p className="text-sm text-foreground">
+                  {facultyMember.kelloggdirectorySubtitle}
+                </p>
               ) : null}
-            </ItemTitle>
-            {facultyMember?.kelloggdirectoryTitle && (
-              <ItemDescription className="truncate">
-                {facultyMember.kelloggdirectoryTitle}
-              </ItemDescription>
-            )}
-            {facultyMember?.email && (
-              <ItemDescription className="flex items-start gap-2 text-sm text-primary break-words">
-                <Mail className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                <a
-                  href={`mailto:${facultyMember.email}`}
-                  className="hover:underline break-words"
-                  title={`Email ${facultyMember.kelloggdirectoryName ?? ""}`}
-                >
-                  {facultyMember.email}
-                </a>
-              </ItemDescription>
-            )}
-            {facultyMember?.kelloggdirectorySubtitle ? (
-              <p className="text-sm text-foreground">
-                {facultyMember.kelloggdirectorySubtitle}
-              </p>
-            ) : null}
-            <p className="mt-3 text-sm leading-relaxed whitespace-pre-line text-muted-foreground line-clamp-8">
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground line-clamp-8">
               {facultyMember?.kelloggdirectoryBio || "No biography available."}
             </p>
-          </ItemContent>
-          <ItemActions></ItemActions>
-        </Item>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto sm:space-y-6 pr-1 min-h-0 md:basis-[60%] md:max-w-[60%]">

@@ -165,6 +165,25 @@ export const organizations = pgTable("organizations", {
 	pgPolicy("Policy with security definer functions", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true` }),
 ]);
 
+export const faculty = pgTable("faculty", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "faculty_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	kelloggdirectoryName: text("kelloggdirectory_name"),
+	twentyfiveliveName: text("twentyfivelive_name"),
+	kelloggdirectoryTitle: text("kelloggdirectory_title"),
+	kelloggdirectoryBio: text("kelloggdirectory_bio"),
+	kelloggdirectoryImageUrl: text("kelloggdirectory_image_url"),
+	updatedAt: timestamp("updated_at", { mode: 'string' }),
+	kelloggdirectoryBioUrl: text("kelloggdirectory_bio_url"),
+	kelloggdirectorySubtitle: text("kelloggdirectory_subtitle"),
+	cutoutImage: text("cutout_image"),
+	email: text(),
+}, (table) => [
+	unique("faculty_kelloggdirectory_name_key").on(table.kelloggdirectoryName),
+	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
+]);
+
 export const notifications = pgTable("notifications", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	userId: uuid("user_id"),
@@ -192,25 +211,6 @@ export const notifications = pgTable("notifications", {
 	pgPolicy("rt_select_all_notifications", { as: "permissive", for: "select", to: ["anon", "authenticated"] }),
 ]);
 
-export const faculty = pgTable("faculty", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "faculty_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	kelloggdirectoryName: text("kelloggdirectory_name"),
-	twentyfiveliveName: text("twentyfivelive_name"),
-	kelloggdirectoryTitle: text("kelloggdirectory_title"),
-	kelloggdirectoryBio: text("kelloggdirectory_bio"),
-	kelloggdirectoryImageUrl: text("kelloggdirectory_image_url"),
-	updatedAt: timestamp("updated_at", { mode: 'string' }),
-	kelloggdirectoryBioUrl: text("kelloggdirectory_bio_url"),
-	kelloggdirectorySubtitle: text("kelloggdirectory_subtitle"),
-	cutoutImage: text("cutout_image"),
-	email: text(),
-}, (table) => [
-	unique("faculty_kelloggdirectory_name_key").on(table.kelloggdirectoryName),
-	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
-]);
-
 export const facultyUpdates = pgTable("faculty_updates", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "faculty_updates_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
@@ -233,6 +233,7 @@ export const venues = pgTable("venues", {
 	type: text().default('CLASSROOM'),
 	subType: text("sub_type").default('TIERED'),
 	building: text().default('GLOBAL HUB').notNull(),
+	crestron: text(),
 }, (table) => [
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
@@ -284,6 +285,24 @@ export const resourcesDict = pgTable("resources_dict", {
 	unique("resources_id_key").on(table.id),
 ]);
 
+export const venueFilters = pgTable("venue_filters", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "venue_filters_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	name: text(),
+});
+
+export const shiftBlocks = pgTable("shift_blocks", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "shift_blocks_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	startTime: time("start_time"),
+	endTime: time("end_time"),
+	date: date(),
+}, (table) => [
+	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
+]);
+
 export const events = pgTable("events", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	resources: jsonb().default([]),
@@ -316,24 +335,6 @@ export const events = pgTable("events", {
 			foreignColumns: [venues.id],
 			name: "events_venue_fkey"
 		}).onDelete("cascade"),
-	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
-]);
-
-export const venueFilters = pgTable("venue_filters", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "venue_filters_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	name: text(),
-});
-
-export const shiftBlocks = pgTable("shift_blocks", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "shift_blocks_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	startTime: time("start_time"),
-	endTime: time("end_time"),
-	date: date(),
-}, (table) => [
 	pgPolicy("Allow all to authenticated", { as: "permissive", for: "all", to: ["authenticated"], using: sql`true`, withCheck: sql`true`  }),
 ]);
 
@@ -381,25 +382,6 @@ export const venueFilterVenue = pgTable("venue_filter_venue", {
 	primaryKey({ columns: [table.venue, table.venueFilter], name: "venue_filter_venue_pkey"}),
 ]);
 
-export const shiftBlockProfile = pgTable("shift_block_profile", {
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	shiftBlock: bigint("shift_block", { mode: "number" }).notNull(),
-	profile: uuid().notNull(),
-}, (table) => [
-	foreignKey({
-			columns: [table.profile],
-			foreignColumns: [profiles.id],
-			name: "shift_block_profile_profile_fkey"
-		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.shiftBlock],
-			foreignColumns: [shiftBlocks.id],
-			name: "shift_block_profile_shift_block_fkey"
-		}).onDelete("cascade"),
-	primaryKey({ columns: [table.shiftBlock, table.profile], name: "shift_block_profile_pkey"}),
-]);
-
 export const seriesFaculty = pgTable("series_faculty", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
@@ -418,6 +400,25 @@ export const seriesFaculty = pgTable("series_faculty", {
 			name: "series_faculty_series_fkey"
 		}).onDelete("cascade"),
 	primaryKey({ columns: [table.faculty, table.series], name: "series_faculty_pkey"}),
+]);
+
+export const shiftBlockProfile = pgTable("shift_block_profile", {
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	shiftBlock: bigint("shift_block", { mode: "number" }).notNull(),
+	profile: uuid().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.profile],
+			foreignColumns: [profiles.id],
+			name: "shift_block_profile_profile_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.shiftBlock],
+			foreignColumns: [shiftBlocks.id],
+			name: "shift_block_profile_shift_block_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.shiftBlock, table.profile], name: "shift_block_profile_pkey"}),
 ]);
 
 export const shiftBlockProfileRoom = pgTable("shift_block_profile_room", {

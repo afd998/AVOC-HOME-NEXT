@@ -2,7 +2,7 @@ import { asc, db, eq, venues, type Room } from "shared";
 
 export type VenueRow = Pick<
   Room,
-  "id" | "name" | "type" | "subType" | "spelling" | "building"
+  "id" | "name" | "type" | "subType" | "spelling" | "building" | "crestron"
 >;
 
 export async function getVenueById(
@@ -25,6 +25,7 @@ export async function getVenueById(
         type: true,
         subType: true,
         building: true,
+        crestron: true,
       },
     });
 
@@ -45,6 +46,7 @@ export async function getVenues(): Promise<VenueRow[]> {
         type: venues.type,
         subType: venues.subType,
         building: venues.building,
+        crestron: venues.crestron,
       })
       .from(venues)
       .orderBy(asc(venues.name));

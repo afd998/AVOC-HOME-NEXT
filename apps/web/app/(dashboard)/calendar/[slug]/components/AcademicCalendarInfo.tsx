@@ -1,31 +1,40 @@
 "use client"
 import React from 'react';
-import { useAcademicCalendar } from '../hooks/useAcademicCalendar';
 import { GraduationCap } from 'lucide-react';
-import { Badge } from '../../../../../components/ui/badge';
+import { useParams } from 'next/navigation';
+
+import { Badge } from '@/components/ui/badge';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '../../../../../components/ui/popover';
-import { useParams } from 'next/navigation';
+} from '@/components/ui/popover';
+import { useAcademicCalendar } from '@/ref/useAcademicCalendar';
 
 const AcademicCalendarInfo: React.FC = () => {
-  const { date } = useParams<{ date: string }>();
+  const { slug } = useParams<{ slug?: string | string[] }>();
 
-  // Get selected date from URL params
-  const getSelectedDate = (): Date => {
-    if (!date) {
+  const selectedDate = React.useMemo(() => {
+    const dateParam = Array.isArray(slug) ? slug[0] : slug;
+
+    if (!dateParam) {
       const now = new Date();
-      return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+      return new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        12,
+        0,
+        0
+      );
     }
-    
-    const [year, month, day] = date.split('-').map(Number);
-    const parsedDate = new Date(year, month - 1, day, 12, 0, 0);
-    return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
-  };
 
-  const selectedDate = getSelectedDate();
+    const [year, month, day] = dateParam.split("-").map(Number);
+    const parsedDate = new Date(year, month - 1, day, 12, 0, 0);
+
+    return Number.isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+  }, [slug]);
+
   const { data: calendarItems = [], error } = useAcademicCalendar(selectedDate);
 
   if (error) {
