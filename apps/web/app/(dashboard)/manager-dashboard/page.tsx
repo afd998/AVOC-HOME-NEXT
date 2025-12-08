@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDateNumeric, formatTime } from "@/app/utils/dateTime";
 import { getFailedQcItemsForDate, type FailedQcItem } from "@/lib/data/manager-dashboard/failures";
 import { getDailyEventCounts, type DailyEventCounts } from "@/lib/data/manager-dashboard/summary";
+import { DailyReportAreaChart } from "./components/daily-report-area-chart";
+import { DailyReportChart } from "./components/daily-report-chart";
 
 const tabs = [
   { value: "daily-report", label: "Daily Report" },
@@ -51,6 +53,7 @@ export default async function ManagerDashboardPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <DailySummary counts={dailyCounts} displayDate={selectedDate} />
+              <DailyReportAreaChart />
               <FailedQcItemsTable items={failedQcItems} displayDate={selectedDate} />
             </CardContent>
           </Card>
@@ -109,7 +112,7 @@ function DailySummary({ counts, displayDate }: DailySummaryProps) {
   ];
 
   return (
-    <section className="space-y-2">
+    <section className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Snapshot</p>
@@ -117,13 +120,16 @@ function DailySummary({ counts, displayDate }: DailySummaryProps) {
           <p className="text-xs text-muted-foreground">Activity for {formattedDate}.</p>
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        {summary.map((item) => (
-          <div key={item.label} className="rounded-md border bg-muted/30 px-3 py-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</p>
-            <div className="mt-1 text-2xl font-semibold leading-none">{item.value}</div>
-          </div>
-        ))}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid gap-3 sm:grid-cols-3">
+          {summary.map((item) => (
+            <div key={item.label} className="rounded-md border bg-muted/30 px-3 py-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</p>
+              <div className="mt-1 text-2xl font-semibold leading-none">{item.value}</div>
+            </div>
+          ))}
+        </div>
+        <DailyReportChart />
       </div>
     </section>
   );

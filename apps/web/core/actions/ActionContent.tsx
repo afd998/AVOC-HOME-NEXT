@@ -35,8 +35,13 @@ export default function ActionContent({
   // TODO: Implement real-time updates for actions similar to tasks
   // TODO: Set up real-time subscription for action
 
-  const { isCompleted, isCompleting, errorMessage, handleMarkCompleted } =
-    useActionCompletion(action);
+  const {
+    isCompleted,
+    isCompleting,
+    errorMessage,
+    handleMarkCompleted,
+    canCompleteAction,
+  } = useActionCompletion(action);
 
   // Transform eventDetails into finalEvent-like shape for downstream renderers
   const eventForConfiguration = useMemo<finalEvent | null>(() => {
@@ -231,6 +236,7 @@ export default function ActionContent({
         action={action}
         isCompleted={isCompleted}
         isCompleting={isCompleting}
+        canCompleteAction={canCompleteAction}
         onMarkCompleted={handleMarkCompleted}
       />
     </>

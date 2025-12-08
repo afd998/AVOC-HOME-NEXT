@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
 import type { ActionGroup } from "./useActionsQuery";
 import { actionPanelQueryKey } from "./useActionsQuery";
+import { actionQueryKey } from "./useActionQuery";
 
 /**
  * Hook for updating actions in the React Query cache.
@@ -15,6 +16,20 @@ export function useActionMutations() {
 
   const updateAction = useCallback(
     (action: HydratedAction) => {
+      const numericId =
+        typeof action.id === "string"
+          ? Number.parseInt(action.id, 10)
+          : action.id;
+
+      if (numericId == null || Number.isNaN(numericId)) {
+        return;
+      }
+
+      const actionIdKey =
+        typeof action.id === "string" && action.id.trim().length > 0
+          ? action.id
+          : String(numericId);
+
       // Get all cached action queries
       const cache = queryClient.getQueryCache();
       const queries = cache.findAll({
@@ -27,15 +42,6 @@ export function useActionMutations() {
         
         queryClient.setQueryData<ActionGroup[]>(queryKey, (oldData) => {
           if (!oldData) return oldData;
-
-          const numericId =
-            typeof action.id === "string"
-              ? Number.parseInt(action.id, 10)
-              : action.id;
-
-          if (numericId == null || Number.isNaN(numericId)) {
-            return oldData;
-          }
 
           // Find the group for this action
           const existingGroupIndex = oldData.findIndex(
@@ -83,6 +89,31 @@ export function useActionMutations() {
           return updatedActionGroups;
         });
       }
+
+      if (actionIdKey) {
+        queryClient.setQueryData<HydratedAction | undefined>(
+          actionQueryKey(actionIdKey),
+          (existingAction) => {
+            if (!existingAction) {
+              return action;
+            }
+
+            const existingId =
+              typeof existingAction.id === "string"
+                ? Number.parseInt(existingAction.id, 10)
+                : existingAction.id;
+
+            if (
+              existingId === numericId ||
+              String(existingAction.id) === actionIdKey
+            ) {
+              return action;
+            }
+
+            return existingAction;
+          }
+        );
+      }
     },
     [queryClient]
   );
@@ -116,4 +147,3 @@ export function useActionMutations() {
     findActionById,
   };
 }
-

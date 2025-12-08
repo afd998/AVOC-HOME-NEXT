@@ -10,6 +10,7 @@ interface ActionFooterProps {
   action: HydratedAction;
   isCompleted: boolean;
   isCompleting: boolean;
+  canCompleteAction: boolean;
   onMarkCompleted: () => void;
 }
 
@@ -17,10 +18,18 @@ export default function ActionFooter({
   action,
   isCompleted,
   isCompleting,
+  canCompleteAction,
   onMarkCompleted,
 }: ActionFooterProps) {
   const completedByProfile = action.completedByProfile ?? null;
   const completedByDisplayName = getProfileDisplayName(completedByProfile);
+  const disableUntilStart = !canCompleteAction && !isCompleted;
+  const buttonDisabled = isCompleting || isCompleted || disableUntilStart;
+  const disabledVisualClasses = disableUntilStart
+    ? "opacity-60 cursor-not-allowed"
+    : isCompleted
+      ? "opacity-100"
+      : "";
 
   return (
     <CardFooter className="flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:gap-4 sm:justify-between shrink-0">
@@ -62,11 +71,10 @@ export default function ActionFooter({
       <Button
         type="button"
         onClick={onMarkCompleted}
-        disabled={isCompleting || isCompleted}
+        disabled={buttonDisabled}
+        title={disableUntilStart ? "Available once the action starts." : undefined}
         variant="secondary"
-        className={`w-full justify-center gap-2 bg-emerald-600 text-emerald-50 hover:bg-emerald-700 focus-visible:ring-emerald-500 disabled:bg-emerald-600 disabled:text-emerald-50 disabled:opacity-100 sm:w-auto sm:ml-auto ${
-          isCompleted ? "opacity-100" : ""
-        }`}
+        className={`w-full justify-center gap-2 bg-emerald-600 text-emerald-50 hover:bg-emerald-700 focus-visible:ring-emerald-500 disabled:bg-emerald-600 disabled:text-emerald-50 sm:w-auto sm:ml-auto ${disabledVisualClasses}`}
       >
         {isCompleting && !isCompleted ? (
           <>
@@ -83,4 +91,3 @@ export default function ActionFooter({
     </CardFooter>
   );
 }
-
