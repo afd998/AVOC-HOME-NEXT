@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { EventSeriesIcon } from "../components/sidebar/event-series-icon";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -115,11 +116,49 @@ export default function SeriesSearch() {
 
   const showSkeletons = isLoading && results.length === 0;
 
+  let resultsSection: ReactNode;
+  if (!meetsMinLength) {
+    resultsSection = (
+      <Card>
+        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          Start typing to search for a series.
+        </CardContent>
+      </Card>
+    );
+  } else if (showSkeletons) {
+    resultsSection = <ResultsSkeleton />;
+  } else if (results.length > 0) {
+    resultsSection = (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Showing up to {results.length.toLocaleString()} of {total.toLocaleString()} matches
+          {displayQuery ? ` for "${displayQuery}"` : ""}.
+        </p>
+        {results.map((series) => (
+          <SeriesResultCard key={series.id} series={series} />
+        ))}
+      </div>
+    );
+  } else {
+    resultsSection = (
+      <Card>
+        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          {displayQuery
+            ? `No series found for "${displayQuery}".`
+            : "No series found for that search."}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      <Card className="shadow-md">
+    <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
+      <Card className="shadow-md md:sticky md:top-4 md:w-[30rem] md:flex-shrink-0 md:self-start">
         <CardHeader>
-          <CardTitle>Search Series</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <EventSeriesIcon className="h-5 w-5" />
+            <span>Event Series</span>
+          </CardTitle>
           <CardDescription>
             Lookup academic series by name. Searches run on the server so you
             only download the matches you need.
@@ -147,35 +186,9 @@ export default function SeriesSearch() {
           ) : null}
         </CardContent>
       </Card>
-
-      {!meetsMinLength ? (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            Start typing to search for a series.
-          </CardContent>
-        </Card>
-      ) : showSkeletons ? (
-        <ResultsSkeleton />
-      ) : results.length > 0 ? (
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Showing up to {results.length.toLocaleString()} of{" "}
-            {total.toLocaleString()} matches
-            {displayQuery ? ` for "${displayQuery}"` : ""}.
-          </p>
-          {results.map((series) => (
-            <SeriesResultCard key={series.id} series={series} />
-          ))}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            {displayQuery
-              ? `No series found for "${displayQuery}".`
-              : "No series found for that search."}
-          </CardContent>
-        </Card>
-      )}
+      <div className="flex-1 min-w-0 max-h-[40rem] overflow-y-auto pr-1">
+        {resultsSection}
+      </div>
     </div>
   );
 }

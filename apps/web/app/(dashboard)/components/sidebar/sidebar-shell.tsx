@@ -371,7 +371,7 @@ export const SidebarTrigger = React.forwardRef<
     <Button
       ref={ref}
       type="button"
-      variant="ghost"
+      variant="outline"
       size="icon"
       onClick={toggleSidebar}
       className={cn(

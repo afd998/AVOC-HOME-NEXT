@@ -8,13 +8,20 @@ import {
   useAssignRoomsToShiftBlock,
   useShiftBlocks,
 } from "@/features/SessionAssignments/hooks/useShiftBlocks";
+import type { ActionGroup } from "@/lib/query";
+import { useActionPanelStore } from "@/lib/stores/action-panel";
 
 interface RoomRowsProps {
   calendar: RoomRowData[];
   dateString: string;
+  actionGroups?: ActionGroup[];
 }
 
-export default function RoomRows({ calendar, dateString }: RoomRowsProps) {
+export default function RoomRows({
+  calendar,
+  dateString,
+  actionGroups = [],
+}: RoomRowsProps) {
   const {
     showEventAssignments,
     selectedShiftBlock,
@@ -34,6 +41,15 @@ export default function RoomRows({ calendar, dateString }: RoomRowsProps) {
   const { data: shiftBlocks = [] } = useShiftBlocks(dateString);
   const assignRoomsToShiftBlock = useAssignRoomsToShiftBlock();
   const isAssigning = assignRoomsToShiftBlock.isPending;
+  const { activeTab, currentUserId } = useActionPanelStore();
+
+  const actionsByRoom = React.useMemo(() => {
+    const map = new Map<string, ActionGroup["actions"]>();
+    actionGroups.forEach((group) => {
+      map.set(group.roomName, group.actions);
+    });
+    return map;
+  }, [actionGroups]);
 
   const labelRoomOrder = React.useMemo(
     () => calendar.map((r) => r.roomName),
@@ -178,6 +194,43 @@ export default function RoomRows({ calendar, dateString }: RoomRowsProps) {
           const assignedEntry = shiftAssignments.find(
             (a: any) => Array.isArray(a?.rooms) && a.rooms.includes(roomName)
           );
+          const visibleRoomActions = (actionsByRoom.get(roomName) ?? []).filter(
+            (action) => {
+              const normalizedType = (action.type?.toUpperCase() ?? "")
+                .replace(/\s+/g, " ")
+                .trim();
+              const normalizedSubType = (action.subType?.toUpperCase() ?? "")
+                .replace(/\s+/g, " ")
+                .trim();
+
+              if (
+                normalizedType === "CAPTURE QC" ||
+                normalizedType === "CAPTURE_QC" ||
+                normalizedSubType === "CAPTURE QC" ||
+                normalizedSubType === "CAPTURE_QC"
+              ) {
+                return false;
+              }
+              if (activeTab === "mine") {
+                if (!currentUserId) {
+                  return false;
+                }
+                const effectiveAssigneeId =
+                  action.assignedToManual ??
+                  action.assignedToManualProfile?.id ??
+                  action.assignedTo ??
+                  action.assignedToProfile?.id ??
+                  null;
+                if (!effectiveAssigneeId) {
+                  return false;
+                }
+                return (
+                  String(effectiveAssigneeId) === String(currentUserId)
+                );
+              }
+              return true;
+            }
+          );
           return (
             <RoomRow
               key={`${roomName}`}
@@ -196,6 +249,7 @@ export default function RoomRows({ calendar, dateString }: RoomRowsProps) {
               assignedUserId={assignedEntry?.user ?? null}
               assignedUserName={assignedEntry?.name ?? null}
               venueId={venueId}
+              roomActions={visibleRoomActions}
             />
           );
         }

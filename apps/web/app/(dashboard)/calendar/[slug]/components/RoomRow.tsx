@@ -11,7 +11,10 @@ import {
 import UserAvatar from "@/core/User/UserAvatar";
 import Event from "@/app/(dashboard)/calendar/[slug]/components/Event/components/Event";
 import { finalEvent } from "@/lib/data/calendar/calendar";
+import type { HydratedAction } from "@/lib/data/calendar/actionUtils";
 import Link from "next/link";
+import RoomRowAction from "@/app/(dashboard)/calendar/[slug]/components/RoomRowAction";
+import { convertTimeToMinutes } from "@/app/(dashboard)/calendar/[slug]/components/ActionsPanel/utils";
 
 interface RoomRowProps {
   room: string;
@@ -29,6 +32,7 @@ interface RoomRowProps {
   assignedUserId?: string | null;
   assignedUserName?: string | null;
   venueId?: number | null;
+  roomActions?: HydratedAction[];
 }
 
 export default function RoomRow({
@@ -47,6 +51,7 @@ export default function RoomRow({
   assignedUserId = null,
   assignedUserName = null,
   venueId = null,
+  roomActions = [],
 }: RoomRowProps) {
   const rowHeightPx = 90;
   const roomText = room.replace(/^GH\s+/, "");
@@ -114,12 +119,53 @@ export default function RoomRow({
 
   const label = labelContent;
 
+  const stackedActionElements = React.useMemo(() => {
+    const totals = new Map<number, number>();
+    const indices = new Map<number, number>();
+
+    const getStartKey = (action: HydratedAction) => {
+      if (typeof action.derived?.startMinutes === "number") {
+        return action.derived.startMinutes;
+      }
+      const fallback = convertTimeToMinutes(action.startTime);
+      if (fallback !== null) {
+        return fallback;
+      }
+      const numericId =
+        typeof action.id === "number"
+          ? action.id
+          : Number.parseInt(String(action.id), 10);
+      return Number.isFinite(numericId) ? numericId : 0;
+    };
+
+    roomActions.forEach((action) => {
+      const key = getStartKey(action);
+      totals.set(key, (totals.get(key) ?? 0) + 1);
+    });
+
+    return roomActions.map((action) => {
+      const key = getStartKey(action);
+      const currentIndex = indices.get(key) ?? 0;
+      indices.set(key, currentIndex + 1);
+      const stackCount = totals.get(key) ?? 1;
+      return (
+        <RoomRowAction
+          key={`action-${action.id}-${currentIndex}`}
+          action={action}
+          rowHeightPx={rowHeightPx}
+          stackIndex={currentIndex}
+          stackCount={stackCount}
+        />
+      );
+    });
+  }, [roomActions, rowHeightPx]);
+
   return (
     <div
       className={` flex overflow-visible ${isLastRow ? "rounded-b-md" : ""} ${
         isEvenRow
-          ? "bg-muted/80 dark:bg-muted/80"
-          : "bg-muted/5 dark:bg-muted/100"
+          ? "bg-muted/10 dark:bg-background"
+          : "bg-background/30 dark:bg-muted/30"
       }`}
       style={{
         ...rowHeightStyle,
@@ -179,6 +225,7 @@ export default function RoomRow({
         {roomEvents?.map((event: finalEvent) => (
           <Event key={event.id} event={event} rowHeightPx={rowHeightPx} />
         ))}
+        {stackedActionElements}
       </div>
     </div>
   );

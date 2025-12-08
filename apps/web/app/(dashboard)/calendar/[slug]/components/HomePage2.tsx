@@ -13,7 +13,7 @@ import {
   CALENDAR_ROW_HEIGHT_PX,
   CALENDAR_START_HOUR,
 } from "@/app/(dashboard)/calendar/[slug]/calendarConfig";
-import { useCalendarQuery } from "@/lib/query";
+import { useActionsQuery, useCalendarQuery } from "@/lib/query";
 import { useEventAssignmentsStore } from "@/lib/stores/event-assignments";
 
 type HomePage2Props = {
@@ -28,6 +28,11 @@ export default function HomePage2({
   slug,
 }: HomePage2Props) {
   const { data: calendar = [] } = useCalendarQuery({
+    date: slug,
+    filter,
+    autoHide,
+  });
+  const { data: actionGroups = [] } = useActionsQuery({
     date: slug,
     filter,
     autoHide,
@@ -129,6 +134,7 @@ export default function HomePage2({
         <RoomRows
           calendar={calendar}
           dateString={slug}
+          actionGroups={actionGroups}
         />
       </div>
     </>

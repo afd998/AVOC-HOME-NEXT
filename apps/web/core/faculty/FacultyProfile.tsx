@@ -139,17 +139,17 @@ export default async function FacultyProfile({
           <SessionSetupsServer facultyMember={facultyMember} />
         </Suspense> */}
 
-        {/* Faculty Series List */}
+        {/* Faculty Classes List */}
         <div className="space-y-3">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Series ({sortedSeries.length})
+            Classes ({sortedSeries.length})
           </h2>
           
           {sortedSeries.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
-                No series found for this faculty member.
+                No classes found for this faculty member.
               </CardContent>
             </Card>
           ) : (

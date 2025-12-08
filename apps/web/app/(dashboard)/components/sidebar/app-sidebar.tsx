@@ -1,12 +1,10 @@
 import { Suspense } from "react";
 
-import { Calendar as CalendarIcon, LayoutDashboard } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 
-import { NavUser } from "./nav-user";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarRail,
   SidebarGroup,
@@ -37,6 +35,7 @@ import { LogoButton } from "./logo-button";
 import { Filters } from "./filters";
 import { CalendarOnly } from "./calendar-only"; 
 import { FacultyIcon } from "./faculty-icon";
+import { EventSeriesIcon } from "./event-series-icon";
 
 const RoomIcon = ({ className }: { className?: string }) => (
   <svg
@@ -69,7 +68,7 @@ export async function AppSidebar({
           <Link href="/faculty">
             <button
               className="group-data-[collapsible=icon]:flex hidden w-full h-8 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground flex items-center justify-center"
-              aria-label="Faculty List"
+              aria-label="Faculty Directory"
             >
               <FacultyIcon className="h-4 w-4" />
             </button>
@@ -141,15 +140,15 @@ export async function AppSidebar({
                 <Link href="/faculty">
                   <SidebarMenuButton className="w-full justify-start">
                     <FacultyIcon className="h-4 w-4" />
-                    <span>Faculty</span>
+                    <span>Faculty Directory</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <Link href="/series">
                   <SidebarMenuButton className="w-full justify-start">
-                    <CalendarIcon className="h-4 w-4" />
-                    <span>Series</span>
+                    <EventSeriesIcon className="h-4 w-4" />
+                    <span>Event Series</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -210,11 +209,6 @@ export async function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <Suspense fallback={null}>
-          <NavUser />
-        </Suspense>
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

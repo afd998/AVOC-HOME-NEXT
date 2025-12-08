@@ -11,6 +11,7 @@ import { useActionsQuery } from "@/lib/query";
 import ActionAssignments from "../ActionAssignments/ActionAssignments";
 import { useEventAssignmentsStore } from "@/lib/stores/event-assignments";
 import { supabase } from "@/lib/supabase";
+import { useActionPanelStore } from "@/lib/stores/action-panel";
 
 type ActionsPanelProps = {
   date: string;
@@ -23,10 +24,10 @@ export default function ActionsPanel({
   filter,
   autoHide,
 }: ActionsPanelProps) {
-  const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
+  const { activeTab, setActiveTab, currentUserId, setCurrentUserId } =
+    useActionPanelStore();
   const [showSchedule, setShowSchedule] = useState(false);
   const [selectedDate, setSelectedDate] = useState(date);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const { data: actionGroups = [] } = useActionsQuery({ date, filter, autoHide });
   const scrollContainerRef = useRef<HTMLDivElement>(null);

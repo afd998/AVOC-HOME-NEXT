@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Check } from "lucide-react";
 
@@ -13,6 +15,7 @@ import { cn } from "@/lib/utils";
 import UserAvatar from "@/core/User/UserAvatar";
 import { getProfileDisplayName } from "@/core/User/utils";
 import ActionIcon from "@/core/actions/ActionIcon";
+import { useActionHoverStore } from "@/lib/stores/action-hover";
 
 import { convertTimeToMinutes, getActionDisplayName } from "./utils";
 import { actionOverdueClassName } from "./actionOverdueStyles";
@@ -28,6 +31,23 @@ export default function ActionRow({
   hideAssignedAvatar = false,
 }: ActionRowProps) {
   const { action, roomName } = entry;
+  const hoveredActionId = useActionHoverStore(
+    (state) => state.hoveredActionId
+  );
+  const actionPanelHoverId = useActionHoverStore(
+    (state) => state.actionPanelHoverId
+  );
+  const setActionPanelHover = useActionHoverStore(
+    (state) => state.setActionPanelHover
+  );
+  const isTimelineHover =
+    hoveredActionId !== null &&
+    hoveredActionId !== undefined &&
+    String(hoveredActionId) === String(action.id);
+  const isPanelHover =
+    actionPanelHoverId !== null &&
+    actionPanelHoverId !== undefined &&
+    String(actionPanelHoverId) === String(action.id);
   const assignedProfile =
     action.assignedToManualProfile ?? action.assignedToProfile;
   const assignedName = getProfileDisplayName(assignedProfile);
@@ -72,8 +92,10 @@ export default function ActionRow({
           ? " hover:bg-emerald-50  border-emerald-200 bg-emerald-50 dark:bg-emerald-900 dark:border-emerald-800"
           : isOverdue
             ? "border-rose-200 bg-rose-100/70 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/50"
-            : "bg-muted/40 dark:bg-muted/90",
-        isOverdue && actionOverdueClassName
+            : "bg-card",
+        isOverdue && actionOverdueClassName,
+        (isTimelineHover || isPanelHover) &&
+          "border-primary/70 bg-primary/15 shadow-[0_0_12px_rgba(59,130,246,0.35)] dark:bg-primary/25"
       )}
       asChild
     >
@@ -85,8 +107,11 @@ export default function ActionRow({
             ? "hover:!bg-emerald-100 dark:hover:!bg-emerald-900/60"
             : isOverdue
               ? "hover:!bg-rose-200 dark:hover:!bg-rose-900/70"
-              : "hover:!bg-muted/70 dark:hover:!bg-muted/40"
+              : "hover:!bg-muted/70 dark:hover:!bg-muted/40",
+          (isTimelineHover || isPanelHover) && "!bg-primary/20 dark:!bg-primary/30"
         )}
+        onMouseEnter={() => setActionPanelHover(action.id)}
+        onMouseLeave={() => setActionPanelHover(null)}
       >
         <ItemMedia
           variant="default"

@@ -76,7 +76,7 @@ export default function RecordingGroup({
           ],
           isAllCompleted &&
             "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/60",
-          !hasOverdueAction && !isAllCompleted && "bg-muted/40"
+          !hasOverdueAction && !isAllCompleted && "bg-card"
         )}
       >
         <CollapsibleTrigger

@@ -4,9 +4,9 @@ import { SidebarTrigger } from "@/app/(dashboard)/components/sidebar/sidebar";
 import React, { Suspense } from "react";
 import { SidebarShell } from "@/app/(dashboard)/components/sidebar/sidebar-shell";
 import HeaderBreadcrumb from "@/app/(dashboard)/components/sidebar/header-breadcrumb";
-import ChicagoTime from "@/app/(dashboard)/components/header/chicago-time";
+import { ProfilePopover } from "@/app/(dashboard)/components/header/profile-popover";
 import { Button } from "@/components/ui/button";
-import { Bell, Search } from "lucide-react";
+import { Bell } from "lucide-react";
 import { CalendarFocusToggle } from "@/app/(dashboard)/components/sidebar/calendar-focus-toggle";
 
 export default async function DashboardLayout({
@@ -35,16 +35,7 @@ export default async function DashboardLayout({
             <div className="flex items-center gap-2 px-4">
               <Button
                 type="button"
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                aria-label="Search"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 className="h-8 w-8"
                 aria-label="Notifications"
@@ -52,7 +43,7 @@ export default async function DashboardLayout({
                 <Bell className="h-4 w-4" />
               </Button>
               <React.Suspense fallback={null}>
-                <ChicagoTime />
+                <ProfilePopover />
               </React.Suspense>
             </div>
           </header>

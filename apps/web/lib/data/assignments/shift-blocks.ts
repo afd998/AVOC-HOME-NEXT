@@ -198,12 +198,12 @@ export async function assignRoomsToShiftBlock(
         targetProfileId !== undefined // allow null to unassign
       ) {
         const eventsForRooms = await tx
-          .select({ id: events.id, roomName: events.roomName })
+          .select({ id: events.id })
           .from(events)
           .where(
             and(
               eq(events.date, blockMeta.date),
-              inArray(events.roomName, candidateList)
+              inArray(events.venue, roomIds)
             )
           );
 
@@ -478,38 +478,12 @@ export async function updateActionsForCopiedBlocks(
 ) {
   if (blocks.length === 0) return;
 
-  const roomIdToName = new Map<number, string | null>();
+  const relationsByBlock = new Map<number, Map<string, number[]>>();
   roomRelations.forEach((rel) => {
-    if (rel.roomName) {
-      roomIdToName.set(rel.room, rel.roomName);
-    }
-  });
-
-  const missingRoomIds = Array.from(
-    new Set(
-      roomRelations
-        .map((rel) => rel.room)
-        .filter((roomId) => !roomIdToName.has(roomId))
-    )
-  );
-
-  if (missingRoomIds.length > 0) {
-    const venueRows = await tx
-      .select({ id: venues.id, name: venues.name })
-      .from(venues)
-      .where(inArray(venues.id, missingRoomIds));
-    venueRows.forEach((venue) => {
-      roomIdToName.set(venue.id, venue.name ?? null);
-    });
-  }
-
-  const relationsByBlock = new Map<number, Map<string, string[]>>();
-  roomRelations.forEach((rel) => {
-    const roomName = roomIdToName.get(rel.room);
-    if (!roomName) return;
+    if (typeof rel.room !== "number") return;
     const blockMap = relationsByBlock.get(rel.shiftBlock) ?? new Map();
     const rooms = blockMap.get(rel.profile) ?? [];
-    rooms.push(roomName);
+    rooms.push(rel.room);
     blockMap.set(rel.profile, rooms);
     relationsByBlock.set(rel.shiftBlock, blockMap);
   });
@@ -519,14 +493,14 @@ export async function updateActionsForCopiedBlocks(
     const profileRooms = relationsByBlock.get(block.id);
     if (!profileRooms) continue;
 
-    for (const [profileId, roomNames] of profileRooms.entries()) {
-      const candidateList = buildRoomNameCandidates(roomNames);
-      if (candidateList.length === 0) continue;
+    for (const [profileId, roomIds] of profileRooms.entries()) {
+      const uniqueRoomIds = Array.from(new Set(roomIds.filter((id): id is number => typeof id === "number")));
+      if (uniqueRoomIds.length === 0) continue;
 
       const eventsForRooms = await tx
         .select({ id: events.id })
         .from(events)
-        .where(and(eq(events.date, block.date), inArray(events.roomName, candidateList)));
+        .where(and(eq(events.date, block.date), inArray(events.venue, uniqueRoomIds)));
 
       const eventIds = eventsForRooms
         .map((e) => e.id)
