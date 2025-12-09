@@ -29,6 +29,10 @@ config.validate();
 // Global browser instance for reuse across requests
 let browser: Browser | null = null;
 
+// Global flag to skip event partitioning (process all events regardless of start time)
+// Set to true to temporarily disable partitioning and update all events for the day
+export let SKIP_EVENT_PARTITIONING = false;
+
 /**
  * Initialize and return a browser instance
  * Uses singleton pattern to reuse the same browser across multiple requests
@@ -126,26 +130,36 @@ async function main(): Promise<void> {
 
   const now = dayjs();
   const { futureEvents, startedEvents } = partitionEventsByStart(events, now);
-  if (startedEvents.length > 0) {
-    const startedIds = startedEvents
-      .map((event) => event.id)
-      .filter((id): id is number => typeof id === "number");
+  
+  // Use all events if partitioning is disabled, otherwise use only future events
+  const eventsToProcess = SKIP_EVENT_PARTITIONING ? events : futureEvents;
+  
+  if (SKIP_EVENT_PARTITIONING) {
     console.log(
-      `⏸️ Skipping ${startedEvents.length} events that already started: ${
-        startedIds.length > 0 ? startedIds.join(", ") : "no IDs available"
-      }`
+      `⚠️ Event partitioning is DISABLED - processing ALL ${events.length} events (including ${startedEvents.length} already-started events)`
     );
   } else {
-    console.log(`▶️ No already-started events found for ${date}`);
+    if (startedEvents.length > 0) {
+      const startedIds = startedEvents
+        .map((event) => event.id)
+        .filter((id): id is number => typeof id === "number");
+      console.log(
+        `⏸️ Skipping ${startedEvents.length} events that already started: ${
+          startedIds.length > 0 ? startedIds.join(", ") : "no IDs available"
+        }`
+      );
+    } else {
+      console.log(`▶️ No already-started events found for ${date}`);
+    }
   }
 
   console.log(`🔗 Processing resource events and enriching events...`);
 
   // Process resource events (doesn't need enriched events)
-  const resourcesEvents = await makeResourceEventsRows(futureEvents);
+  const resourcesEvents = await makeResourceEventsRows(eventsToProcess);
 
   // Enrich events with extension data
-  const enrichedEvents = enrichEvents(futureEvents);
+  const enrichedEvents = enrichEvents(eventsToProcess);
 
   console.log(`🔍 Processing actions and QC items...`);
   const actions = await getActions(enrichedEvents);
@@ -155,7 +169,7 @@ async function main(): Promise<void> {
   );
 
   const batch = {
-    events: futureEvents,
+    events: eventsToProcess,
     enrichedEvents,
     resourcesEvents,
     seriesFacultyRows,
@@ -172,15 +186,17 @@ async function main(): Promise<void> {
     eventOtherHardwareRows,
     eventRecordingRows,
   } = flattenEnrichedEvents(batch.enrichedEvents);
-
   // Save series first (for FK constraint)
   await saveSeries(seriesRows);
   console.log(`📚 Saved ${seriesRows.length} series`);
 
   // Save events
-  const startedEventIds = startedEvents
-    .map((event) => event.id)
-    .filter((id): id is number => typeof id === "number");
+  // When partitioning is disabled, don't exclude any events
+  const startedEventIds = SKIP_EVENT_PARTITIONING
+    ? []
+    : startedEvents
+        .map((event) => event.id)
+        .filter((id): id is number => typeof id === "number");
 
   await saveEvents([...batch.events], date, startedEventIds);
 

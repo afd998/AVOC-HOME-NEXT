@@ -61,7 +61,7 @@ const parseRoomName = (subjectItemName) => {
     return null;
   }
   // Handle combined rooms like "KGH2410A&B" by keeping the ampersand grouping intact
-  const combinedMatch = subjectItemName.match(/K(GH\d+[A-Z]?(?:&[A-Z])?)/);
+  const combinedMatch = subjectItemName.match(/K(GH\d+(?:[A-Z])?(?:&(?:\d+|[A-Z]+))?)/);
   if (combinedMatch) {
     const combined = combinedMatch[1];
     return combined.replace(/^GH(\d+)/, "GH $1");

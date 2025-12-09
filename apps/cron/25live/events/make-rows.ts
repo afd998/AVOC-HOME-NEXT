@@ -91,6 +91,101 @@ const normalizeRoomName = (value: unknown): string | null => {
   return trimmed.replace(/\s+/g, "").toUpperCase();
 };
 
+const COMBINED_ROOM_COMPONENTS: Record<string, string[]> = {
+  "GH 1420&30": ["GH 1420", "GH 1430"],
+  "GH 2410A&B": ["GH 2410A", "GH 2410B"],
+  "GH 2420A&B": ["GH 2420A", "GH 2420B"],
+  "GH 2430A&B": ["GH 2430A", "GH 2430B"],
+};
+
+const getComponentRooms = (roomName: string): string[] => {
+  if (COMBINED_ROOM_COMPONENTS[roomName]) {
+    return COMBINED_ROOM_COMPONENTS[roomName];
+  }
+
+  if (!roomName.includes("&")) {
+    return [];
+  }
+
+  const [leftRaw, rightRaw] = roomName.split("&");
+  if (!leftRaw || !rightRaw) {
+    return [];
+  }
+
+  const left = leftRaw.trim();
+  const right = rightRaw.trim();
+  const baseMatch = left.match(/^(GH\s*)(\d+)([A-Z]?)$/);
+  if (!baseMatch) {
+    return [];
+  }
+
+  const [, prefix, numberPart, letterPart] = baseMatch;
+  const components = [left];
+
+  if (/^\d+$/.test(right)) {
+    const replacementLength = right.length;
+    if (numberPart.length >= replacementLength) {
+      const leadingDigits = numberPart.slice(0, numberPart.length - replacementLength);
+      components.push(`${prefix}${leadingDigits}${right}${letterPart}`.trim());
+    }
+  } else if (/^[A-Z]+$/.test(right)) {
+    components.push(`${prefix}${numberPart}${right}`);
+  }
+
+  return components;
+};
+
+type SpaceInfo = {
+  space_name?: string;
+  formal_name?: string;
+  building_name?: string | null;
+  partition_name?: string;
+  max_capacity?: number;
+};
+
+type ReservationSpaceEntry = {
+  rawSpace: SpaceInfo | undefined;
+  spaceName: string | null;
+  roomName: string | null;
+  spaceKey: string;
+};
+
+const filterSpacesForReservation = (
+  spaceEntries: ReservationSpaceEntry[]
+): ReservationSpaceEntry[] => {
+  if (spaceEntries.length <= 1) {
+    return spaceEntries;
+  }
+
+  const combinedRoomsPresent = new Set<string>();
+  const componentsToOmit = new Set<string>();
+
+  for (const entry of spaceEntries) {
+    const roomName = entry.roomName;
+    if (roomName) {
+      const components = getComponentRooms(roomName);
+      if (components.length > 0) {
+        combinedRoomsPresent.add(roomName);
+        components.forEach((component) => componentsToOmit.add(component));
+      }
+    }
+  }
+
+  if (combinedRoomsPresent.size === 0) {
+    return spaceEntries;
+  }
+
+  return spaceEntries.filter(({ roomName }) => {
+    if (!roomName) {
+      return true;
+    }
+    if (combinedRoomsPresent.has(roomName)) {
+      return true;
+    }
+    return !componentsToOmit.has(roomName);
+  });
+};
+
 const buildRoomLookup = async (): Promise<Map<string, number>> => {
   const roomRows = await db
     .select({
@@ -259,7 +354,7 @@ export async function makeEventRows(
       const resources = parseReservationResources(rsv);
       // Handle space_reservation (can be object or array)
       // Extract all spaces from space_reservation(s)
-      const spaces: Array<{ space_name?: string; formal_name?: string; building_name?: string | null; partition_name?: string; max_capacity?: number } | undefined> = [];
+      const spaces: Array<SpaceInfo | undefined> = [];
       
       if (rsv.space_reservation) {
         const spaceReservations = Array.isArray(rsv.space_reservation)
@@ -278,10 +373,32 @@ export async function makeEventRows(
         spaces.push(undefined);
       }
 
-      for (const space of spaces) {
+      const reservationSpaceEntries: ReservationSpaceEntry[] = spaces.map((space) => {
         const spaceName = space?.space_name ?? null;
         const roomName = getRoomNameForSpace(series, spaceName);
         const spaceKey = normalizeRoomName(spaceName) ?? "NOSPACE";
+        return {
+          rawSpace: space,
+          spaceName,
+          roomName,
+          spaceKey,
+        };
+      });
+
+      const filteredSpaceEntries = filterSpacesForReservation(reservationSpaceEntries);
+
+      const uniqueSpaceEntries: ReservationSpaceEntry[] = [];
+      const seenSpaceKeys = new Set<string>();
+
+      for (const entry of filteredSpaceEntries) {
+        if (seenSpaceKeys.has(entry.spaceKey)) {
+          continue;
+        }
+        seenSpaceKeys.add(entry.spaceKey);
+        uniqueSpaceEntries.push(entry);
+      }
+
+      for (const { spaceName, roomName, spaceKey } of uniqueSpaceEntries) {
         const eventId = generateDeterministicId(
           composeEventIdInput(seriesId, rsvId, spaceKey)
         );

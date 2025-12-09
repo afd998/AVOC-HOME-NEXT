@@ -53,7 +53,7 @@ export async function getActionsCalendar(
   });
   const HydrateActions = addDisplayColumns(filteredActions);
   const roomGroups = groupActionsByRoom(HydrateActions);
-  const finalRoomGroups = roomGroups;
+  const finalRoomGroups = handleMergedRooms(roomGroups);
   const visibleRoomGroups = autoHide
     ? finalRoomGroups.filter((group) => group.actions.length > 0)
     : finalRoomGroups;

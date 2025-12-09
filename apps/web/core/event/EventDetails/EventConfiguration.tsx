@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  CardFooter,
   CardTitle,
 } from "../../../components/ui/card";
 import {
@@ -145,6 +146,9 @@ export default function EventConfiguration({
             )}
           </div>
         </CardContent>
+        <CardFooter className="justify-end pt-0 text-xs text-muted-foreground">
+          Event ID: {event.id}
+        </CardFooter>
       </Card>
     </EventConfigurationProvider>
   );
