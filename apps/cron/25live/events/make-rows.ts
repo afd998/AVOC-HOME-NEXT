@@ -148,6 +148,7 @@ type ReservationSpaceEntry = {
   spaceName: string | null;
   roomName: string | null;
   spaceKey: string;
+  venueId: number | null;
 };
 
 const filterSpacesForReservation = (
@@ -162,12 +163,22 @@ const filterSpacesForReservation = (
 
   for (const entry of spaceEntries) {
     const roomName = entry.roomName;
-    if (roomName) {
-      const components = getComponentRooms(roomName);
-      if (components.length > 0) {
-        combinedRoomsPresent.add(roomName);
-        components.forEach((component) => componentsToOmit.add(component));
-      }
+    if (!roomName) {
+      continue;
+    }
+
+    const components = getComponentRooms(roomName);
+    if (components.length === 0) {
+      continue;
+    }
+
+    // Only treat a combined room as authoritative (and drop its components)
+    // when it actually maps to a known venue. If we cannot resolve the
+    // combined room to a venue, keep the component rooms so they are saved
+    // as separate events instead of collapsing into an "unknown" room.
+    if (entry.venueId != null) {
+      combinedRoomsPresent.add(roomName);
+      components.forEach((component) => componentsToOmit.add(component));
     }
   }
 
@@ -248,6 +259,10 @@ const getRoomNameForSpace = (
   const parsedSpace = parseRoomName(spaceName ?? "");
   if (parsedSpace) {
     return parsedSpace;
+  }
+
+  if (typeof spaceName === "string" && spaceName.trim().length > 0) {
+    return spaceName.trim();
   }
 
   const subjectName = series.subject_itemName ?? "";
@@ -373,17 +388,27 @@ export async function makeEventRows(
         spaces.push(undefined);
       }
 
-      const reservationSpaceEntries: ReservationSpaceEntry[] = spaces.map((space) => {
-        const spaceName = space?.space_name ?? null;
-        const roomName = getRoomNameForSpace(series, spaceName);
-        const spaceKey = normalizeRoomName(spaceName) ?? "NOSPACE";
-        return {
-          rawSpace: space,
-          spaceName,
-          roomName,
-          spaceKey,
-        };
-      });
+      const reservationSpaceEntries: ReservationSpaceEntry[] = spaces.map(
+        (space) => {
+          const spaceName = (space?.space_name ?? null)?.trim() || null;
+          const roomName = getRoomNameForSpace(series, spaceName);
+          const spaceKey = normalizeRoomName(spaceName) ?? "NOSPACE";
+
+          // Resolve venue using the explicit space name first; if that fails,
+          // fall back to the parsed room name (which may normalize combined rooms).
+          const venueId =
+            resolveVenueId(spaceName, roomLookup) ??
+            resolveVenueId(roomName, roomLookup);
+
+          return {
+            rawSpace: space,
+            spaceName,
+            roomName,
+            spaceKey,
+            venueId,
+          };
+        }
+      );
 
       const filteredSpaceEntries = filterSpacesForReservation(reservationSpaceEntries);
 
@@ -398,7 +423,11 @@ export async function makeEventRows(
         uniqueSpaceEntries.push(entry);
       }
 
-      for (const { spaceName, roomName, spaceKey } of uniqueSpaceEntries) {
+      for (const entry of uniqueSpaceEntries) {
+        const { spaceName, roomName, spaceKey, venueId } = entry;
+        if (venueId == null) {
+          continue;
+        }
         const eventId = generateDeterministicId(
           composeEventIdInput(seriesId, rsvId, spaceKey)
         );
@@ -420,8 +449,6 @@ export async function makeEventRows(
         } else {
           seenEventIds.add(eventKey);
         }
-
-        const venueId = resolveVenueId(roomName, roomLookup);
 
         processedEvents.push({
           id: eventId,

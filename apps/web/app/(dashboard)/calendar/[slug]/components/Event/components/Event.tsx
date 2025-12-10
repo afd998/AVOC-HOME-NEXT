@@ -54,7 +54,7 @@ export default function Event({ event, rowHeightPx = 90 }: EventProps) {
           event.eventType === "Lecture" || event.eventType === "KEC"
             ? "dark:border-gray-600 border-gray-400"
             : ""
-        }  absolute transition-all duration-200 ease-in-out cursor-pointer group rounded-md hover:scale-105 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)]  text-sm ${
+        }  absolute transition-all duration-200 ease-in-out cursor-pointer group rounded-md hover:bg-secondary hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)]  text-sm ${
           event.derived.isShortLecture ? "px-1" : "px-2"
         }  ${event.derived.isMergedRoomEvent ? "pt-2 pb-2" : " "} ${
           event.derived.isMergedRoomEvent

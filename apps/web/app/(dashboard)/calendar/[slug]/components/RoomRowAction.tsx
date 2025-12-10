@@ -79,13 +79,29 @@ export default function RoomRowAction({
         : "ring-border",
     isPanelHover && "ring-2 ring-primary/80"
   );
+  // Detect merged rooms (e.g., "A & B") so we can center the action between the combined rows.
+  const mergedRoomSegmentCount = (() => {
+    const roomName = action.room ?? action.eventDetails?.roomName ?? "";
+    if (!roomName.includes("&")) {
+      return 1;
+    }
+    const segments = roomName
+      .split("&")
+      .map((segment) => segment.trim())
+      .filter(Boolean);
+    return Math.max(segments.length, 2);
+  })();
 
   const STACK_GAP = -20;
   const clusterHeight =
     stackCount * ACTION_BUTTON_SIZE + (stackCount - 1) * STACK_GAP;
+  const mergedRoomOffsetPx =
+    mergedRoomSegmentCount > 1
+      ? (rowHeightPx * (mergedRoomSegmentCount - 1)) / 2
+      : 0;
   const baseTop = Math.max(
     4,
-    Math.round(rowHeightPx / 2 - clusterHeight / 2)
+    Math.round(rowHeightPx / 2 - clusterHeight / 2 + mergedRoomOffsetPx)
   );
   const top = baseTop + stackIndex * (ACTION_BUTTON_SIZE + STACK_GAP);
   const rawLeftValue = action.derived?.left ?? "0";

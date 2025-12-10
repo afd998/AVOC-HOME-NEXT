@@ -1,7 +1,5 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import HomePage2 from "./components/HomePage2";
-import CalendarTaskSplit from "./components/CalendarTaskSplit";
-import ActionsPanel from "./components/ActionsPanel";
 import { CalendarShellProvider } from "./components/CalendarShellProvider";
 import { getCalendar } from "@/lib/data/calendar/calendar";
 import { getActionsCalendar } from "@/lib/data/calendar/actionsCalendar";
@@ -54,23 +52,14 @@ export default async function CalendarPage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="h-[calc(100vh-4rem)]">
-        <CalendarTaskSplit>
-          <div className="h-full">
-            <CalendarShellProvider>
-              <HomePage2
-                filter={filter}
-                autoHide={autoHide}
-                slug={slug}
-              />
-            </CalendarShellProvider>
-          </div>
-          <ActionsPanel
-            date={slug}
+      <div className="h-full min-h-0">
+        <CalendarShellProvider>
+          <HomePage2
             filter={filter}
             autoHide={autoHide}
+            slug={slug}
           />
-        </CalendarTaskSplit>
+        </CalendarShellProvider>
       </div>
     </HydrationBoundary>
   );

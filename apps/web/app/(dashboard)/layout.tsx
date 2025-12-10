@@ -8,6 +8,7 @@ import { ProfilePopover } from "@/app/(dashboard)/components/header/profile-popo
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { CalendarFocusToggle } from "@/app/(dashboard)/components/sidebar/calendar-focus-toggle";
+import { DashboardSplitShell } from "@/app/(dashboard)/components/dashboard-split-shell";
 
 export default async function DashboardLayout({
   children,
@@ -47,8 +48,10 @@ export default async function DashboardLayout({
               </React.Suspense>
             </div>
           </header>
-          <main className="flex-1 w-full p-2 overflow-y-auto min-h-0">
-            <Suspense fallback={null}>{children}</Suspense>
+          <main className="flex-1 w-full p-2 min-h-0 overflow-hidden">
+            <DashboardSplitShell>
+              <Suspense fallback={null}>{children}</Suspense>
+            </DashboardSplitShell>
           </main>
         </SidebarInset>
       </SidebarShell>
