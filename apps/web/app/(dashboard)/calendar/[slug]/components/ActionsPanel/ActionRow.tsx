@@ -52,7 +52,11 @@ export default function ActionRow({
     action.assignedToManualProfile ?? action.assignedToProfile;
   const assignedName = getProfileDisplayName(assignedProfile);
 
-  const title = getActionDisplayName(action);
+  const actionDisplayName = getActionDisplayName(action);
+  const seriesName = action.eventDetails?.series?.seriesName?.trim();
+  const title =
+    action.eventDetails?.eventName?.trim() || seriesName || "Linked Event";
+  const subtitle = actionDisplayName;
   const normalizedStatus = action.status?.trim() || null;
   const isCompleted =
     normalizedStatus?.toLowerCase() === "completed";
@@ -64,7 +68,7 @@ export default function ActionRow({
     String(now.getMonth() + 1).padStart(2, "0"),
     String(now.getDate()).padStart(2, "0"),
   ].join("-");
-  
+
   // Get date from event details
   const actionDate = action.eventDetails?.date;
   const isSameDay =
@@ -76,11 +80,6 @@ export default function ActionRow({
     isSameDay &&
     startMinutesAbsolute !== null &&
     startMinutesAbsolute <= nowMinutes;
-  const seriesName = action.eventDetails?.series?.seriesName?.trim();
-  const subtitleParts = [
-    action.eventDetails?.eventName?.trim() || seriesName || "Linked Event",
-  ].filter(Boolean);
-  const subtitle = subtitleParts.join(" | ");
 
   return (
     <Item

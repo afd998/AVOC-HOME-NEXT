@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
@@ -8,7 +8,6 @@ import { Phone } from "lucide-react";
 import EventPageContent from "./EventPageContent";
 import EventActionsTimeline from "./EventActionsTimeline";
 import { useEventQuery } from "@/lib/query";
-import PhoneCallModal from "./PhoneCallModal";
 
 interface EventActionsSectionProps {
   eventId: string;
@@ -17,7 +16,6 @@ interface EventActionsSectionProps {
 export default function EventActionsSection({ eventId }: EventActionsSectionProps) {
   const { data: event } = useEventQuery({ eventId });
   const actions = event?.actions || [];
-  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
 
   return (
     <EventPageContent>
@@ -33,9 +31,11 @@ export default function EventActionsSection({ eventId }: EventActionsSectionProp
                 variant="outline"
                 size="icon"
                 aria-label="Phone call"
-                onClick={() => setIsPhoneModalOpen(true)}
+                asChild
               >
-                <Phone className="h-4 w-4" />
+                <Link href={`/events/${eventId}/new`}>
+                  <Phone className="h-4 w-4" />
+                </Link>
               </Button>
             </div>
           </div>
@@ -44,12 +44,6 @@ export default function EventActionsSection({ eventId }: EventActionsSectionProp
           <EventActionsTimeline actions={actions} />
         </CardContent>
       </Card>
-      <PhoneCallModal
-        event={event}
-        actions={actions}
-        open={isPhoneModalOpen}
-        onOpenChange={setIsPhoneModalOpen}
-      />
     </EventPageContent>
   );
 }

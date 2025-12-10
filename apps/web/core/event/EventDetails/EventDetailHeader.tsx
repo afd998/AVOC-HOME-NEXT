@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { truncateEventName } from "@/core/event/eventUtils";
-import { MapPin, ChevronUp, ChevronDown } from "lucide-react";
+import { MapPin, ChevronUp, ChevronDown, Clock } from "lucide-react";
 import {
   Item,
   ItemMedia,
@@ -26,6 +26,9 @@ import {
 } from "../../../components/ui/popover";
 import { useEventQuery } from "@/lib/query";
 import { XPanelButton } from "../../venue/XPanelButton";
+import { formatTimeFromHHMMSS } from "@/lib/utils/timeUtils";
+import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
 
 interface EventDetailHeaderProps {
   eventId: string;
@@ -33,6 +36,31 @@ interface EventDetailHeaderProps {
 
 export default function EventDetailHeader({ eventId }: EventDetailHeaderProps) {
   const { data: event, isLoading } = useEventQuery({ eventId });
+  const [isInProgress, setIsInProgress] = useState(false);
+
+  useEffect(() => {
+    if (!event?.date || !event?.startTime || !event?.endTime) {
+      setIsInProgress(false);
+      return;
+    }
+
+    const checkInProgress = () => {
+      const now = new Date();
+      const [year, month, day] = event.date.split("-").map(Number);
+      const [startHour, startMin] = event.startTime.split(":").map(Number);
+      const [endHour, endMin] = event.endTime.split(":").map(Number);
+
+      const startDate = new Date(year, month - 1, day, startHour, startMin);
+      const endDate = new Date(year, month - 1, day, endHour, endMin);
+
+      setIsInProgress(now >= startDate && now <= endDate);
+    };
+
+    checkInProgress();
+    const interval = setInterval(checkInProgress, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [event?.date, event?.startTime, event?.endTime]);
 
   if (isLoading) {
     return (
@@ -118,7 +146,7 @@ export default function EventDetailHeader({ eventId }: EventDetailHeaderProps) {
               </ItemContent>
             </Item>
 
-            <div className="md:w-[260px]">
+            <div className="md:w-[260px] space-y-3">
               <Item variant="outline" className="w-full items-start">
                 <ItemMedia variant="icon">
                   <MapPin className="size-4" />
@@ -146,6 +174,26 @@ export default function EventDetailHeader({ eventId }: EventDetailHeaderProps) {
                   </ItemActions>
                 ) : null}
               </Item>
+              {event.startTime && event.endTime && (
+                <Item variant="outline" className="w-full items-start">
+                  <ItemMedia variant="icon">
+                    <Clock className="size-4" />
+                  </ItemMedia>
+                  <ItemContent className="gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <ItemTitle>Time</ItemTitle>
+                      {isInProgress && (
+                        <Badge variant="affirmative" className="text-xs">
+                          In Progress
+                        </Badge>
+                      )}
+                    </div>
+                    <ItemDescription>
+                      {formatTimeFromHHMMSS(event.startTime)} - {formatTimeFromHHMMSS(event.endTime)}
+                    </ItemDescription>
+                  </ItemContent>
+                </Item>
+              )}
             </div>
           </div>
 
