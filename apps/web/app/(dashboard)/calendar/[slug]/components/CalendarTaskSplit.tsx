@@ -37,7 +37,7 @@ export default function CalendarTaskSplit({
     return (
       <div
         className={cn(
-          "flex h-full rounded-md border bg-background",
+          "flex h-full rounded-md bg-background",
           className
         )}
       >
@@ -51,7 +51,7 @@ export default function CalendarTaskSplit({
   return (
     <ResizablePanelGroup
       direction="horizontal"
-      className={cn("flex h-full rounded-md border bg-background", className)}
+      className={cn("flex h-full rounded-md bg-background", className)}
     >
       <ResizablePanel
         defaultSize={80}
