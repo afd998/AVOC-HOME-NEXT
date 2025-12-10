@@ -17,9 +17,8 @@ export default function CalendarPageLayout({
   return (
     <>
       {children}
-      {eventModal}
+
       {actionModal}
-      {facultyModal}
     </>
   );
 }

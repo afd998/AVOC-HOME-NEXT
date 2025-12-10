@@ -103,6 +103,7 @@ export default function HomePage2({
           startHour={CALENDAR_START_HOUR}
           endHour={CALENDAR_END_HOUR}
           pixelsPerMinute={CALENDAR_PIXELS_PER_MINUTE}
+          dateString={slug}
         />
       </div>
       {showEventAssignments && selectedRange && (

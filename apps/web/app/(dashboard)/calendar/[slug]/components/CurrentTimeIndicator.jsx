@@ -2,7 +2,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-export default function CurrentTimeIndicator({ startHour, endHour, pixelsPerMinute }) {
+function formatDateSlug(date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+export default function CurrentTimeIndicator({ startHour, endHour, pixelsPerMinute, dateString }) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const currentTimeRef = useRef(new Date());
 
@@ -20,16 +28,21 @@ export default function CurrentTimeIndicator({ startHour, endHour, pixelsPerMinu
     }, 30000);
     return () => { clearInterval(timer); };
   }, []);
+
+  const isTodayRoute = dateString ? formatDateSlug(currentTime) === dateString : true;
   const currentHour = currentTime.getHours();
   const currentMinute = currentTime.getMinutes();
   const totalCurrentMinutes = (currentHour - startHour) * 60 + currentMinute;
   // Match event positioning - don't add room label width offset
   const currentPosition = totalCurrentMinutes * pixelsPerMinute;
 
-
-
   // Only show if within the visible time range and position is valid
-  if (currentHour >= startHour && currentHour <= endHour && currentPosition >= 0) {
+  if (
+    isTodayRoute &&
+    currentHour >= startHour &&
+    currentHour <= endHour &&
+    currentPosition >= 0
+  ) {
     return (
       <>
         {/* Sticky playhead that follows TimeGrid pattern */}
@@ -66,4 +79,4 @@ export default function CurrentTimeIndicator({ startHour, endHour, pixelsPerMinu
     );
   }
   return null;
-} 
+}
