@@ -118,9 +118,18 @@ export async function makeResourceEventsRows(
   processedEvents.forEach((event) => {
     event.resources.forEach((resource) => {
       const resourceId = resource.itemName;
+      if (!resourceId) {
+        return;
+      }
 
       // Create unique key for this event-resource pair
       const pairKey = `${event.id}-${resourceId}`;
+      
+      // Skip if we've already seen this pair (prevent duplicates)
+      if (seenPairs.has(pairKey)) {
+        return;
+      }
+      
       seenPairs.add(pairKey);
 
       // Normalize the quantity and instructions for this resource
