@@ -1,17 +1,24 @@
 import dayjs, { type Dayjs } from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import { type ProcessedEvent } from "shared";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const TIME_ZONE = "America/Chicago";
 
 export function getEventStartDate(event: ProcessedEvent): Dayjs | null {
   if (!event.date || !event.startTime) {
     return null;
   }
-  const timestamp = dayjs(`${event.date}T${event.startTime}`);
+  const timestamp = dayjs.tz(`${event.date}T${event.startTime}`, TIME_ZONE);
   return timestamp.isValid() ? timestamp : null;
 }
 
 export function partitionEventsByStart(
   events: ProcessedEvent[],
-  reference: Dayjs = dayjs()
+  reference: Dayjs = dayjs().tz(TIME_ZONE)
 ) {
   return events.reduce<{
     futureEvents: ProcessedEvent[];
@@ -29,4 +36,3 @@ export function partitionEventsByStart(
     { futureEvents: [], startedEvents: [] }
   );
 }
-

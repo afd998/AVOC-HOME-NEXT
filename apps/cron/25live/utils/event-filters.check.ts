@@ -1,9 +1,16 @@
 import assert from "node:assert/strict";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import { partitionEventsByStart } from "./event-filters";
 import { type ProcessedEvent } from "shared";
 
-const reference = dayjs("2024-01-15T10:00:00");
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const TIME_ZONE = "America/Chicago";
+
+const reference = dayjs.tz("2024-01-15T10:00:00", TIME_ZONE);
 
 const baseEvent = {
   createdAt: "2024-01-10T00:00:00.000Z",
@@ -70,4 +77,3 @@ assert.deepStrictEqual(
 );
 
 console.log("Event filter checks passed ✅");
-
