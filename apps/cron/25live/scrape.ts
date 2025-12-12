@@ -18,7 +18,6 @@ import { saveEventAVConfigRows } from "./event-av-config/save-rows";
 import { saveEventOtherHardwareRows } from "./event-other-hardware/save-rows";
 import { saveEventRecordingRows } from "./event-recording/save-rows";
 import { saveActions } from "./actions/save-rows";
-import { pgPool } from "shared";
 import { partitionEventsByStart } from "./utils/event-filters";
 import { makeSeriesRows } from "./series/make-rows";
 import { saveSeries, computeSeriesPositions } from "./series/save-rows";
@@ -177,6 +176,10 @@ async function main(): Promise<void> {
     qcItemsRows,
   };
 
+  const eventIdsForActions = eventsToProcess
+    .map((event) => event.id)
+    .filter((id): id is number => typeof id === "number");
+
   console.log(`\n💾 Saving data to database...`);
 
   // Flatten enriched events for saving
@@ -216,7 +219,7 @@ async function main(): Promise<void> {
   ]);
 
   // Save actions (QC items depend on these)
-  await saveActions(batch.actions, date);
+  await saveActions(batch.actions, date, eventIdsForActions);
 
   // Save QC items last (depends on actions being saved)
   await saveQcItemRows(batch.qcItemsRows);
@@ -232,8 +235,6 @@ void (async () => {
       await (browser as Browser).close();
       browser = null;
     }
-    // Close database connection pool to prevent connection termination errors
-    await pgPool.end();
   }
 })().catch((error) => {
   // Set exit code to indicate failure for process monitoring tools
