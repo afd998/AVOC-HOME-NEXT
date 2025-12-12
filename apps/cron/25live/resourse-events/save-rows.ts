@@ -1,4 +1,4 @@
-import { inArray } from "drizzle-orm";
+import { inArray, sql } from "drizzle-orm";
 import {
   db,
   resourceEvents as resourceEventsTable,
@@ -23,6 +23,16 @@ export async function saveResourceEvents(
 
   // STEP 11: Insert the new resource-event relationships
   if (resourceEventsRows.length > 0) {
-    await db.insert(resourceEventsTable).values(resourceEventsRows);
+    // Use upsert semantics to guard against races or leftover rows from prior runs
+    await db
+      .insert(resourceEventsTable)
+      .values(resourceEventsRows)
+      .onConflictDoUpdate({
+        target: [resourceEventsTable.resourceId, resourceEventsTable.eventId],
+        set: {
+          quantity: sql`excluded.quantity`,
+          instructions: sql`excluded.instructions`,
+        },
+      });
   }
 }
