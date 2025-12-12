@@ -9,16 +9,6 @@ type CalendarPageLayoutProps = Readonly<{
 
 export default function CalendarPageLayout({
   children,
-  eventModal,
-  actionModal,
-  facultyModal,
 }: CalendarPageLayoutProps) {
-
-  return (
-    <>
-      {children}
-
-      {actionModal}
-    </>
-  );
+  return <>{children}</>;
 }

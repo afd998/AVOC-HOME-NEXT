@@ -10,7 +10,6 @@ import {
   Item,
   ItemContent,
   ItemDescription,
-  ItemGroup,
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
@@ -69,7 +68,7 @@ export default function RecordingGroup({
         variant="outline"
         size="sm"
         className={cn(
-          "flex flex-col gap-0 p-0",
+          "p-0",
           hasOverdueAction && [
             "border-rose-200 bg-rose-100/70 dark:border-rose-900 dark:bg-rose-950/40",
             actionOverdueClassName,
@@ -115,18 +114,16 @@ export default function RecordingGroup({
           </ItemContent>
           <ChevronDown className="ml-2 size-4 shrink-0 text-muted-foreground transition-transform" />
         </CollapsibleTrigger>
-        <CollapsibleContent className="border-t px-3 pb-3 pt-2">
-          <ItemGroup className="gap-2">
-            {actions.map((entry) => (
-              <ActionRow
-                key={`${groupKey}-${entry.action.id}`}
-                entry={entry}
-                hideAssignedAvatar={hideAssignedAvatar}
-              />
-            ))}
-          </ItemGroup>
-        </CollapsibleContent>
       </Item>
+      <CollapsibleContent className="mt-2 flex flex-col gap-3">
+        {actions.map((entry) => (
+          <ActionRow
+            key={`${groupKey}-${entry.action.id}`}
+            entry={entry}
+            hideAssignedAvatar={hideAssignedAvatar}
+          />
+        ))}
+      </CollapsibleContent>
     </Collapsible>
   );
 }
