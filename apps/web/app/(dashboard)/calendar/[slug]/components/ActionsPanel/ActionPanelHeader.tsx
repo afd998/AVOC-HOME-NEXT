@@ -1,13 +1,20 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { ArrowDown, UserPlus, CalendarClock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEventAssignmentsStore } from "@/lib/stores/event-assignments";
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+});
+
 type ActionPanelHeaderProps = {
+  date: string;
   onGoToNow?: () => void;
   goNowDisabled?: boolean;
   totalActions: number;
@@ -17,6 +24,7 @@ type ActionPanelHeaderProps = {
 };
 
 export default function ActionPanelHeader({
+  date,
   onGoToNow,
   goNowDisabled = false,
   totalActions,
@@ -34,11 +42,24 @@ export default function ActionPanelHeader({
     [onTabValueChange]
   );
 
+  const formattedDate = useMemo(() => {
+    const [year, month, day] = date.split("-").map(Number);
+    if ([year, month, day].some((value) => Number.isNaN(value))) {
+      return date;
+    }
+
+    const parsed = new Date(year, month - 1, day);
+    return Number.isNaN(parsed.getTime()) ? date : dateFormatter.format(parsed);
+  }, [date]);
+
   return (
     <header className="border-b px-4 py-3">
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base font-semibold leading-none">Action View</h2>
+          <div className="flex flex-col">
+            <h2 className="text-base font-semibold leading-none">Actions</h2>
+            <p className="text-sm text-muted-foreground">{formattedDate}</p>
+          </div>
           <div className="flex items-center gap-2">
             {!showEventAssignments && (
               <Button

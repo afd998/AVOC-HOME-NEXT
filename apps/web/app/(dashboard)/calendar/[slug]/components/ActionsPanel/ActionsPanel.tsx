@@ -144,6 +144,7 @@ export default function ActionsPanel({
       <ActionOverdueKeyframes />
       <div className="flex h-full flex-col">
         <ActionPanelHeader
+          date={date}
           onGoToNow={handleGoToNow}
           goNowDisabled={!hasIndicator}
           tabValue={activeTab}
