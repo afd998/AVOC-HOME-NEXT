@@ -21,6 +21,7 @@ type ActionPanelHeaderProps = {
   tabValue: "all" | "mine";
   onTabValueChange?: (value: "all" | "mine") => void;
   onOpenSchedule?: () => void;
+  enableAssignments?: boolean;
 };
 
 export default function ActionPanelHeader({
@@ -31,8 +32,16 @@ export default function ActionPanelHeader({
   tabValue,
   onTabValueChange,
   onOpenSchedule,
+  enableAssignments = true,
 }: ActionPanelHeaderProps) {
   const { showEventAssignments, toggleEventAssignments } = useEventAssignmentsStore();
+  const assignmentsEnabled = enableAssignments;
+  const assignmentsOpen = assignmentsEnabled && showEventAssignments;
+
+  const handleToggleAssignments = useCallback(() => {
+    if (!assignmentsEnabled) return;
+    toggleEventAssignments();
+  }, [assignmentsEnabled, toggleEventAssignments]);
   const handleTabValueChange = useCallback(
     (nextValue: string) => {
       if (nextValue === "all" || nextValue === "mine") {
@@ -61,18 +70,18 @@ export default function ActionPanelHeader({
             <p className="text-sm text-muted-foreground">{formattedDate}</p>
           </div>
           <div className="flex items-center gap-2">
-            {!showEventAssignments && (
+            {assignmentsEnabled && !assignmentsOpen && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={toggleEventAssignments}
+                onClick={handleToggleAssignments}
                 aria-label="Show assignments"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
                 Assignments
               </Button>
             )}
-            {showEventAssignments && (
+            {assignmentsEnabled && assignmentsOpen && (
               <>
                 <Button
                   variant="outline"
@@ -84,9 +93,9 @@ export default function ActionPanelHeader({
                   Schedule
                 </Button>
                 <Button
-                  variant={showEventAssignments ? "default" : "ghost"}
+                  variant={assignmentsOpen ? "default" : "ghost"}
                   size="sm"
-                  onClick={toggleEventAssignments}
+                  onClick={handleToggleAssignments}
                   aria-label="Hide assignments"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />

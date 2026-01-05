@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 
 import ActionsPanel from "@/app/(dashboard)/calendar/[slug]/components/ActionsPanel";
+import { useEventAssignmentsStore } from "@/lib/stores/event-assignments";
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -45,10 +46,20 @@ export function DashboardActionsPanel() {
   const pathname = usePathname();
   const params = useParams();
   const searchParams = useSearchParams();
+  const isCalendarRoute = Boolean(pathname?.startsWith("/calendar"));
+  const setShowEventAssignments = useEventAssignmentsStore(
+    (state) => state.setShowEventAssignments
+  );
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    if (!isCalendarRoute) {
+      setShowEventAssignments(false);
+    }
+  }, [isCalendarRoute, setShowEventAssignments]);
 
   const filter = searchParams?.get("filter") ?? "All Rooms";
   const autoHideParam = searchParams?.get("autoHide");
@@ -57,7 +68,7 @@ export function DashboardActionsPanel() {
   const date = useMemo(() => {
     const searchDate = searchParams?.get("date");
     const slugDate =
-      pathname?.startsWith("/calendar") && normalizeDateCandidate(params?.slug);
+      isCalendarRoute && normalizeDateCandidate(params?.slug);
 
     if (slugDate) return slugDate;
     if (searchDate && DATE_REGEX.test(searchDate)) return searchDate;
@@ -74,6 +85,7 @@ export function DashboardActionsPanel() {
       date={date}
       filter={filter}
       autoHide={autoHide}
+      enableAssignments={isCalendarRoute}
     />
   );
 }

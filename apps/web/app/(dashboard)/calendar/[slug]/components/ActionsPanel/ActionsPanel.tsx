@@ -17,12 +17,14 @@ type ActionsPanelProps = {
   date: string;
   filter: string;
   autoHide: boolean;
+  enableAssignments?: boolean;
 };
 
 export default function ActionsPanel({
   date,
   filter,
   autoHide,
+  enableAssignments = true,
 }: ActionsPanelProps) {
   const { activeTab, setActiveTab, currentUserId, setCurrentUserId } =
     useActionPanelStore();
@@ -108,10 +110,10 @@ export default function ActionsPanel({
   }, [date]);
 
   useEffect(() => {
-    if (!showEventAssignments) {
+    if (!enableAssignments || !showEventAssignments) {
       setShowSchedule(false);
     }
-  }, [showEventAssignments]);
+  }, [enableAssignments, showEventAssignments]);
 
   const handleIndicatorUpdate = useCallback(
     (element: HTMLDivElement | null) => {
@@ -150,7 +152,11 @@ export default function ActionsPanel({
           tabValue={activeTab}
           onTabValueChange={setActiveTab}
           totalActions={totalActions}
-          onOpenSchedule={() => setShowSchedule(true)}
+          enableAssignments={enableAssignments}
+          onOpenSchedule={() => {
+            if (!enableAssignments) return;
+            setShowSchedule(true);
+          }}
         />
         <div
           ref={scrollContainerRef}

@@ -1,7 +1,7 @@
 import { AppSidebar } from "@/app/(dashboard)/components/sidebar/app-sidebar";
 import { SidebarInset } from "@/app/(dashboard)/components/sidebar/sidebar";
 import { SidebarTrigger } from "@/app/(dashboard)/components/sidebar/sidebar";
-import React, { Suspense } from "react";
+import React from "react";
 import { SidebarShell } from "@/app/(dashboard)/components/sidebar/sidebar-shell";
 import HeaderBreadcrumb from "@/app/(dashboard)/components/sidebar/header-breadcrumb";
 import { ProfilePopover } from "@/app/(dashboard)/components/header/profile-popover";
@@ -50,7 +50,7 @@ export default async function DashboardLayout({
           </header>
           <main className="flex-1 w-full p-2 min-h-0 overflow-hidden">
             <DashboardSplitShell>
-              <Suspense fallback={null}>{children}</Suspense>
+              {children}
             </DashboardSplitShell>
           </main>
         </SidebarInset>
