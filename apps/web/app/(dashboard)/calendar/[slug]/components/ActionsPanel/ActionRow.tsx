@@ -7,7 +7,6 @@ import {
   Item,
   ItemActions,
   ItemContent,
-  ItemDescription,
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
@@ -15,7 +14,12 @@ import { cn } from "@/lib/utils";
 import UserAvatar from "@/core/User/UserAvatar";
 import { getProfileDisplayName } from "@/core/User/utils";
 import ActionIcon from "@/core/actions/ActionIcon";
+import { EventFacultySummary } from "@/core/event/components/EventFacultySummary";
 import { useActionHoverStore } from "@/lib/stores/action-hover";
+import {
+  isLectureSeriesType,
+  truncateLectureSeriesTitle,
+} from "@/core/series/util";
 
 import { convertTimeToMinutes, getActionDisplayName } from "./utils";
 import { actionOverdueClassName } from "./actionOverdueStyles";
@@ -56,7 +60,15 @@ export default function ActionRow({
   const seriesName = action.eventDetails?.series?.seriesName?.trim();
   const title =
     action.eventDetails?.eventName?.trim() || seriesName || "Linked Event";
-  const subtitle = actionDisplayName;
+  const seriesType =
+    action.eventDetails?.eventType ?? action.eventDetails?.series?.seriesType;
+  const displayTitle = isLectureSeriesType(seriesType)
+    ? truncateLectureSeriesTitle(title)
+    : title;
+  const faculty =
+    ((action.eventDetails?.series as any)?.seriesFaculties ?? [])
+      .map((relation: any) => relation?.faculty)
+      .filter(Boolean) ?? [];
   const normalizedStatus = action.status?.trim() || null;
   const isCompleted =
     normalizedStatus?.toLowerCase() === "completed";
@@ -119,15 +131,26 @@ export default function ActionRow({
           <ActionIcon
             action={action}
             size="sm"
+            tooltip={actionDisplayName || undefined}
           />
         </ItemMedia>
         <ItemContent className="flex-1 gap-1">
-          <ItemTitle className="text-sm font-medium leading-tight">
-            {title}
+          <ItemTitle className="text-sm font-medium leading-tight" title={title}>
+            {faculty.length > 0 ? (
+              <EventFacultySummary
+                faculty={faculty}
+                maxVisible={2}
+                size="sm"
+                showNames={false}
+                className="flex-row items-center justify-start gap-1 shrink-0"
+                avatarsClassName="justify-start"
+                avatarClassName="h-6 w-6"
+                overlapClassName="-space-x-2"
+                remainingBadgeClassName="h-6 w-6 text-[10px]"
+              />
+            ) : null}
+            {displayTitle}
           </ItemTitle>
-          <ItemDescription className="text-xs text-muted-foreground">
-            {subtitle || "No additional details"}
-          </ItemDescription>
         </ItemContent>
         <ItemActions className="ml-auto flex items-center gap-3 text-xs font-medium uppercase">
           <div className="flex items-center gap-2 text-muted-foreground">

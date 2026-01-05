@@ -33,7 +33,15 @@ export async function getActionById(
               otherHardwareDict: true,
             },
           },
-          series: true,
+          series: {
+            with: {
+              seriesFaculties: {
+                with: {
+                  faculty: true,
+                },
+              },
+            },
+          },
           venue: true,
         },
       },

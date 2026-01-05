@@ -1,12 +1,18 @@
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { getActionIconConfig } from "./utils/getActionIcon";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type ActionIconProps = {
   action: { type?: string | null; subType?: string | null };
   size?: "sm" | "md" | "lg";
   className?: string;
   iconClassName?: string;
+  tooltip?: string;
 };
 
 const wrapperBySize: Record<NonNullable<ActionIconProps["size"]>, string> = {
@@ -26,11 +32,13 @@ export default function ActionIcon({
   size = "md",
   className,
   iconClassName,
+  tooltip,
 }: ActionIconProps) {
   const { icon, colorClass } = getActionIconConfig(action);
 
-  return (
+  const iconNode = (
     <span
+      aria-label={tooltip || undefined}
       className={cn(
         "inline-flex items-center justify-center rounded-full border bg-background",
         wrapperBySize[size],
@@ -42,5 +50,16 @@ export default function ActionIcon({
         className={cn(iconBySize[size], colorClass, iconClassName)}
       />
     </span>
+  );
+
+  if (!tooltip) {
+    return iconNode;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{iconNode}</TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
   );
 }

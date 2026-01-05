@@ -3,6 +3,7 @@
 import { useMemo, useCallback } from "react";
 import Link from "next/link";
 import type { finalEvent } from "@/lib/data/calendar/calendar";
+import { FacultyItem } from "@/core/faculty/FacultyItem";
 import {
   Card,
   CardContent,
@@ -71,15 +72,36 @@ export default function EventConfiguration({
       <Card className="mb-3">
         {headerTitle ? (
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold leading-tight">
-              {headerHref ? (
-                <Link href={headerHref} className="hover:underline">
-                  {headerTitle}
-                </Link>
-              ) : (
-                headerTitle
-              )}
-            </CardTitle>
+            <div className="flex items-center gap-3">
+              {event.faculty?.length ? (
+                <div className="shrink-0 flex flex-wrap items-center gap-2">
+                  {event.faculty.slice(0, 2).map((member) => (
+                    <FacultyItem
+                      key={member.id}
+                      faculty={member}
+                      compact
+                      showSubtitle={false}
+                      variant="ghost"
+                    />
+                  ))}
+                  {event.faculty.length > 2 ? (
+                    <span className="text-xs text-muted-foreground">
+                      +{event.faculty.length - 2}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <CardTitle className="text-lg font-semibold leading-tight">
+                {headerHref ? (
+                  <Link href={headerHref} className="hover:underline">
+                    {headerTitle}
+                  </Link>
+                ) : (
+                  headerTitle
+                )}
+              </CardTitle>
+            </div>
           </CardHeader>
         ) : null}
         <CardContent className="pt-6">

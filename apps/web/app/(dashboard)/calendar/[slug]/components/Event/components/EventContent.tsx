@@ -3,6 +3,10 @@ import { Item, ItemContent } from "@/components/ui/item";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { finalEvent } from "@/lib/data/calendar/calendar";
+import {
+  isLectureSeriesType,
+  truncateLectureSeriesTitle,
+} from "@/core/series/util";
 import localFont from "next/font/local";
 import {
   getFacultyDisplayNamesServer,
@@ -84,7 +88,7 @@ function LectureEvent({ event }: { event: finalEvent }) {
           }}
           title={event.eventName || ""}
         >
-          {event.eventName?.substring(0, 8) || ""}
+          {truncateLectureSeriesTitle(event.eventName)}
         </span>
         <div className="flex flex-col gap-0">
           {thirdPart && (
@@ -257,7 +261,8 @@ export default function EventContent({ event }: { event: finalEvent }) {
         event.eventType === "KEC" ? "w-full justify-center" : "min-w-0"
       } ${event.derived.isMergedRoomEvent ? "h-full pt-6" : ""}`}
     >
-      {event.eventType === "Lecture" ? (
+      {isLectureSeriesType(event.eventType) ||
+      isLectureSeriesType(event.series?.seriesType) ? (
         <LectureEvent event={event} />
       ) : event.eventType === "KEC" ? (
         <KECEvent event={event} />

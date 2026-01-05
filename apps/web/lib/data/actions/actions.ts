@@ -112,7 +112,15 @@ export async function getActionsByDate(date: string): Promise<ActionWithDict[]> 
                 otherHardwareDict: true,
               },
             },
-            series: true,
+            series: {
+              with: {
+                seriesFaculties: {
+                  with: {
+                    faculty: true,
+                  },
+                },
+              },
+            },
             venue: true,
           },
         },

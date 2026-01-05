@@ -49,6 +49,13 @@ export default function ActionContent({
 
     const eventDetails = action.eventDetails;
 
+    // Faculty is linked to series (seriesFaculties), not directly to the event.
+    // When ActionContent renders the "Event" configuration card, we want the same
+    // series faculty available for avatars/name summaries in the header.
+    const facultyMembers = (eventDetails.series?.seriesFaculties ?? [])
+      .map((relation) => relation.faculty)
+      .filter(Boolean) as finalEvent["faculty"];
+
     // Transform resourceEvents to CalendarEventResource format
     const resources: CalendarEventResource[] = (
       eventDetails.resourceEvents ?? []
@@ -110,7 +117,7 @@ export default function ActionContent({
       avConfig,
       recording,
       otherHardware,
-      faculty: [], // Not needed here
+      faculty: facultyMembers,
       isFirstSession: false, // Not needed here
       actions: [], // Not needed here
     } as finalEvent;
