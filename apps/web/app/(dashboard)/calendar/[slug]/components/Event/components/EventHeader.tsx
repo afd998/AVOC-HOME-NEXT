@@ -48,7 +48,7 @@ export default function EventHeader({ event }: { event: finalEvent }) {
           {hasHybrid && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center justify-center rounded-sm bg-black/10 p-1 dark:bg-white/10">
+                <div className="flex items-center justify-center rounded-sm p-1">
                   <ZoomIcon />
                 </div>
               </TooltipTrigger>
@@ -60,7 +60,7 @@ export default function EventHeader({ event }: { event: finalEvent }) {
           {hasRecording && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center justify-center rounded-sm bg-black/10 p-1 dark:bg-white/10">
+                <div className="flex items-center justify-center rounded-sm p-1">
                   <RecordingIcon />
                 </div>
               </TooltipTrigger>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { CalendarFocusToggle } from "@/app/(dashboard)/components/sidebar/calendar-focus-toggle";
 import { DashboardSplitShell } from "@/app/(dashboard)/components/dashboard-split-shell";
-
+import { Suspense } from "react";
 export default async function DashboardLayout({
   children,
 }: {
@@ -50,7 +50,7 @@ export default async function DashboardLayout({
           </header>
           <main className="flex-1 w-full p-2 min-h-0 overflow-hidden">
             <DashboardSplitShell>
-              {children}
+            <Suspense> {children} </Suspense>
             </DashboardSplitShell>
           </main>
         </SidebarInset>

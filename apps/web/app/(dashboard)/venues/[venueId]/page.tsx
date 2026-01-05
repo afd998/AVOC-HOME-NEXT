@@ -2,14 +2,15 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getVenueById } from "@/lib/data/venues";
 import { getQueryClient } from "@/lib/query";
 import VenuePageContent from "./components/VenuePageContent";
+import { Suspense } from "react";
 
 type VenuePageProps = {
   params: Promise<{ venueId: string }>;
 };
 
-export default async function VenuePage({
-  params,
-}: VenuePageProps) {
+export default async function VenuePage({ params }: VenuePageProps) {
+  "use cache";
+
   const { venueId } = await params;
 
   const queryClient = getQueryClient();
@@ -27,8 +28,10 @@ export default async function VenuePage({
   });
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <VenuePageContent venueId={venueId} />
-    </HydrationBoundary>
+
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <VenuePageContent venueId={venueId} />
+      </HydrationBoundary>
+
   );
 }

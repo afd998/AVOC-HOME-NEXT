@@ -1,9 +1,10 @@
+"use cache";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import ActionContentWrapper from "./ActionContentWrapper";
 import { getActionById } from "@/lib/data/actions/action";
 import { addDisplayColumns } from "@/lib/data/calendar/actionUtils";
 import { getQueryClient } from "@/lib/query";
-
+import { Suspense } from "react";
 type ActionsPageProps = {
   params: Promise<{ slug: string }>;
 };
@@ -27,8 +28,10 @@ export default async function ActionsPage(props: ActionsPageProps) {
   }
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <ActionContentWrapper actionId={slug} />
-    </HydrationBoundary>
+    <Suspense>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <ActionContentWrapper actionId={slug} />
+      </HydrationBoundary>
+    </Suspense>
   );
 }
