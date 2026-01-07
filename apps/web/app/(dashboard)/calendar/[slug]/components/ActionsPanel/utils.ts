@@ -103,6 +103,24 @@ export function buildActionListItems(
     return aStart - bStart;
   });
 
+  // First pass: count recording checks per time slot
+  const recordingCheckCounts = new Map<string, number>();
+  sortedActions.forEach((entry) => {
+    const isRecordingCheck = entry.action.type?.toUpperCase().includes("RECORDING") || 
+                            entry.action.type?.toUpperCase().includes("CAPTURE") ||
+                            entry.action.subType?.toUpperCase().includes("RECORDING") ||
+                            entry.action.subType?.toUpperCase().includes("CAPTURE");
+    
+    if (isRecordingCheck) {
+      const groupKey =
+        entry.startMinutes !== null
+          ? `recording-${entry.startMinutes}`
+          : `recording-${entry.action.startTime ?? entry.action.id}`;
+      recordingCheckCounts.set(groupKey, (recordingCheckCounts.get(groupKey) || 0) + 1);
+    }
+  });
+
+  // Second pass: build items with conditional grouping
   const items = sortedActions.reduce<ActionListItem[]>((acc, entry) => {
     // Check if this is a recording check action (type might be "CAPTURE_QC" or similar)
     const isRecordingCheck = entry.action.type?.toUpperCase().includes("RECORDING") || 
@@ -115,24 +133,30 @@ export function buildActionListItems(
         entry.startMinutes !== null
           ? `recording-${entry.startMinutes}`
           : `recording-${entry.action.startTime ?? entry.action.id}`;
-      const previous = acc.at(-1);
+      
+      // Only group if there are 3 or more items at this time
+      const count = recordingCheckCounts.get(groupKey) || 0;
+      if (count >= 3) {
+        const previous = acc.at(-1);
 
-      if (previous?.type === "recording-group" && previous.groupKey === groupKey) {
-        previous.actions.push(entry);
-        if (!previous.roomNames.includes(entry.roomName)) {
-          previous.roomNames.push(entry.roomName);
+        if (previous?.type === "recording-group" && previous.groupKey === groupKey) {
+          previous.actions.push(entry);
+          if (!previous.roomNames.includes(entry.roomName)) {
+            previous.roomNames.push(entry.roomName);
+          }
+        } else {
+          acc.push({
+            type: "recording-group",
+            groupKey,
+            startLabel: entry.startLabel,
+            actions: [entry],
+            roomNames: [entry.roomName],
+          });
         }
-      } else {
-        acc.push({
-          type: "recording-group",
-          groupKey,
-          startLabel: entry.startLabel,
-          actions: [entry],
-          roomNames: [entry.roomName],
-        });
-      }
 
-      return acc;
+        return acc;
+      }
+      // If less than 3, treat as regular action
     }
 
     acc.push({ type: "action", entry });
