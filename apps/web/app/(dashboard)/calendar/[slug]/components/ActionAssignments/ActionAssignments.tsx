@@ -29,6 +29,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Copy, Loader2, ClipboardList } from "lucide-react";
 import ShiftBlockLines from "./components/ShiftBlockLines";
+import UserAvatar from "@/core/User/UserAvatar";
 
 interface ActionAssignmentsProps {
   dates: string[]; // Array of date strings in YYYY-MM-DD format
@@ -553,7 +554,7 @@ const ActionAssignments: React.FC<ActionAssignmentsProps> = ({
                 {technicianProfiles.map((profile) => (
                   <TableRow key={profile.id}>
                     <TableCell className="w-8 font-medium">
-                      {profile.name || profile.id}
+                      <UserAvatar profile={profile} size="sm" />
                     </TableCell>
                     {dates.map((date) => {
                       const shift = getShift(profile.id, date);
