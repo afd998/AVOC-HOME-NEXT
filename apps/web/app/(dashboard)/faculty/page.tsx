@@ -24,14 +24,10 @@ export default async function FacultyPage() {
   );
 
   return (
-    <div className="bg-background flex-1 min-h-0">
-      <div className="bg-background/80">
-        <div className="mx-auto flex w-full max-w-6xl flex-1 min-h-0 flex-col gap-8 px-6 py-6">
-          <React.Suspense>
-            <FacultyDirectory faculty={sortedFaculty} />
-          </React.Suspense>
-        </div>
-      </div>
+    <div className="h-full min-h-0 min-w-0 bg-background">
+      <React.Suspense>
+        <FacultyDirectory faculty={sortedFaculty} />
+      </React.Suspense>
     </div>
   );
 }

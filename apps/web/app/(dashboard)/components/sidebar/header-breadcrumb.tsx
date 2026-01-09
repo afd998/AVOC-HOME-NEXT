@@ -107,6 +107,9 @@ export default function HeaderBreadcrumb() {
   return (
     <Breadcrumb>
       <BreadcrumbList className="h-8 gap-2 rounded-md px-3 text-sm">
+        {!loading && breadcrumbs && breadcrumbs.length > 0 && (
+          <BreadcrumbSeparator />
+        )}
         {!loading &&
           breadcrumbs?.map((item, index) => (
             <React.Fragment key={item.key}>

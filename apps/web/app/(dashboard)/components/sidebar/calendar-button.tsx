@@ -2,30 +2,39 @@
 
 import { Button } from "@/components/ui/button";
 import { CalendarIcon } from "lucide-react";
+import { useSidebar } from "./sidebar-shell";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function CalendarButton() {
-  return (
+  const { state, setOpen } = useSidebar();
+
+  const handleClick = () => {
+    // If sidebar is collapsed, expand it
+    if (state === "collapsed") {
+      setOpen(true);
+    }
+  };
+
+  const button = (
     <button
-      onClick={() => {
-        // Trigger sidebar expansion by removing the collapsed state
-        const sidebarElement = document.querySelector(
-          '[data-sidebar="sidebar"]'
-        );
-        if (sidebarElement) {
-          sidebarElement.removeAttribute("data-state");
-          // Also trigger the sidebar toggle if there's a toggle button
-          const toggleButton = document.querySelector(
-            '[data-sidebar="trigger"]'
-          );
-          if (toggleButton) {
-            (toggleButton as HTMLElement).click();
-          }
-        }
-      }}
-      className="group-data-[collapsible=icon]:flex hidden w-full h-8 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground flex items-center justify-center"
+      onClick={handleClick}
+      className="group-data-[collapsible=icon]:flex hidden w-full h-8 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground flex items-center justify-center cursor-pointer"
       aria-label="Open calendar"
     >
       <CalendarIcon className="h-4 w-4" />
     </button>
+  );
+
+  return (
+    <Tooltip delayDuration={2000}>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent side="right">
+        <p>Calendar</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

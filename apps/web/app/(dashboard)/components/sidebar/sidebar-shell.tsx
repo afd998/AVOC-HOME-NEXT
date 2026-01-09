@@ -162,7 +162,28 @@ function SidebarShellContent({
   children,
   style,
 }: SidebarShellContentProps) {
-  const { isMobile, openMobile, setOpenMobile, state } = useSidebar();
+  const { isMobile, openMobile, setOpenMobile, state, setOpen } = useSidebar();
+
+  const handleSidebarClick = React.useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      // Only expand if sidebar is collapsed
+      if (state === "collapsed") {
+        // Check if the click target is an interactive element
+        const target = event.target as HTMLElement;
+        const isInteractive =
+          target.tagName === "BUTTON" ||
+          target.tagName === "A" ||
+          target.tagName === "INPUT" ||
+          target.closest("button, a, input, [role='button']") !== null;
+
+        // If not clicking on an interactive element, expand the sidebar
+        if (!isInteractive) {
+          setOpen(true);
+        }
+      }
+    },
+    [state, setOpen]
+  );
 
   const childArray = React.Children.toArray(children).filter(
     (child) => !(typeof child === "string" && child.trim().length === 0)
@@ -220,12 +241,16 @@ function SidebarShellContent({
           </Sheet>
         ) : (
           <div
-            className="group peer text-sidebar-foreground hidden md:block"
+            className={cn(
+              "group peer text-sidebar-foreground hidden md:block",
+              state === "collapsed" && "cursor-pointer"
+            )}
             data-state={state}
             data-collapsible={state === "collapsed" ? collapsible : ""}
             data-variant={variant}
             data-side={side}
             data-slot="sidebar"
+            onClick={handleSidebarClick}
           >
             {sidebar}
           </div>

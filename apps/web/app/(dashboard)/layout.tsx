@@ -10,6 +10,7 @@ import { Bell } from "lucide-react";
 import { CalendarFocusToggle } from "@/app/(dashboard)/components/sidebar/calendar-focus-toggle";
 import { DashboardSplitShell } from "@/app/(dashboard)/components/dashboard-split-shell";
 import { Suspense } from "react";
+import Image from "next/image";
 export default async function DashboardLayout({
   children,
 }: {
@@ -34,6 +35,23 @@ export default async function DashboardLayout({
             </div>
             <div className="flex-1" />
             <div className="flex items-center gap-2 px-4">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="h-8 border border-border cursor-pointer hover:bg-accent/80 dark:hover:bg-accent/30"
+                aria-label="Magnum OS"
+              >
+                <a href="http://10.26.49.246/" target="_blank" rel="noopener noreferrer">
+                  <Image
+                    src="/images/magnum-os.svg"
+                    alt="Magnum OS"
+                    width={120}
+                    height={16}
+                    className="h-4 dark:invert"
+                  />
+                </a>
+              </Button>
               <Button
                 type="button"
                 variant="ghost"

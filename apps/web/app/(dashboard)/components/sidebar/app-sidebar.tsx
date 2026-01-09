@@ -28,6 +28,7 @@ import { Calendar } from "@/components/ui/calendar";
 import Link from "next/link";
 // Navigation data for the sidebar
 import CalendarButton from "./calendar-button";
+import FacultyButton from "./faculty-button";
 import SliderServer from "./sliders-server";
 import ThemeToggle from "@/components/theme/theme-toggle";
 import { LogoButton } from "./logo-button";
@@ -65,14 +66,7 @@ export async function AppSidebar({
           {/* Calendar icon - only visible when collapsed */}
           <CalendarButton />
           {/* Faculty icon - only visible when collapsed */}
-          <Link href="/faculty">
-            <button
-              className="group-data-[collapsible=icon]:flex hidden w-full h-8 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground flex items-center justify-center"
-              aria-label="Faculty Directory"
-            >
-              <FacultyIcon className="h-4 w-4" />
-            </button>
-          </Link>
+          <FacultyButton />
           {/* Session Assignments icon - only visible when collapsed */}
         </div>
       </SidebarHeader>

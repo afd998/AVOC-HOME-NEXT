@@ -3,12 +3,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getTodayPath } from "@/utils/datePaths";
+import { useSidebar } from "./sidebar-shell";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function LogoButton() {
-  return (
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
+  const button = (
     <Link href={`${getTodayPath()}`}>
       <button
-        className="group relative flex h-12 items-center gap-2 rounded-md px-2 transition-all duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:px-1"
+        className="group relative flex h-12 items-center gap-2 rounded-md px-2 transition-all duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:px-1 cursor-pointer"
         aria-label="Go to home"
       >
         <Image
@@ -25,4 +34,17 @@ export function LogoButton() {
       </button>
     </Link>
   );
+
+  if (isCollapsed) {
+    return (
+      <Tooltip delayDuration={2000}>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent side="right">
+          <p>Home</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return button;
 }

@@ -87,7 +87,7 @@ const ShiftBlockLine: React.FC<ShiftBlockLineProps> = ({ shiftBlock, pixelsPerMi
           <div className="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <ItemTitle className="text-sm font-medium cursor-help">
+                <ItemTitle className="text-sm font-medium">
                   {displayTime}
                 </ItemTitle>
               </TooltipTrigger>
